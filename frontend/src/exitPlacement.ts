@@ -23,12 +23,18 @@ export function exitSpaceAt(
   let bestId: string | undefined;
   let bestDistance = Infinity;
   for (const space of layout.spaces) {
-    const distance = pointInPolygon(x, y, space.vertices)
-      ? 0
-      : Math.min(...space.vertices.map(([ax, ay], i) => {
-          const [bx, by] = space.vertices[(i + 1) % space.vertices.length];
-          return distanceSquaredToSegment(x, y, ax, ay, bx, by);
-        }));
+    if (pointInPolygon(x, y, space.vertices)) {
+      const distance = 0;
+      if (distance < bestDistance || (distance === bestDistance && space.id === currentSpaceId)) {
+        bestId = space.id;
+        bestDistance = distance;
+      }
+      continue;
+    }
+    const box = polygonBBox(space.vertices);
+    const dx = Math.max(box.x - x, 0, x - box.x - box.width);
+    const dy = Math.max(box.y - y, 0, y - box.y - box.height);
+    const distance = dx * dx + dy * dy;
     if (distance < bestDistance || (distance === bestDistance && space.id === currentSpaceId)) {
       bestId = space.id;
       bestDistance = distance;
