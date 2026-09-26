@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Circle, Layer, Line, Rect, Stage, Image as KonvaImage } from 'react-konva';
 import type {
   BuildingLayout,
   EditorTool,
+  ObjectRef,
   OccupantFrameState,
   OccupantResult,
-  SelectedRef,
+  Selection,
 } from '../../types/building';
 import { SCALE } from '../../utils';
+import { ContextMenu, type ContextMenuState } from '../ContextMenu';
 import { usePolygonDraft } from './usePolygonDraft';
 import { useCanvasInteraction } from './useCanvasInteraction';
 import { useCanvasViewport } from './useCanvasViewport';
@@ -21,9 +23,19 @@ import { OccupantsLayer } from './layers/OccupantsLayer';
 interface Props {
   layout: BuildingLayout;
   tool: EditorTool;
-  selected: SelectedRef;
-  onSelect: (ref: SelectedRef) => void;
+  selected: Selection;
+  onSelect: (selection: Selection) => void;
+  onSelectObject: (
+    ref: ObjectRef,
+    modifiers: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean },
+  ) => void;
   onChange: (layout: BuildingLayout) => void;
+  onCopy: () => void;
+  onCut: () => void;
+  onPaste: (worldPoint?: { x: number; y: number }) => void;
+  onDuplicate: () => void;
+  onDeleteSelected: () => void;
+  canPaste: boolean;
   occupants?: OccupantFrameState[];
   routeOccupants?: OccupantResult[];
   showPaths?: boolean;
@@ -41,7 +53,14 @@ export function BuildingCanvas({
   tool,
   selected,
   onSelect,
+  onSelectObject,
   onChange,
+  onCopy,
+  onCut,
+  onPaste,
+  onDuplicate,
+  onDeleteSelected,
+  canPaste,
   occupants = [],
   routeOccupants = [],
   showPaths = false,
@@ -54,6 +73,7 @@ export function BuildingCanvas({
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
   const [previewSize, setPreviewSize] = useState<{ width: number; height: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const occupantRadiusPx = Math.max(occupantRadiusM * SCALE, 3);
 
   const displayWidth = previewSize?.width ?? layout.width;
@@ -109,14 +129,27 @@ export function BuildingCanvas({
     onSelect,
   });
 
-  const { onMouseDown, onMouseMove, onContextMenu, dragProps, resizeSpace } =
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  const { onMouseDown, onMouseMove, onContextMenu, openObjectContextMenu, handleObjectClick, dragProps, resizeSpace } =
     useCanvasInteraction({
       layout,
       tool,
       interactive,
+      selected,
       onSelect,
+      onSelectObject,
       onChange,
       draft,
+      onContextMenuRequest: (request) => {
+        setContextMenu({
+          x: request.clientX,
+          y: request.clientY,
+          worldX: request.worldX,
+          worldY: request.worldY,
+          target: request.target,
+        });
+      },
     });
 
   return (
@@ -155,7 +188,7 @@ export function BuildingCanvas({
           if (!isPanning()) return;
           const moved = endPan(evt);
           if (!moved && evt.target === evt.target.getStage() && tool === 'select') {
-            onSelect(null);
+            onSelect([]);
           }
         }}
         onMouseLeave={() => {
@@ -187,10 +220,11 @@ export function BuildingCanvas({
             interactive={interactive}
             congestedIds={congestedIds}
             floorPlanImage={floorPlanImage}
-            onSelect={onSelect}
+            onObjectClick={handleObjectClick}
             onChange={onChange}
             dragProps={dragProps}
             resizeSpace={resizeSpace}
+            onObjectContextMenu={openObjectContextMenu}
           />
 
           <HazardLayer
@@ -206,11 +240,11 @@ export function BuildingCanvas({
           <OpeningsLayer
             layout={layout}
             selected={selected}
-            interactive={interactive}
             congestedIds={congestedIds}
-            onSelect={onSelect}
+            onObjectClick={handleObjectClick}
             onChange={onChange}
             dragProps={dragProps}
+            onObjectContextMenu={openObjectContextMenu}
           />
 
           {showPaths && <PathsLayer occupants={routeOccupants} />}
@@ -218,12 +252,12 @@ export function BuildingCanvas({
           <OccupantsLayer
             layout={layout}
             selected={selected}
-            interactive={interactive}
             occupants={occupants}
             occupantRadiusPx={occupantRadiusPx}
-            onSelect={onSelect}
+            onObjectClick={handleObjectClick}
             onChange={onChange}
             dragProps={dragProps}
+            onObjectContextMenu={openObjectContextMenu}
           />
 
           <BuildingBoundsLayer
@@ -261,6 +295,24 @@ export function BuildingCanvas({
           ))}
         </Layer>
       </Stage>
+
+      <ContextMenu
+        state={contextMenu}
+        onClose={closeContextMenu}
+        canPaste={canPaste}
+        hasSelection={selected.length > 0}
+        onDuplicate={onDuplicate}
+        onCopy={onCopy}
+        onCut={onCut}
+        onPaste={() => {
+          if (contextMenu?.worldX != null && contextMenu.worldY != null) {
+            onPaste({ x: contextMenu.worldX, y: contextMenu.worldY });
+          } else {
+            onPaste();
+          }
+        }}
+        onDelete={onDeleteSelected}
+      />
     </div>
   );
 }

@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { BuildingLayout, EditorTool, SelectedRef } from '../types/building';
+import type { BuildingLayout, EditorTool, ObjectRef, Selection } from '../types/building';
+import { applySelectClick } from '../types/editor';
 import { emptyLayout } from '../layout/emptyLayout';
+import {
+  deleteRefs,
+  extractSelection,
+  getClipboard,
+  hasClipboard,
+  offsetToWorldPoint,
+  PASTE_OFFSET_M,
+  pastePayload,
+  setClipboard,
+} from '../layout/clipboard';
 
 export function useBuildingEditor({
   simulating,
@@ -14,8 +25,9 @@ export function useBuildingEditor({
   const [layout, setLayout] = useState<BuildingLayout>(emptyLayout());
   const [undoHistory, setUndoHistory] = useState<BuildingLayout[]>([]);
   const [tool, setTool] = useState<EditorTool>('select');
-  const [selected, setSelected] = useState<SelectedRef>(null);
+  const [selected, setSelected] = useState<Selection>([]);
   const [dirty, setDirty] = useState(false);
+  const [clipboardVersion, setClipboardVersion] = useState(0);
 
   const updateLayout = (next: BuildingLayout) => {
     if (busy || simulating || JSON.stringify(next) === JSON.stringify(layout)) return;
@@ -28,55 +40,84 @@ export function useBuildingEditor({
     if (busy || simulating || undoHistory.length === 0) return;
     setLayout(undoHistory[undoHistory.length - 1]);
     setUndoHistory((history) => history.slice(0, -1));
-    setSelected(null);
+    setSelected([]);
     setDirty(true);
     setError(null);
   }, [busy, simulating, undoHistory, setError]);
 
   const onDeleteSelected = useCallback(() => {
-    if (!selected || busy || simulating) return;
-    const apply = (next: BuildingLayout) => {
-      setUndoHistory((history) => [...history, layout]);
-      setLayout(next);
-      setDirty(true);
-    };
-    if (selected.kind === 'space') {
-      apply({
-        ...layout,
-        spaces: layout.spaces
-          .filter((s) => s.id !== selected.id)
-          .map((s) =>
-            s.linked_stair_id === selected.id ? { ...s, linked_stair_id: null } : s,
-          ),
-        doors: layout.doors.filter((d) => !d.connects.includes(selected.id)),
-        exits: layout.exits.filter((e) => e.connected_space_id !== selected.id),
-        occupant_groups: layout.occupant_groups.filter((g) => g.space_id !== selected.id),
-      });
-    } else if (selected.kind === 'door') {
-      apply({ ...layout, doors: layout.doors.filter((d) => d.id !== selected.id) });
-    } else if (selected.kind === 'exit') {
-      apply({ ...layout, exits: layout.exits.filter((e) => e.id !== selected.id) });
-    } else if (selected.kind === 'occupants') {
-      apply({
-        ...layout,
-        occupant_groups: layout.occupant_groups.filter((g) => g.id !== selected.id),
-      });
-    }
-    setSelected(null);
+    if (selected.length === 0 || busy || simulating) return;
+    updateLayout(deleteRefs(layout, selected));
+    setSelected([]);
   }, [selected, busy, simulating, layout]);
+
+  const onCopy = useCallback(() => {
+    if (selected.length === 0 || busy || simulating) return;
+    setClipboard(extractSelection(layout, selected));
+    setClipboardVersion((v) => v + 1);
+  }, [selected, busy, simulating, layout]);
+
+  const onCut = useCallback(() => {
+    if (selected.length === 0 || busy || simulating) return;
+    setClipboard(extractSelection(layout, selected));
+    setClipboardVersion((v) => v + 1);
+    updateLayout(deleteRefs(layout, selected));
+    setSelected([]);
+  }, [selected, busy, simulating, layout]);
+
+  const onPaste = useCallback(
+    (worldPoint?: { x: number; y: number }) => {
+      if (!hasClipboard() || busy || simulating) return;
+      const payload = getClipboard();
+      if (!payload) return;
+      const offset = worldPoint
+        ? offsetToWorldPoint(payload, worldPoint.x, worldPoint.y)
+        : { x: PASTE_OFFSET_M, y: PASTE_OFFSET_M };
+      const result = pastePayload(layout, payload, offset);
+      updateLayout(result.layout);
+      setSelected(result.selection);
+    },
+    [busy, simulating, layout],
+  );
+
+  const onDuplicate = useCallback(() => {
+    if (selected.length === 0 || busy || simulating) return;
+    const payload = extractSelection(layout, selected);
+    const result = pastePayload(layout, payload, {
+      x: PASTE_OFFSET_M,
+      y: PASTE_OFFSET_M,
+    });
+    updateLayout(result.layout);
+    setSelected(result.selection);
+  }, [selected, busy, simulating, layout]);
+
+  const selectObject = useCallback(
+    (
+      ref: ObjectRef,
+      modifiers: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean },
+    ) => {
+      setSelected((current) => applySelectClick(current, ref, modifiers));
+    },
+    [],
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      // Text fields retain their native text undo behavior.
+      // Text fields retain their native text undo / clipboard behavior.
       const target = event.target;
-      if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]')) return;
       if (
-        event.key.toLowerCase() === 'q'
-        && !event.ctrlKey
-        && !event.metaKey
-        && !event.altKey
-        && !event.shiftKey
-        && selected
+        target instanceof HTMLElement
+        && target.closest('input, textarea, select, [contenteditable]')
+      ) {
+        return;
+      }
+
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+
+      if (
+        (event.key === 'Delete' || event.key === 'Backspace' || (key === 'q' && !mod && !event.altKey && !event.shiftKey))
+        && selected.length > 0
         && !busy
         && !simulating
       ) {
@@ -84,14 +125,47 @@ export function useBuildingEditor({
         onDeleteSelected();
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
-        event.preventDefault();
-        onUndo();
+
+      if (mod && !event.altKey) {
+        if (key === 'z' && !event.shiftKey) {
+          event.preventDefault();
+          onUndo();
+          return;
+        }
+        if (key === 'c' && selected.length > 0) {
+          event.preventDefault();
+          onCopy();
+          return;
+        }
+        if (key === 'x' && selected.length > 0) {
+          event.preventDefault();
+          onCut();
+          return;
+        }
+        if (key === 'v' && hasClipboard()) {
+          event.preventDefault();
+          onPaste();
+          return;
+        }
+        if (key === 'd' && selected.length > 0) {
+          event.preventDefault();
+          onDuplicate();
+        }
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onUndo, selected, busy, simulating, onDeleteSelected]);
+  }, [
+    onUndo,
+    selected,
+    busy,
+    simulating,
+    onDeleteSelected,
+    onCopy,
+    onCut,
+    onPaste,
+    onDuplicate,
+  ]);
 
   return {
     layout,
@@ -102,10 +176,17 @@ export function useBuildingEditor({
     setTool,
     selected,
     setSelected,
+    selectObject,
     dirty,
     setDirty,
     updateLayout,
     onUndo,
     onDeleteSelected,
+    onCopy,
+    onCut,
+    onPaste,
+    onDuplicate,
+    canPaste: hasClipboard(),
+    clipboardVersion,
   };
 }

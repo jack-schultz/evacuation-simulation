@@ -1,33 +1,39 @@
 import { Circle, Group, Text } from 'react-konva';
-import type { BuildingLayout, OccupantFrameState, SelectedRef } from '../../../types/building';
-import { SCALE, snap } from '../../../utils';
+import type {
+  BuildingLayout,
+  OccupantFrameState,
+  Selection,
+} from '../../../types/building';
+import { isRefSelected } from '../../../types/editor';
+import { SCALE } from '../../../utils';
 import { spaceCentroid, spaceContaining } from '../geometryHelpers';
-import type { DragPropsFn } from '../useCanvasInteraction';
+import type {
+  DragPropsFn,
+  HandleObjectClickFn,
+  OpenObjectContextMenuFn,
+} from '../useCanvasInteraction';
 
 interface Props {
   layout: BuildingLayout;
-  selected: SelectedRef;
-  interactive: boolean;
+  selected: Selection;
   occupants: OccupantFrameState[];
   occupantRadiusPx: number;
-  onSelect: (ref: SelectedRef) => void;
+  onObjectClick: HandleObjectClickFn;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
+  onObjectContextMenu: OpenObjectContextMenuFn;
 }
 
 export function OccupantsLayer({
   layout,
   selected,
-  interactive,
   occupants,
   occupantRadiusPx,
-  onSelect,
+  onObjectClick,
   onChange,
   dragProps,
+  onObjectContextMenu,
 }: Props) {
-  const isSelected = (kind: string, id: string) =>
-    selected?.kind === kind && selected.id === id;
-
   return (
     <>
       {layout.occupant_groups.map((g) => {
@@ -36,22 +42,17 @@ export function OccupantsLayer({
         const [centerX, centerY] = spaceCentroid(space.vertices);
         const sx = g.spawn_x ?? centerX;
         const sy = g.spawn_y ?? centerY;
-        const cx = sx * SCALE;
-        const cy = sy * SCALE;
+        const active = isRefSelected(selected, { kind: 'occupants', id: g.id });
         return (
           <Group
             key={g.id}
-            x={cx}
-            y={cy}
-            {...dragProps({ kind: 'occupants', id: g.id }, () => {})}
-            onDragEnd={(e) => {
-              const x = snap(e.target.x() / SCALE);
-              const y = snap(e.target.y() / SCALE);
-              const spaceId = spaceContaining(layout, x, y);
-              e.target.position({ x: cx, y: cy });
-              e.target.getStage()!.container().style.cursor = '';
-              e.cancelBubble = true;
-              if (spaceId) {
+            x={sx * SCALE}
+            y={sy * SCALE}
+            {...dragProps(
+              { kind: 'occupants', id: g.id },
+              (x, y) => {
+                const spaceId = spaceContaining(layout, x, y);
+                if (!spaceId) return;
                 onChange({
                   ...layout,
                   occupant_groups: layout.occupant_groups.map((group) =>
@@ -60,13 +61,22 @@ export function OccupantsLayer({
                       : group,
                   ),
                 });
-              }
-            }}
-            onClick={() => interactive && onSelect({ kind: 'occupants', id: g.id })}
+              },
+              0,
+              0,
+              { x: sx, y: sy },
+              {
+                validate: (x, y) => spaceContaining(layout, x, y) != null,
+              },
+            )}
+            onClick={(e) => onObjectClick({ kind: 'occupants', id: g.id }, e)}
+            onContextMenu={(e) =>
+              onObjectContextMenu({ kind: 'occupants', id: g.id }, e)
+            }
           >
             <Circle
               radius={14}
-              fill={isSelected('occupants', g.id) ? '#7c3aed' : '#8b5cf6'}
+              fill={active ? '#7c3aed' : '#8b5cf6'}
               opacity={occupants.length ? 0.25 : 0.9}
             />
             <Text

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { emptyLayout } from '../layout/emptyLayout';
-import type { BuildingLayout, BuildingSummary } from '../types/building';
+import type { BuildingLayout, BuildingSummary, Selection } from '../types/building';
 
 export function useBuildingPersistence({
   layout,
@@ -17,7 +17,7 @@ export function useBuildingPersistence({
   layout: BuildingLayout;
   setLayout: (layout: BuildingLayout) => void;
   setUndoHistory: (history: BuildingLayout[]) => void;
-  setSelected: (ref: null) => void;
+  setSelected: (selection: Selection) => void;
   dirty: boolean;
   setDirty: (dirty: boolean) => void;
   setBusy: (busy: boolean) => void;
@@ -45,7 +45,7 @@ export function useBuildingPersistence({
     setBuildingId(b.id);
     setLayout(b.layout);
     setUndoHistory([]);
-    setSelected(null);
+    setSelected([]);
     setDirty(false);
     setFloorPlanStatus(null);
     onResetSimulation();
@@ -131,7 +131,7 @@ export function useBuildingPersistence({
     setFloorPlanUrl(null);
     setLayout(emptyLayout());
     setUndoHistory([]);
-    setSelected(null);
+    setSelected([]);
     setFloorPlanStatus(null);
     setDirty(true);
     onResetSimulation();

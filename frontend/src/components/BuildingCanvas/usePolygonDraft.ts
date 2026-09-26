@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { BuildingLayout, EditorTool, SelectedRef } from '../../types/building';
+import type { BuildingLayout, EditorTool, Selection } from '../../types/building';
 import { polygonArea, samePoint, uid, type Point } from '../../utils';
 import { toFlatPoints } from './geometryHelpers';
 
@@ -16,7 +16,7 @@ export function usePolygonDraft({
   interactive: boolean;
   layout: BuildingLayout;
   onChange: (layout: BuildingLayout) => void;
-  onSelect: (ref: SelectedRef) => void;
+  onSelect: (selection: Selection) => void;
 }) {
   const [draftPoints, setDraftPoints] = useState<Point[]>([]);
   const [cursor, setCursor] = useState<Point | null>(null);
@@ -59,7 +59,7 @@ export function usePolygonDraft({
         },
       ],
     });
-    onSelect({ kind: 'space', id });
+    onSelect([{ kind: 'space', id }]);
     setDraftPoints([]);
     setCursor(null);
   };

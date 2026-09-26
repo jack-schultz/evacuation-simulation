@@ -1,4 +1,5 @@
-import type { BuildingLayout, SelectedRef } from '../../types/building';
+import type { BuildingLayout, ObjectRef, Selection } from '../../types/building';
+import { primarySelection } from '../../types/editor';
 import { DoorProperties } from './DoorProperties';
 import { ExitProperties } from './ExitProperties';
 import { OccupantGroupProperties } from './OccupantGroupProperties';
@@ -6,9 +7,9 @@ import { SpaceProperties } from './SpaceProperties';
 
 interface Props {
   layout: BuildingLayout;
-  selected: SelectedRef;
+  selected: Selection;
   onChange: (layout: BuildingLayout) => void;
-  onSelect: (ref: SelectedRef) => void;
+  onSelect: (selection: Selection) => void;
   onDeleteSelected: () => void;
   disabled?: boolean;
 }
@@ -21,7 +22,7 @@ export function PropertiesPanel({
   onDeleteSelected,
   disabled,
 }: Props) {
-  if (!selected) {
+  if (selected.length === 0) {
     return (
       <div className="panel properties">
         <h2>Properties</h2>
@@ -30,23 +31,43 @@ export function PropertiesPanel({
     );
   }
 
-  if (selected.kind === 'space') {
-    const space = layout.spaces.find((s) => s.id === selected.id);
+  if (selected.length > 1) {
+    return (
+      <div className="panel properties">
+        <h2>Multiple selection</h2>
+        <p className="hint">{selected.length} objects selected.</p>
+        <button
+          type="button"
+          className="danger"
+          disabled={disabled}
+          onClick={onDeleteSelected}
+        >
+          Delete selected
+        </button>
+      </div>
+    );
+  }
+
+  const primary = primarySelection(selected);
+  if (!primary) return null;
+
+  if (primary.kind === 'space') {
+    const space = layout.spaces.find((s) => s.id === primary.id);
     if (!space) return null;
     return (
       <SpaceProperties
         layout={layout}
         space={space}
         onChange={onChange}
-        onSelect={onSelect}
+        onSelect={(ref: ObjectRef) => onSelect([ref])}
         onDeleteSelected={onDeleteSelected}
         disabled={disabled}
       />
     );
   }
 
-  if (selected.kind === 'door') {
-    const door = layout.doors.find((d) => d.id === selected.id);
+  if (primary.kind === 'door') {
+    const door = layout.doors.find((d) => d.id === primary.id);
     if (!door) return null;
     return (
       <DoorProperties
@@ -59,8 +80,8 @@ export function PropertiesPanel({
     );
   }
 
-  if (selected.kind === 'exit') {
-    const exit = layout.exits.find((e) => e.id === selected.id);
+  if (primary.kind === 'exit') {
+    const exit = layout.exits.find((e) => e.id === primary.id);
     if (!exit) return null;
     return (
       <ExitProperties
@@ -73,8 +94,8 @@ export function PropertiesPanel({
     );
   }
 
-  if (selected.kind === 'occupants') {
-    const group = layout.occupant_groups.find((g) => g.id === selected.id);
+  if (primary.kind === 'occupants') {
+    const group = layout.occupant_groups.find((g) => g.id === primary.id);
     if (!group) return null;
     return (
       <OccupantGroupProperties

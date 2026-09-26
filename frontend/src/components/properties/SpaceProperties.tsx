@@ -1,11 +1,11 @@
-import type { BuildingLayout, SelectedRef, Space } from '../../types/building';
+import type { BuildingLayout, ObjectRef, Space } from '../../types/building';
 import { polygonArea } from '../../utils';
 
 interface Props {
   layout: BuildingLayout;
   space: Space;
   onChange: (layout: BuildingLayout) => void;
-  onSelect: (ref: SelectedRef) => void;
+  onSelect: (ref: ObjectRef) => void;
   onDeleteSelected: () => void;
   disabled?: boolean;
 }

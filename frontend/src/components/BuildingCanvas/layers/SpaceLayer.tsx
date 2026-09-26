@@ -1,20 +1,31 @@
 import { Group, Line, Rect, Text } from 'react-konva';
-import type { BuildingLayout, EditorTool, SelectedRef } from '../../../types/building';
+import type {
+  BuildingLayout,
+  EditorTool,
+  Selection,
+} from '../../../types/building';
+import { isRefSelected } from '../../../types/editor';
 import { SCALE, snap, polygonBBox, type Point } from '../../../utils';
 import { SPACE_COLORS, spaceCentroid } from '../geometryHelpers';
-import type { DragPropsFn, ResizeSpaceFn } from '../useCanvasInteraction';
+import type {
+  DragPropsFn,
+  HandleObjectClickFn,
+  OpenObjectContextMenuFn,
+  ResizeSpaceFn,
+} from '../useCanvasInteraction';
 
 interface Props {
   layout: BuildingLayout;
   tool: EditorTool;
-  selected: SelectedRef;
+  selected: Selection;
   interactive: boolean;
   congestedIds?: Set<string>;
   floorPlanImage: HTMLImageElement | null;
-  onSelect: (ref: SelectedRef) => void;
+  onObjectClick: HandleObjectClickFn;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
   resizeSpace: ResizeSpaceFn;
+  onObjectContextMenu: OpenObjectContextMenuFn;
 }
 
 export function SpaceLayer({
@@ -24,25 +35,30 @@ export function SpaceLayer({
   interactive,
   congestedIds,
   floorPlanImage,
-  onSelect,
+  onObjectClick,
   onChange,
   dragProps,
   resizeSpace,
+  onObjectContextMenu,
 }: Props) {
-  const isSelected = (kind: string, id: string) =>
-    selected?.kind === kind && selected.id === id;
+  const selectedSpace = (id: string) =>
+    isRefSelected(selected, { kind: 'space', id });
 
   return (
     <>
       {layout.spaces.map((s) => {
         const box = polygonBBox(s.vertices);
         const [cx, cy] = spaceCentroid(s.vertices);
+        const active = selectedSpace(s.id);
         return (
           <Group
             key={s.id}
             x={box.x * SCALE}
             y={box.y * SCALE}
-            onClick={() => interactive && onSelect({ kind: 'space', id: s.id })}
+            onClick={(e) => onObjectClick({ kind: 'space', id: s.id }, e)}
+            onContextMenu={(e) =>
+              onObjectContextMenu({ kind: 'space', id: s.id }, e)
+            }
             {...dragProps(
               { kind: 'space', id: s.id },
               (nx, ny) => {
@@ -65,6 +81,7 @@ export function SpaceLayer({
               },
               box.width,
               box.height,
+              { x: box.x, y: box.y },
             )}
           >
             <Line
@@ -78,11 +95,11 @@ export function SpaceLayer({
               stroke={
                 congestedIds?.has(s.id)
                   ? '#dc2626'
-                  : isSelected('space', s.id)
+                  : active
                     ? '#2563eb'
                     : '#64748b'
               }
-              strokeWidth={congestedIds?.has(s.id) || isSelected('space', s.id) ? 3 : 1}
+              strokeWidth={congestedIds?.has(s.id) || active ? 3 : 1}
             />
             <Text
               text={s.name}
@@ -94,7 +111,7 @@ export function SpaceLayer({
               fill="#334155"
               listening={false}
             />
-            {isSelected('space', s.id) && interactive && tool === 'select' &&
+            {active && interactive && tool === 'select' && selected.length === 1 &&
               (['nw', 'ne', 'sw', 'se'] as const).map((corner) => {
                 const handleX = corner.includes('w') ? 0 : box.width * SCALE;
                 const handleY = corner.includes('n') ? 0 : box.height * SCALE;

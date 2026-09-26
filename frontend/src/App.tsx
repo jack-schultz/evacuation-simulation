@@ -129,7 +129,14 @@ export default function App() {
             tool={editor.tool}
             selected={editor.selected}
             onSelect={editor.setSelected}
+            onSelectObject={editor.selectObject}
             onChange={editor.updateLayout}
+            onCopy={editor.onCopy}
+            onCut={editor.onCut}
+            onPaste={editor.onPaste}
+            onDuplicate={editor.onDuplicate}
+            onDeleteSelected={editor.onDeleteSelected}
+            canPaste={editor.canPaste}
             occupants={session.playback.currentFrame?.occupants ?? []}
             routeOccupants={session.playback.results?.occupants ?? []}
             showPaths={showPaths}
@@ -141,7 +148,7 @@ export default function App() {
           />
         </main>
 
-        {editor.selected && (
+        {editor.selected.length > 0 && (
           <aside className="inspector-sidebar" aria-label="Properties">
             <PropertiesPanel
               layout={editor.layout}

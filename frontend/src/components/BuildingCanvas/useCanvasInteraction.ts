@@ -1,7 +1,15 @@
+import { useRef } from 'react';
 import type Konva from 'konva';
-import type { BuildingLayout, EditorTool, SelectedRef } from '../../types/building';
+import type {
+  BuildingLayout,
+  EditorTool,
+  ObjectRef,
+  Selection,
+} from '../../types/building';
+import { applyContextSelect, isRefSelected } from '../../types/editor';
 import { SCALE, snap, uid, polygonBBox, samePoint, type Point } from '../../utils';
 import { exitSpaceAt } from '../../exitPlacement';
+import { translateSelection } from '../../layout/clipboard';
 import { findNearestSpaces, spaceContaining } from './geometryHelpers';
 
 type DraftApi = {
@@ -14,22 +22,47 @@ type DraftApi = {
   SPACE_TOOLS: EditorTool[];
 };
 
+export type ContextMenuRequest = {
+  clientX: number;
+  clientY: number;
+  worldX: number;
+  worldY: number;
+  target: 'object' | 'canvas';
+  ref?: ObjectRef;
+};
+
 export function useCanvasInteraction({
   layout,
   tool,
   interactive,
+  selected,
   onSelect,
+  onSelectObject,
   onChange,
   draft,
+  onContextMenuRequest,
 }: {
   layout: BuildingLayout;
   tool: EditorTool;
   interactive: boolean;
-  onSelect: (ref: SelectedRef) => void;
+  selected: Selection;
+  onSelect: (selection: Selection) => void;
+  onSelectObject: (
+    ref: ObjectRef,
+    modifiers: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean },
+  ) => void;
   onChange: (layout: BuildingLayout) => void;
   draft: DraftApi;
+  onContextMenuRequest?: (request: ContextMenuRequest) => void;
 }) {
-  const toWorld = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+
+  const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRefRef = useRef<ObjectRef | null>(null);
+  const suppressNextClickRef = useRef(false);
+
+  const toWorld = (evt: Konva.KonvaEventObject<MouseEvent | PointerEvent>) => {
     const stage = evt.target.getStage();
     const pointer = stage?.getPointerPosition();
     if (!stage || !pointer) return null;
@@ -41,7 +74,7 @@ export function useCanvasInteraction({
   const onMouseDown = (evt: Konva.KonvaEventObject<MouseEvent>) => {
     if (!interactive) return;
     if (tool === 'select') {
-      if (evt.target === evt.target.getStage()) onSelect(null);
+      if (evt.target === evt.target.getStage()) onSelect([]);
       return;
     }
     if (evt.evt.button === 2 && draft.SPACE_TOOLS.includes(tool)) {
@@ -84,7 +117,7 @@ export function useCanvasInteraction({
           },
         ],
       });
-      onSelect({ kind: 'door', id });
+      onSelect([{ kind: 'door', id }]);
       return;
     }
 
@@ -107,7 +140,7 @@ export function useCanvasInteraction({
           },
         ],
       });
-      onSelect({ kind: 'exit', id });
+      onSelect([{ kind: 'exit', id }]);
       return;
     }
 
@@ -131,7 +164,7 @@ export function useCanvasInteraction({
           },
         ],
       });
-      onSelect({ kind: 'occupants', id });
+      onSelect([{ kind: 'occupants', id }]);
     }
   };
 
@@ -143,19 +176,38 @@ export function useCanvasInteraction({
   };
 
   const onContextMenu = (evt: Konva.KonvaEventObject<PointerEvent>) => {
+    evt.evt.preventDefault();
+
     if (draft.SPACE_TOOLS.includes(tool) && draft.draftPoints.length > 0) {
-      evt.evt.preventDefault();
       draft.cancelDraft();
+      return;
     }
+
+    // Object layers handle their own context menus; only empty canvas here.
+    if (evt.target !== evt.target.getStage()) return;
+    if (!interactive || !onContextMenuRequest) return;
+
+    const world = toWorld(evt);
+    if (!world) return;
+
+    onContextMenuRequest({
+      clientX: evt.evt.clientX,
+      clientY: evt.evt.clientY,
+      worldX: world.x,
+      worldY: world.y,
+      target: 'canvas',
+    });
   };
 
   // All editable shapes use world coordinates at their drag anchor. Committing
   // through onChange keeps saving and the existing property controls in sync.
   const dragProps = (
-    ref: SelectedRef,
+    ref: ObjectRef | null,
     commit: (x: number, y: number) => void,
     width = 0,
     height = 0,
+    origin?: { x: number; y: number },
+    options?: { validate?: (x: number, y: number) => boolean },
   ) => ({
     draggable: interactive && tool === 'select',
     onMouseEnter: (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -168,7 +220,21 @@ export function useCanvasInteraction({
     },
     onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => {
       e.cancelBubble = true;
-      onSelect(ref);
+      if (ref) {
+        const current = selectedRef.current;
+        if (!isRefSelected(current, ref)) {
+          onSelect([ref]);
+          selectedRef.current = [ref];
+        }
+        dragRefRef.current = ref;
+        dragOriginRef.current = origin ?? {
+          x: snap(e.target.x() / SCALE),
+          y: snap(e.target.y() / SCALE),
+        };
+      } else {
+        dragRefRef.current = null;
+        dragOriginRef.current = null;
+      }
       e.target.getStage()!.container().style.cursor = 'grabbing';
     },
     onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -176,10 +242,87 @@ export function useCanvasInteraction({
       e.target.getStage()!.container().style.cursor = '';
       const x = Math.min(Math.max(0, layout.width - width), Math.max(0, snap(e.target.x() / SCALE)));
       const y = Math.min(Math.max(0, layout.height - height), Math.max(0, snap(e.target.y() / SCALE)));
+
+      const dragRef = dragRefRef.current;
+      const dragOrigin = dragOriginRef.current;
+      const current = selectedRef.current;
+
+      if (
+        dragRef
+        && dragOrigin
+        && current.length > 1
+        && isRefSelected(current, dragRef)
+      ) {
+        const dx = x - dragOrigin.x;
+        const dy = y - dragOrigin.y;
+        e.target.position({
+          x: dragOrigin.x * SCALE,
+          y: dragOrigin.y * SCALE,
+        });
+        onChange(translateSelection(layout, current, dx, dy));
+        suppressNextClickRef.current = true;
+        dragOriginRef.current = null;
+        dragRefRef.current = null;
+        return;
+      }
+
+      if (options?.validate && !options.validate(x, y)) {
+        if (dragOrigin) {
+          e.target.position({ x: dragOrigin.x * SCALE, y: dragOrigin.y * SCALE });
+        }
+        suppressNextClickRef.current = true;
+        dragOriginRef.current = null;
+        dragRefRef.current = null;
+        return;
+      }
+
       e.target.position({ x: x * SCALE, y: y * SCALE });
       commit(x, y);
+      suppressNextClickRef.current = true;
+      dragOriginRef.current = null;
+      dragRefRef.current = null;
     },
   });
+
+  const handleObjectClick = (
+    ref: ObjectRef,
+    evt: Konva.KonvaEventObject<MouseEvent>,
+  ) => {
+    if (!interactive) return;
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+    onSelectObject(ref, evt.evt);
+  };
+
+  const openObjectContextMenu = (
+    ref: ObjectRef,
+    evt: Konva.KonvaEventObject<PointerEvent>,
+  ) => {
+    evt.evt.preventDefault();
+    evt.cancelBubble = true;
+
+    if (draft.SPACE_TOOLS.includes(tool) && draft.draftPoints.length > 0) {
+      draft.cancelDraft();
+      return;
+    }
+    if (!interactive || !onContextMenuRequest) return;
+
+    const next = applyContextSelect(selectedRef.current, ref);
+    onSelect(next);
+    selectedRef.current = next;
+
+    const world = toWorld(evt);
+    onContextMenuRequest({
+      clientX: evt.evt.clientX,
+      clientY: evt.evt.clientY,
+      worldX: world?.x ?? 0,
+      worldY: world?.y ?? 0,
+      target: 'object',
+      ref,
+    });
+  };
 
   const resizeSpace = (
     space: BuildingLayout['spaces'][number],
@@ -238,8 +381,23 @@ export function useCanvasInteraction({
     });
   };
 
-  return { onMouseDown, onMouseMove, onContextMenu, dragProps, resizeSpace };
+  return {
+    onMouseDown,
+    onMouseMove,
+    onContextMenu,
+    openObjectContextMenu,
+    handleObjectClick,
+    dragProps,
+    resizeSpace,
+    onSelectObject,
+  };
 }
 
 export type DragPropsFn = ReturnType<typeof useCanvasInteraction>['dragProps'];
 export type ResizeSpaceFn = ReturnType<typeof useCanvasInteraction>['resizeSpace'];
+export type OpenObjectContextMenuFn = ReturnType<
+  typeof useCanvasInteraction
+>['openObjectContextMenu'];
+export type HandleObjectClickFn = ReturnType<
+  typeof useCanvasInteraction
+>['handleObjectClick'];
