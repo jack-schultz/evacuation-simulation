@@ -15,6 +15,12 @@ export interface BuildingResponse {
   updated_at: string;
 }
 
+export interface FloorPlanImageSummary {
+  id: string;
+  filename: string;
+  created_at: string;
+}
+
 export interface SimulationParameters {
   timestep_s: number;
   max_time_s: number;

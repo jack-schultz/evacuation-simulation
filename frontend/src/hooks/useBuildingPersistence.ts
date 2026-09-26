@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { emptyLayout } from '../layout/emptyLayout';
-import type { BuildingLayout, BuildingSummary, Selection } from '../types/building';
+import type { BuildingLayout, BuildingSummary } from '../types/building';
+import type { FloorPlanImageSummary } from '../types/building';
+
+export interface FloorPlanLibraryImage extends FloorPlanImageSummary {
+  url: string;
+}
 
 export function useBuildingPersistence({
   layout,
@@ -27,7 +32,35 @@ export function useBuildingPersistence({
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [buildings, setBuildings] = useState<BuildingSummary[]>([]);
   const [floorPlanStatus, setFloorPlanStatus] = useState<string | null>(null);
-  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+  const [floorPlans, setFloorPlans] = useState<FloorPlanLibraryImage[]>([]);
+  const [selectedFloorPlanId, setSelectedFloorPlanId] = useState<string | null>(null);
+  const [floorPlanOpacity, setFloorPlanOpacity] = useState(0.2);
+  const imageUrls = useRef<string[]>([]);
+
+  const replaceFloorPlans = useCallback((next: FloorPlanLibraryImage[]) => {
+    imageUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    imageUrls.current = next.map((image) => image.url);
+    setFloorPlans(next);
+  }, []);
+
+  const loadFloorPlans = useCallback(async (id: string, preferredId?: string) => {
+    const summaries = await api.listFloorPlans(id);
+    const assets = await Promise.all(summaries.map(async (summary) => ({
+      ...summary,
+      url: await api.getFloorPlan(id, summary.id) ?? '',
+    })));
+    const loaded = assets.filter((image) => image.url);
+    replaceFloorPlans(loaded);
+    setSelectedFloorPlanId(
+      loaded.find((image) => image.id === preferredId)?.id ?? loaded[0]?.id ?? null,
+    );
+  }, [replaceFloorPlans]);
+
+  useEffect(() => () => {
+    imageUrls.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  const floorPlanUrl = floorPlans.find((image) => image.id === selectedFloorPlanId)?.url ?? null;
 
   const refreshList = useCallback(async () => {
     const list = await api.listBuildings();
@@ -37,11 +70,7 @@ export function useBuildingPersistence({
 
   const loadBuilding = useCallback(async (id: string) => {
     const b = await api.getBuilding(id);
-    const imageUrl = await api.getFloorPlan(id);
-    setFloorPlanUrl((previous) => {
-      if (previous) URL.revokeObjectURL(previous);
-      return imageUrl;
-    });
+    await loadFloorPlans(id);
     setBuildingId(b.id);
     setLayout(b.layout);
     setUndoHistory([]);
@@ -49,7 +78,7 @@ export function useBuildingPersistence({
     setDirty(false);
     setFloorPlanStatus(null);
     onResetSimulation();
-  }, [setLayout, setUndoHistory, setSelected, setDirty, onResetSimulation]);
+  }, [setLayout, setUndoHistory, setSelected, setDirty, onResetSimulation, loadFloorPlans]);
 
   useEffect(() => {
     (async () => {
@@ -112,12 +141,8 @@ export function useBuildingPersistence({
         setDirty(false);
       }
       const result = await api.uploadFloorPlan(id, file);
-      const imageUrl = await api.getFloorPlan(id);
-      setFloorPlanUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous);
-        return imageUrl;
-      });
-      setFloorPlanStatus(`PNG stored in database and shown as a pale overlay: ${result.filename}`);
+      await loadFloorPlans(id, result.id);
+      setFloorPlanStatus(`PNG added to the library: ${result.filename}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -127,8 +152,8 @@ export function useBuildingPersistence({
 
   const onNew = () => {
     setBuildingId(null);
-    if (floorPlanUrl) URL.revokeObjectURL(floorPlanUrl);
-    setFloorPlanUrl(null);
+    replaceFloorPlans([]);
+    setSelectedFloorPlanId(null);
     setLayout(emptyLayout());
     setUndoHistory([]);
     setSelected([]);
@@ -143,6 +168,11 @@ export function useBuildingPersistence({
     buildings,
     floorPlanStatus,
     floorPlanUrl,
+    floorPlans,
+    selectedFloorPlanId,
+    setSelectedFloorPlanId,
+    floorPlanOpacity,
+    setFloorPlanOpacity,
     refreshList,
     loadBuilding,
     onSave,

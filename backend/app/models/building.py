@@ -46,3 +46,13 @@ class FloorPlanImageRecord(Base):
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     image_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class FloorPlanLibraryRecord(Base):
+    __tablename__ = "floor_plan_library"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    building_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
