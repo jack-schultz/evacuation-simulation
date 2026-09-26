@@ -20,7 +20,7 @@ class RouteSelector(Protocol):
 
 
 class DijkstraRouteSelector:
-    """Shortest-path route selection by edge distance (metres)."""
+    """Shortest-path route selection by distance adjusted for edge speed factors."""
 
     def select_route(
         self,
@@ -56,7 +56,9 @@ class DijkstraRouteSelector:
                 if edge.distance_m <= 0 and edge.from_id == edge.to_id:
                     continue
                 nxt = edge.to_id
-                new_cost = cost + edge.distance_m
+                if edge.speed_factor <= 0:
+                    continue
+                new_cost = cost + edge.distance_m / edge.speed_factor
                 if new_cost < dist.get(nxt, float("inf")):
                     dist[nxt] = new_cost
                     prev[nxt] = node_id

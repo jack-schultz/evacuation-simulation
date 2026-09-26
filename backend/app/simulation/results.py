@@ -21,7 +21,7 @@ def build_results(
     remaining = [o for o in occupants if o.status != OccupantStatus.EVACUATED]
 
     evac_times = [o.evacuated_at for o in evacuated if o.evacuated_at is not None]
-    total_evac = max(evac_times) if evac_times else (simulation_time_s if not remaining else None)
+    total_evac = (max(evac_times) if evac_times else simulation_time_s) if not remaining else None
 
     hotspots = [
         CongestionHotspot(

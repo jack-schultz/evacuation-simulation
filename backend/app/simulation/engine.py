@@ -13,6 +13,7 @@ from app.domain.building import (
     SimulationParameters,
     SimulationResults,
 )
+from app.simulation.flood import FloodRouteSelector, apply_flood
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
 from app.simulation.graph import EdgeKind, NavigationGraphBuilder
 from app.simulation.movement import MovementModel, SimulatedOccupant
@@ -57,6 +58,7 @@ class SimulationEngine:
             "corridor_density_per_m2": params.corridor_density_per_m2,
         }
         graph = self.graph_builder.build(layout, defaults)
+        apply_flood(graph, layout.flood)
 
         occupants = self._spawn_occupants(layout, graph)
         queues: dict[str, ElementQueueState] = {}
@@ -91,7 +93,13 @@ class SimulationEngine:
 
         for group in layout.occupant_groups:
             start_node = graph.space_node_ids[group.space_id]
-            route = self.route_selector.select_route(
+            selector = (
+                FloodRouteSelector()
+                if layout.flood and layout.flood.enabled and layout.flood.intensity > 0
+                and isinstance(self.route_selector, DijkstraRouteSelector)
+                else self.route_selector
+            )
+            route = selector.select_route(
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )
             space = spaces[group.space_id]
@@ -109,6 +117,7 @@ class SimulationEngine:
                         group_id=group.id,
                         speed_mps=group.walking_speed_mps,
                         route=list(route),
+                        status=OccupantStatus.TRAPPED if len(route) == 1 else OccupantStatus.ACTIVE,
                         x=ox if group.count > 1 else node.x,
                         y=oy if group.count > 1 else node.y,
                     )
@@ -124,11 +133,12 @@ class SimulationEngine:
         t: float,
     ) -> None:
         # Group active occupants by the element they want to traverse next
+        flood_active = any(e.speed_factor != 1.0 for e in graph.edges.values())
         contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
         element_edge = {}
 
         for occ in occupants:
-            if occ.status == OccupantStatus.EVACUATED:
+            if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
             nxt = occ.next_node_id
             if nxt is None:
@@ -136,7 +146,7 @@ class SimulationEngine:
                 occ.evacuated_at = t
                 continue
             edge = edge_between(graph, occ.current_node_id, nxt)
-            if edge is None:
+            if edge is None or edge.speed_factor <= 0:
                 occ.status = OccupantStatus.TRAPPED
                 continue
             contenders[edge.element_id].append(occ)
@@ -145,7 +155,7 @@ class SimulationEngine:
         # Count occupants currently associated with corridor elements (density)
         occupants_on: dict[str, int] = defaultdict(int)
         for occ in occupants:
-            if occ.status == OccupantStatus.EVACUATED:
+            if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
             node = graph.nodes[occ.current_node_id]
             if node.kind.value == "space":
@@ -179,6 +189,10 @@ class SimulationEngine:
             slots = capacity
             for occ in ordered:
                 desired = self.movement_model.desired_move_distance(occ, params.timestep_s)
+                # Edges sharing a door can have different flood exposure.
+                if flood_active:
+                    next_edge = edge_between(graph, occ.current_node_id, occ.next_node_id)
+                    desired *= next_edge.speed_factor
                 if edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
                     # Flow-limited: consume one slot to fully proceed this step fractionally
                     if slots >= 1.0 or (slots > 0 and occ.progress_on_edge > 0):
@@ -206,9 +220,15 @@ class SimulationEngine:
                         q.total_wait_s += params.timestep_s
 
         for occ in occupants:
-            if occ.status == OccupantStatus.EVACUATED:
+            if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
             dist = allowed.get(occ.id, 0.0)
+            # Cap after flow allocation to avoid fractional capacity repeatedly
+            # shrinking the final distance to a node without ever reaching it.
+            if flood_active and occ.next_node_id is not None:
+                next_edge = edge_between(graph, occ.current_node_id, occ.next_node_id)
+                if next_edge is not None:
+                    dist = min(dist, next_edge.distance_m - occ.progress_on_edge)
             waited = dist <= 0
             self.movement_model.apply_move(occ, graph, dist, params.timestep_s, waited)
             if occ.status == OccupantStatus.EVACUATED and occ.evacuated_at is None:
