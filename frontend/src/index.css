@@ -105,17 +105,62 @@ body {
 
 .main {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 200px minmax(320px, 1fr) 220px 230px;
   min-height: 0;
   overflow: hidden;
 }
 
 .sidebar {
+  position: relative;
   border-right: 1px solid var(--border);
   background: var(--panel);
   overflow: auto;
   display: flex;
   flex-direction: column;
+}
+
+.inspector-sidebar,
+.hazards-sidebar {
+  border-right: 0;
+  border-left: 1px solid var(--border);
+}
+
+.column-resizer {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.tools-sidebar > .column-resizer {
+  right: -5px;
+}
+
+.inspector-sidebar > .column-resizer,
+.hazards-sidebar > .column-resizer {
+  left: -5px;
+}
+
+.column-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+}
+
+.column-resizer:hover::after,
+.column-resizer:focus-visible::after {
+  background: #3b82f6;
+}
+
+.column-resizer:focus-visible {
+  outline: none;
 }
 
 .panel {
@@ -228,6 +273,8 @@ button.danger {
 }
 
 .canvas-area {
+  display: flex;
+  align-items: flex-start;
   overflow: auto;
   background:
     radial-gradient(circle at top left, #dbeafe 0, transparent 40%),
@@ -237,6 +284,8 @@ button.danger {
 
 .canvas-wrap {
   display: inline-block;
+  flex: 0 0 auto;
+  margin-inline: auto;
   border: 1px solid var(--border);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   background: #fff;
