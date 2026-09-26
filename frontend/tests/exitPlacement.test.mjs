@@ -2,14 +2,28 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { exitSpaceAt, moveExit } from '../src/exitPlacement.ts';
 
+function rect(id, name, x, y, width, height) {
+  return {
+    id,
+    name,
+    type: 'room',
+    vertices: [
+      [x, y],
+      [x + width, y],
+      [x + width, y + height],
+      [x, y + height],
+    ],
+  };
+}
+
 const layout = {
   name: 'Two rooms', width: 30, height: 20, meters_per_cell: 1,
   spaces: [
-    { id: 'a', name: 'A', type: 'room', x: 0, y: 0, width: 10, height: 10 },
-    { id: 'b', name: 'B', type: 'room', x: 10, y: 0, width: 10, height: 10 },
+    rect('a', 'A', 0, 0, 10, 10),
+    rect('b', 'B', 10, 0, 10, 10),
   ],
   exits: [{ id: 'exit', name: 'Exit', x: 0, y: 5, width: 1.2, connected_space_id: 'a' }],
-  walls: [], doors: [], occupant_groups: [],
+  doors: [], occupant_groups: [],
 };
 
 test('moving an exit updates the serialized coordinates and routing connection together', () => {
@@ -34,8 +48,8 @@ test('shared boundaries preserve the current connection regardless of space orde
 
 test('outside drops choose the nearest rectangle rather than its center', () => {
   const uneven = { ...layout, spaces: [
-    { ...layout.spaces[0], width: 20, height: 20 },
-    { ...layout.spaces[1], x: 22, y: 8, width: 2, height: 2 },
+    rect('a', 'A', 0, 0, 20, 20),
+    rect('b', 'B', 22, 8, 2, 2),
   ] };
   assert.equal(exitSpaceAt(uneven, 20.5, 9), 'a');
 });

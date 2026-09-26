@@ -319,38 +319,53 @@ export function BuildingCanvas({
     localX: number,
     localY: number,
   ) => {
-    const pointerX = snap(space.x + localX / SCALE);
-    const pointerY = snap(space.y + localY / SCALE);
-    const right = space.x + space.width;
-    const bottom = space.y + space.height;
+    const box = polygonBBox(space.vertices);
+    if (box.width < 1e-9 || box.height < 1e-9) return;
+
+    const pointerX = snap(box.x + localX / SCALE);
+    const pointerY = snap(box.y + localY / SCALE);
+    const right = box.x + box.width;
+    const bottom = box.y + box.height;
     const minimumSize = 1;
-    let nextX = space.x;
-    let nextY = space.y;
-    let nextWidth = space.width;
-    let nextHeight = space.height;
+    let nextX = box.x;
+    let nextY = box.y;
+    let nextWidth = box.width;
+    let nextHeight = box.height;
 
     if (corner.includes('w')) {
       nextX = Math.min(Math.max(0, pointerX), right - minimumSize);
       nextWidth = right - nextX;
     } else {
-      const nextRight = Math.min(Math.max(space.x + minimumSize, pointerX), layout.width);
-      nextWidth = nextRight - space.x;
+      const nextRight = Math.min(Math.max(box.x + minimumSize, pointerX), layout.width);
+      nextWidth = nextRight - box.x;
     }
 
     if (corner.includes('n')) {
       nextY = Math.min(Math.max(0, pointerY), bottom - minimumSize);
       nextHeight = bottom - nextY;
     } else {
-      const nextBottom = Math.min(Math.max(space.y + minimumSize, pointerY), layout.height);
-      nextHeight = nextBottom - space.y;
+      const nextBottom = Math.min(Math.max(box.y + minimumSize, pointerY), layout.height);
+      nextHeight = nextBottom - box.y;
     }
+
+    const scaleX = nextWidth / box.width;
+    const scaleY = nextHeight / box.height;
+    // Opposite corner stays fixed while the dragged corner moves.
+    const anchorX = corner.includes('w') ? right : box.x;
+    const anchorY = corner.includes('n') ? bottom : box.y;
+
+    const vertices = space.vertices.map(
+      ([vx, vy]) =>
+        [
+          snap(anchorX + (vx - anchorX) * scaleX),
+          snap(anchorY + (vy - anchorY) * scaleY),
+        ] as Point,
+    );
 
     onChange({
       ...layout,
       spaces: layout.spaces.map((candidate) =>
-        candidate.id === space.id
-          ? { ...candidate, x: nextX, y: nextY, width: nextWidth, height: nextHeight }
-          : candidate,
+        candidate.id === space.id ? { ...candidate, vertices } : candidate,
       ),
     });
   };
@@ -425,37 +440,37 @@ export function BuildingCanvas({
                   y={(cy - box.y) * SCALE - 6}
                   width={80}
                   align="center"
-                fontSize={12}
-                fill="#334155"
-                listening={false}
-              />
-              {isSelected('space', s.id) && interactive && tool === 'select' &&
-                (['nw', 'ne', 'sw', 'se'] as const).map((corner) => {
-                  const handleX = corner.includes('w') ? 0 : s.width * SCALE;
-                  const handleY = corner.includes('n') ? 0 : s.height * SCALE;
-                  return (
-                    <Rect
-                      key={corner}
-                      x={handleX - 5}
-                      y={handleY - 5}
-                      width={10}
-                      height={10}
-                      fill="#2563eb"
-                      stroke="#ffffff"
-                      strokeWidth={1}
-                      draggable
-                      onMouseDown={(e) => { e.cancelBubble = true; }}
-                      onDragStart={(e) => { e.cancelBubble = true; }}
-                      onDragEnd={(e) => {
-                        e.cancelBubble = true;
-                        resizeSpace(s, corner, e.target.x() + 5, e.target.y() + 5);
-                        e.target.position({ x: handleX - 5, y: handleY - 5 });
-                      }}
-                    />
-                  );
-                })}
-            </Group>
-          );
+                  fontSize={12}
+                  fill="#334155"
+                  listening={false}
+                />
+                {isSelected('space', s.id) && interactive && tool === 'select' &&
+                  (['nw', 'ne', 'sw', 'se'] as const).map((corner) => {
+                    const handleX = corner.includes('w') ? 0 : box.width * SCALE;
+                    const handleY = corner.includes('n') ? 0 : box.height * SCALE;
+                    return (
+                      <Rect
+                        key={corner}
+                        x={handleX - 5}
+                        y={handleY - 5}
+                        width={10}
+                        height={10}
+                        fill="#2563eb"
+                        stroke="#ffffff"
+                        strokeWidth={1}
+                        draggable
+                        onMouseDown={(e) => { e.cancelBubble = true; }}
+                        onDragStart={(e) => { e.cancelBubble = true; }}
+                        onDragEnd={(e) => {
+                          e.cancelBubble = true;
+                          resizeSpace(s, corner, e.target.x() + 5, e.target.y() + 5);
+                          e.target.position({ x: handleX - 5, y: handleY - 5 });
+                        }}
+                      />
+                    );
+                  })}
+              </Group>
+            );
           })}
 
           {layout.flood?.enabled && (
@@ -549,12 +564,7 @@ export function BuildingCanvas({
               y={ex.y * SCALE}
               onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}
               {...dragProps({ kind: 'exit', id: ex.id }, (x, y) => {
-                onChange({
-                  ...layout,
-                  exits: layout.exits.map((exit) =>
-                    exit.id === ex.id ? { ...exit, x, y } : exit,
-                  ),
-                });
+                onChange(moveExit(layout, ex.id, x, y));
               })}
             >
               <Rect
