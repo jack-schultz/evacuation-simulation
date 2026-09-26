@@ -31,7 +31,9 @@ regulatory compliance calculation.
 * Occupants initially know available routes to exits.
 * Each occupant (expanded from a group) gets a fixed route at spawn. The route
   to each viable exit is found with Dijkstra; the initial exit assignment weighs
-  walking time against projected exit-aperture queue time across occupants.
+  walking time against projected queues at door and exit apertures across
+  occupants. Multiple doors from the same room can share the crowd even when
+  they lead to one exit.
 * A reachable preferred exit remains binding. If a hazard blocks it, another
   viable exit is chosen where possible.
 * Occupants do not dynamically replan, follow crowds, or exhibit panic.

@@ -27,6 +27,8 @@ class DijkstraRouteSelector:
         graph: NavigationGraph,
         start_node_id: str,
         preferred_exit_id: str | None = None,
+        *,
+        forbidden_node_ids: frozenset[str] = frozenset(),
     ) -> list[str]:
         if start_node_id not in graph.nodes:
             raise ValueError(f"Unknown start node '{start_node_id}'")
@@ -58,6 +60,8 @@ class DijkstraRouteSelector:
                 if edge.distance_m <= 0 and edge.from_id == edge.to_id:
                     continue
                 nxt = edge.to_id
+                if nxt in forbidden_node_ids:
+                    continue
                 if edge.speed_factor <= 0:
                     continue
                 new_cost = cost + edge.distance_m / edge.speed_factor
@@ -104,4 +108,32 @@ def edge_between(graph: NavigationGraph, a: str, b: str):
         edge = graph.edges[edge_id]
         if edge.to_id == b and not (edge.from_id == edge.to_id):
             return edge
+    return None
+
+
+def shortest_path_to_node(
+    graph: NavigationGraph,
+    start_node_id: str,
+    target_node_id: str,
+    allowed_node_ids: set[str],
+) -> list[str] | None:
+    """Find a path to an opening without leaving the starting space first."""
+    distance = {start_node_id: 0.0}
+    previous: dict[str, str | None] = {start_node_id: None}
+    heap = [(0.0, start_node_id)]
+    while heap:
+        cost, node_id = heapq.heappop(heap)
+        if cost > distance.get(node_id, float('inf')):
+            continue
+        if node_id == target_node_id:
+            return DijkstraRouteSelector._reconstruct(previous, node_id)
+        for edge_id in graph.adjacency.get(node_id, []):
+            edge = graph.edges[edge_id]
+            if edge.to_id not in allowed_node_ids or edge.speed_factor <= 0:
+                continue
+            next_cost = cost + edge.distance_m / edge.speed_factor
+            if next_cost < distance.get(edge.to_id, float('inf')):
+                distance[edge.to_id] = next_cost
+                previous[edge.to_id] = node_id
+                heapq.heappush(heap, (next_cost, edge.to_id))
     return None

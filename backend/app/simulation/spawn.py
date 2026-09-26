@@ -13,13 +13,15 @@ from app.domain.geometry import (
 )
 from app.simulation.collision import (
     WallSegment,
+    aperture_slots,
     resolve_overlaps,
     resolve_space_containment,
     resolve_wall_collisions,
 )
 from app.simulation.hazards import HazardRouteSelector, hazard_radius_at
+from app.simulation.graph import NodeKind
 from app.simulation.movement import SimulatedOccupant
-from app.simulation.routing import DijkstraRouteSelector, edge_between
+from app.simulation.routing import DijkstraRouteSelector, edge_between, shortest_path_to_node
 
 def spawn_occupants(
     route_selector,
@@ -37,9 +39,8 @@ def spawn_occupants(
     spacing = max(2.0 * radius_m + 0.05, 0.45)
     margin = radius_m + 0.1
     solids = boundary_solids or []
-    # Each exit aperture has independent service slots. Their next available
-    # times estimate the queue that a newly spawned person would join.
-    exit_slots: dict[str, list[float]] = {}
+    # Track projected availability at every door and exit aperture across groups.
+    opening_slots: dict[str, list[float]] = {}
 
     for group in layout.occupant_groups:
         start_node = graph.space_node_ids[group.space_id]
@@ -49,36 +50,21 @@ def spawn_occupants(
             and isinstance(route_selector, DijkstraRouteSelector)
             else route_selector
         )
-        routes: list[list[str]] = []
         if type(route_selector) is DijkstraRouteSelector:
-            # A preferred exit is binding while it remains reachable. When a
-            # hazard blocks it, try the other viable exits as before.
             exit_ids = ([group.destination_exit_id] if group.destination_exit_id
                         else [e.id for e in layout.exits])
-            for exit_id in exit_ids:
-                try:
-                    routes.append(route_selector.select_route(
-                        graph, start_node, preferred_exit_id=exit_id
-                    ))
-                except ValueError:
-                    pass
+            routes = _candidate_routes(route_selector, graph, layout, group.space_id,
+                                       start_node, exit_ids)
+            # A preferred exit remains binding while reachable. Hazards may
+            # make it inaccessible; then consider all other viable exits.
             if not routes and group.destination_exit_id and selector is not route_selector:
-                for exit_ in layout.exits:
-                    try:
-                        routes.append(route_selector.select_route(
-                            graph, start_node, preferred_exit_id=exit_.id
-                        ))
-                    except ValueError:
-                        pass
-            # Keep the existing no-path behavior: ordinary routing raises,
-            # while hazard routing marks stranded occupants as trapped.
+                routes = _candidate_routes(route_selector, graph, layout, group.space_id,
+                                           start_node, [e.id for e in layout.exits])
             if not routes:
                 routes = [selector.select_route(
                     graph, start_node, preferred_exit_id=group.destination_exit_id
                 )]
         else:
-            # Respect injected routing strategies without assuming they expose
-            # paths to individual exits.
             routes = [selector.select_route(
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )]
@@ -110,15 +96,16 @@ def spawn_occupants(
                     )
             route = min(
                 routes,
-                key=lambda candidate: _projected_exit_time(
+                key=lambda candidate: _projected_route_time(
                     candidate, ox, oy, group.walking_speed_mps,
-                    graph, layout, radius_m, timestep_s, exit_slots,
+                    graph, layout, radius_m, timestep_s, opening_slots,
                 ),
             )
             if len(route) > 1:
-                _reserve_exit_slot(
+                _projected_route_time(
                     route, ox, oy, group.walking_speed_mps,
-                    graph, layout, radius_m, timestep_s, exit_slots,
+                    graph, layout, radius_m, timestep_s, opening_slots,
+                    reserve=True,
                 )
             occupants.append(
                 SimulatedOccupant(
@@ -139,47 +126,98 @@ def spawn_occupants(
     return occupants
 
 
-def _route_travel_time(route, x, y, speed_mps, graph):
-    """Estimate travel from the actual spawn point along a fixed graph route."""
-    total = 0.0
-    for i, (from_id, to_id) in enumerate(zip(route, route[1:])):
-        edge = edge_between(graph, from_id, to_id)
-        if edge is None or edge.speed_factor <= 0:
-            return float("inf")
-        node = graph.nodes[to_id]
-        distance = math.hypot(node.x - x, node.y - y) if i == 0 else edge.distance_m
-        total += distance / (speed_mps * edge.speed_factor)
-    return total
+
+def _candidate_routes(selector, graph, layout, start_space_id, start_node, exit_ids):
+    """Include shortest routes through each reachable door of the start room."""
+    routes: list[list[str]] = []
+    seen: set[tuple[str, ...]] = set()
+
+    def add(route):
+        if route and tuple(route) not in seen and _route_is_walkable(route, graph):
+            routes.append(route)
+            seen.add(tuple(route))
+
+    for exit_id in exit_ids:
+        try:
+            add(selector.select_route(graph, start_node, preferred_exit_id=exit_id))
+        except ValueError:
+            pass
+
+    room_nodes = {nid for nid, node in graph.nodes.items()
+                  if nid == start_node or
+                  (node.kind == NodeKind.WAYPOINT and node.ref_id == start_space_id)}
+    for door in layout.doors:
+        if start_space_id not in door.connects:
+            continue
+        door_node = f"door:{door.id}"
+        other_space = door.connects[1] if door.connects[0] == start_space_id else door.connects[0]
+        other_node = graph.space_node_ids[other_space]
+        prefix = shortest_path_to_node(graph, start_node, door_node,
+                                       room_nodes | {door_node})
+        if prefix is None or edge_between(graph, door_node, other_node) is None:
+            continue
+        for exit_id in exit_ids:
+            try:
+                suffix = selector.select_route(
+                    graph, other_node, preferred_exit_id=exit_id,
+                    forbidden_node_ids=frozenset({door_node}),
+                )
+            except ValueError:
+                continue
+            # Retain the adjoining space node unless visibility provides a
+            # direct opening/waypoint edge through that same adjoining space.
+            tail = suffix[1:]
+            direct_edge = edge_between(graph, door_node, tail[0]) if tail else None
+            direct_through_other = (
+                direct_edge is not None
+                and direct_edge.speed_factor > 0
+                and direct_edge.id.endswith(f":{other_space}")
+            )
+            add(prefix + (tail if direct_through_other else suffix))
+    return routes
 
 
-def _exit_service(route, speed_mps, graph, layout, radius_m, timestep_s, exit_slots):
-    exit_id = graph.nodes[route[-1]].ref_id
-    queue = exit_slots.get(exit_id)
+def _route_is_walkable(route, graph):
+    return all(
+        (edge := edge_between(graph, a, b)) is not None and edge.speed_factor > 0
+        for a, b in zip(route, route[1:])
+    )
+
+
+def _opening_service(node, speed_mps, layout, radius_m, timestep_s, opening_slots):
+    key = node.id
+    queue = opening_slots.get(key)
     if queue is None:
-        exit_ = next(e for e in layout.exits if e.id == exit_id)
-        slots = max(1, int(exit_.width / (2 * radius_m)))
-        queue = [0.0] * slots
+        elements = layout.doors if node.kind == NodeKind.DOOR else layout.exits
+        opening = next(e for e in elements if e.id == node.ref_id)
+        queue = [0.0] * aperture_slots(opening.width, radius_m)
         heapq.heapify(queue)
-        exit_slots[exit_id] = queue
-    # One person needs roughly a body diameter to clear an aperture. The
-    # timestep is a lower bound because the engine admits by discrete steps.
+        opening_slots[key] = queue
     service_s = max(timestep_s, 2 * radius_m / speed_mps)
     return queue, service_s
 
 
-def _projected_exit_time(route, x, y, speed_mps, graph, layout, radius_m, timestep_s, exit_slots):
+def _projected_route_time(route, x, y, speed_mps, graph, layout, radius_m,
+                          timestep_s, opening_slots, *, reserve=False):
     if len(route) <= 1:
-        return float("inf")
-    arrival = _route_travel_time(route, x, y, speed_mps, graph)
-    queue, service_s = _exit_service(
-        route, speed_mps, graph, layout, radius_m, timestep_s, exit_slots
-    )
-    return max(arrival, queue[0]) + service_s
-
-
-def _reserve_exit_slot(route, x, y, speed_mps, graph, layout, radius_m, timestep_s, exit_slots):
-    arrival = _route_travel_time(route, x, y, speed_mps, graph)
-    queue, service_s = _exit_service(
-        route, speed_mps, graph, layout, radius_m, timestep_s, exit_slots
-    )
-    heapq.heapreplace(queue, max(arrival, queue[0]) + service_s)
+        return float("inf"), float("inf")
+    time_s = 0.0
+    total_wait_s = 0.0
+    for i, (from_id, to_id) in enumerate(zip(route, route[1:])):
+        edge = edge_between(graph, from_id, to_id)
+        if edge is None or edge.speed_factor <= 0:
+            return float("inf"), float("inf")
+        node = graph.nodes[to_id]
+        distance = math.hypot(node.x - x, node.y - y) if i == 0 else edge.distance_m
+        time_s += distance / (speed_mps * edge.speed_factor)
+        if node.kind in (NodeKind.DOOR, NodeKind.EXIT):
+            queue, service_s = _opening_service(
+                node, speed_mps, layout, radius_m, timestep_s, opening_slots
+            )
+            total_wait_s += max(0.0, queue[0] - time_s)
+            time_s = max(time_s, queue[0]) + service_s
+            if reserve:
+                heapq.heapreplace(queue, time_s)
+    # A shared downstream bottleneck can make different first doors have the
+    # same finish time. Prefer the route with less total waiting in that tie.
+    return time_s, total_wait_s

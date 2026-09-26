@@ -49,7 +49,7 @@ other and with space-edge segments, and squeeze through openings.
 3. **Run engine** (server, all at once):
    - Build the navigation graph.
    - Expand each occupant group into individuals.
-   - Assign each person a route to a viable exit. Without a preferred exit, the initial assignment weighs walking time from the spawn point against the projected queue at each exit aperture. A reachable preferred exit remains binding. Routes stay fixed for the run.
+   - Assign each person a route to a viable exit. Without a preferred exit, the initial assignment weighs walking time from the spawn point against projected queues at every door and exit on viable routes. Alternate doors from the starting room are considered even when they lead to the same exit. A reachable preferred exit remains binding. Routes stay fixed for the run.
    - Step through time (default 0.25 s). At each step, everyone tries to move
      toward their next waypoint at once; body collisions, space edges, and door/exit widths
      create jams — excess demand means waiting outside the opening.
