@@ -84,6 +84,7 @@ class SimulationEngine:
             boundary_solids,
             spaces,
             doors,
+            params.timestep_s,
         )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []

@@ -22,10 +22,11 @@ regulatory compliance calculation.
 ## Occupant knowledge and behaviour
 
 * Occupants initially know available routes to exits.
-* Each occupant (expanded from a group) selects a single shortest-path route
-  at the start of the simulation (Dijkstra by distance).
-* Optional preferred-exit assignment is supported; otherwise the nearest exit
-  by path length is used.
+* Each occupant (expanded from a group) gets a fixed route at spawn. The route
+  to each viable exit is found with Dijkstra; the initial exit assignment weighs
+  walking time against projected exit-aperture queue time across occupants.
+* A reachable preferred exit remains binding. If a hazard blocks it, another
+  viable exit is chosen where possible.
 * Occupants do not dynamically replan, follow crowds, or exhibit panic.
 * Walking speeds are configurable per group and constant during a run.
 

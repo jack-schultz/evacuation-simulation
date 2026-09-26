@@ -154,7 +154,7 @@ export function OccupantGroupProperties({
             })
           }
         >
-          <option value="">Nearest exit</option>
+          <option value="">Automatic (balance exits)</option>
           {layout.exits.map((x) => (
             <option key={x.id} value={x.id}>
               {x.name}
