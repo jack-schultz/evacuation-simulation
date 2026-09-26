@@ -23,7 +23,7 @@ body,
 }
 
 body {
-  min-width: 1100px;
+  min-width: 760px;
 }
 
 .app {
@@ -117,62 +117,92 @@ body {
 
 .main {
   display: grid;
-  grid-template-columns: 200px minmax(320px, 1fr) 220px 230px;
+  grid-template-columns: auto minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
 }
 
-.sidebar {
-  position: relative;
+.panel-dock {
+  display: flex;
+  min-height: 0;
   border-right: 1px solid var(--border);
   background: var(--panel);
+}
+
+.panel-stack {
+  width: 260px;
   overflow: auto;
   display: flex;
   flex-direction: column;
-}
-
-.inspector-sidebar,
-.hazards-sidebar {
-  border-right: 0;
   border-left: 1px solid var(--border);
 }
 
-.column-resizer {
+.panel-stack-item {
+  position: relative;
+}
+
+.panel-stack-item > .panel {
+  padding-right: 2.25rem;
+}
+
+.panel-minimize {
   position: absolute;
-  z-index: 5;
-  top: 0;
-  bottom: 0;
-  width: 9px;
-  cursor: col-resize;
-  touch-action: none;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  line-height: 1;
+  font-size: 1.1rem;
+  color: #64748b;
 }
 
-.tools-sidebar > .column-resizer {
-  right: -5px;
+.panel-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 44px;
+  padding: 0.4rem 0.25rem;
+  background: #eef2f7;
+  flex-shrink: 0;
 }
 
-.inspector-sidebar > .column-resizer,
-.hazards-sidebar > .column-resizer {
-  left: -5px;
-}
-
-.column-resizer::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 3px;
-  width: 2px;
+.panel-rail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.4rem;
+  padding: 0.35rem 0.15rem;
+  border-radius: 4px;
+  border-color: transparent;
   background: transparent;
+  color: #334155;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.column-resizer:hover::after,
-.column-resizer:focus-visible::after {
-  background: #3b82f6;
+.panel-rail-btn:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e3a8a;
 }
 
-.column-resizer:focus-visible {
-  outline: none;
+.panel-rail-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.panel-rail-label {
+  display: block;
+  line-height: 1.1;
 }
 
 .panel {
