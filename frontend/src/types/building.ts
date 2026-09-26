@@ -145,7 +145,6 @@ export type EditorTool =
   | 'room'
   | 'corridor'
   | 'stairs'
-  | 'wall'
   | 'door'
   | 'exit'
   | 'occupants';

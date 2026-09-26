@@ -5,7 +5,6 @@ const TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'room', label: 'Room' },
   { id: 'corridor', label: 'Corridor' },
   { id: 'stairs', label: 'Stairs' },
-  { id: 'wall', label: 'Wall' },
   { id: 'door', label: 'Door' },
   { id: 'exit', label: 'Exit' },
   { id: 'occupants', label: 'Occupants' },

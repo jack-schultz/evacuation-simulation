@@ -215,16 +215,6 @@ export function BuildingCanvas({
     setDraft(null);
     start.current = null;
 
-    if (tool === 'wall') {
-      const id = uid('wall');
-      onChange({
-        ...layout,
-        walls: [...layout.walls, { id, name: 'Wall', x, y, width: w, height: h }],
-      });
-      onSelect({ kind: 'wall', id });
-      return;
-    }
-
     if (tool === 'room' || tool === 'corridor' || tool === 'stairs') {
       const id = uid(tool);
       onChange({
