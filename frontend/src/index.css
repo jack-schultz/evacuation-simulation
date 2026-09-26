@@ -338,6 +338,13 @@ body {
   font-size: 0.95rem;
 }
 
+.panel-subtitle {
+  margin: 1rem 0 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9a3412;
+}
+
 .tool-list {
   display: grid;
   gap: 0.35rem;
@@ -439,6 +446,7 @@ button.danger {
 
 .canvas-area {
   display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -446,6 +454,72 @@ button.danger {
     radial-gradient(circle at top left, #dbeafe 0, transparent 40%),
     linear-gradient(180deg, #edf2f7, #e2e8f0);
   padding: 0;
+}
+
+.floor-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.floor-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.floor-tab {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #334155;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.floor-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.floor-tab.add {
+  font-weight: 600;
+  min-width: 2rem;
+}
+
+.floor-smoke-badge {
+  margin-left: 0.35rem;
+  opacity: 0.85;
+}
+
+.floor-meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.floor-meta label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.floor-meta input {
+  width: 7rem;
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }
 
 .canvas-wrap {

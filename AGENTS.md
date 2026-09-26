@@ -58,20 +58,21 @@ API routers → services → domain / simulation engine
 
 ## Domain invariants
 
-- Layout pieces: **spaces** (`room` \| `stairs` as closed polygons), **doors**, **exits**, **occupant_groups**.
+- Layout pieces: **floors**, **spaces** (`room` \| `stairs` as closed polygons), **doors**, **exits**, **occupant_groups**.
 - Connectivity is **doors + exits**, plus **linked stairs** (`linked_stair_id`)
-  that form a teleport portal between two stair spaces. A stair whose center
-  lies inside a room is pathable as an opening of that host (like a
+  across different floors. Occupants walk a directed, slowed stair centreline
+  (ascent slower than descent) with capacity while climbing. A stair whose center
+  lies inside a same-floor room is pathable as an opening of that host (like a
   door). Space nodes sit at an
   **interior point** and define which openings share a room; within a space, routes
   follow a visibility graph (openings + reflex-corner waypoints) so paths stay inside
   non-convex rooms. Space edges act as solid barriers for movement (door/exit widths
-  are the only gaps).
+  are the only gaps); collisions are floor-scoped.
 - Occupant groups expand to individuals; each gets a **fixed route at spawn** (no replanning).
 - Occupants steer in continuous `(x, y)` toward door/exit waypoints with body radius collisions against people and space-edge solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
 - Soft validation on **save** (incomplete layouts OK). Hard validation on **run** (need spaces, exits, occupant groups).
 - Creating a simulation **snapshots** the building layout; later edits do not change that sim (UI creates a new sim on Run).
-- Editor: room/stairs tools click corners to draw a polygon; click the first point to close.
+- Editor: room/stairs tools click corners to draw a polygon; click the first point to close. Floor tabs filter the canvas to the active storey.
 
 ## Sync and extension rules
 

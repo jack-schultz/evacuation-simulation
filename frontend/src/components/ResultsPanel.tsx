@@ -2,6 +2,8 @@ import type { SimulationResults } from '../types/building';
 
 interface Props {
   results: SimulationResults | null;
+  /** Live count from the current playback frame. */
+  evacuatedCount?: number | null;
 }
 
 function fmt(v: number | null | undefined, suffix = ''): string {
@@ -9,7 +11,7 @@ function fmt(v: number | null | undefined, suffix = ''): string {
   return `${v.toFixed(1)}${suffix}`;
 }
 
-export function ResultsPanel({ results }: Props) {
+export function ResultsPanel({ results, evacuatedCount }: Props) {
   if (!results) {
     return (
       <div className="results-bar">
@@ -17,6 +19,9 @@ export function ResultsPanel({ results }: Props) {
       </div>
     );
   }
+
+  const evacuated = evacuatedCount ?? results.evacuated_count;
+  const remaining = Math.max(0, results.total_occupants - evacuated);
 
   return (
     <div className="results-bar">
@@ -27,12 +32,12 @@ export function ResultsPanel({ results }: Props) {
       <div className="stat">
         <strong>Evacuated</strong>
         <span>
-          {results.evacuated_count} / {results.total_occupants}
+          {evacuated} / {results.total_occupants}
         </span>
       </div>
       <div className="stat">
         <strong>Remaining</strong>
-        <span>{results.remaining_count}</span>
+        <span>{remaining}</span>
       </div>
       <div className="stat">
         <strong>Avg time</strong>

@@ -114,6 +114,7 @@ def spawn_occupants(
                     speed_mps=group.walking_speed_mps,
                     route=list(route),
                     current_space_id=group.space_id,
+                    floor_id=group.floor_id,
                     status=OccupantStatus.TRAPPED if len(route) == 1 else OccupantStatus.ACTIVE,
                     x=ox,
                     y=oy,

@@ -71,7 +71,10 @@ export function SpaceProperties({
   disabled,
 }: Props) {
   const otherStairs = layout.spaces.filter(
-    (s) => s.type === 'stairs' && s.id !== space.id,
+    (s) =>
+      s.type === 'stairs' &&
+      s.id !== space.id &&
+      (s.floor_id ?? 'floor-0') !== (space.floor_id ?? 'floor-0'),
   );
 
   const renameId = (raw: string) => {
@@ -128,11 +131,12 @@ export function SpaceProperties({
               <option value="">None</option>
               {otherStairs.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.id})
+                  {s.name} ({s.id}) · floor {s.floor_id ?? 'floor-0'}
                 </option>
               ))}
             </select>
           </label>
+          <p className="hint">Link stairs on another floor. People walk the stair centreline slowly (ascent slower than descent). Arrows on the canvas show preferred down direction.</p>
         </>
       )}
       <p className="hint">

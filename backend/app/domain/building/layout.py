@@ -10,12 +10,31 @@ from app.domain.geometry import area as polygon_area
 from app.domain.geometry import bbox as polygon_bbox
 from app.domain.geometry import centroid as polygon_centroid
 from app.domain.geometry import rect_vertices
-from app.domain.building.hazards import FireEmergency, FloodEmergency, PixelObstacleMap
+from app.domain.building.hazards import (
+    DEFAULT_FLOOR_ID,
+    FireEmergency,
+    FloodEmergency,
+    PixelObstacleMap,
+    SmokeEmergency,
+)
+
 
 class SpaceType(str, Enum):
     ROOM = "room"
     CORRIDOR = "corridor"
     STAIRS = "stairs"
+
+
+class Floor(BaseModel):
+    """A storey in the building; spaces on different floors share XY plans."""
+
+    id: str
+    name: str = "Ground"
+    elevation_m: float = Field(
+        default=0.0,
+        description="Metres above datum; used for stair rise and hazard stair-spread direction.",
+    )
+    order: int = Field(default=0, description="Tab / display order (low = bottom).")
 
 
 class Space(BaseModel):
@@ -32,8 +51,9 @@ class Space(BaseModel):
     )
     linked_stair_id: str | None = Field(
         default=None,
-        description="Paired stairs space id for teleport pathing; only used when type is stairs.",
+        description="Paired stairs space id for vertical pathing; only used when type is stairs.",
     )
+    floor_id: str = Field(default=DEFAULT_FLOOR_ID)
 
     @model_validator(mode="before")
     @classmethod
@@ -105,6 +125,7 @@ class Door(BaseModel):
         gt=0,
         description="Max occupants per second through this door; None uses default",
     )
+    floor_id: str = Field(default=DEFAULT_FLOOR_ID)
 
     @field_validator("connects")
     @classmethod
@@ -122,6 +143,7 @@ class Exit(BaseModel):
     width: float = Field(gt=0)
     connected_space_id: str
     flow_rate_per_s: float | None = Field(default=None, gt=0)
+    floor_id: str = Field(default=DEFAULT_FLOOR_ID)
 
 
 class OccupantGroup(BaseModel):
@@ -135,6 +157,8 @@ class OccupantGroup(BaseModel):
     destination_exit_id: str | None = None
     # Reserved for future behavioural parameters
     behaviour: dict[str, float | str | bool] = Field(default_factory=dict)
+    floor_id: str = Field(default=DEFAULT_FLOOR_ID)
+
 
 class BuildingLayout(BaseModel):
     """Serializable building configuration (API + persistence payload)."""
@@ -143,33 +167,97 @@ class BuildingLayout(BaseModel):
     width: float = Field(default=40.0, gt=0)
     height: float = Field(default=40.0, gt=0)
     meters_per_cell: float = Field(default=1.0, gt=0)
+    floors: list[Floor] = Field(default_factory=list)
     spaces: list[Space] = Field(default_factory=list)
     doors: list[Door] = Field(default_factory=list)
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
     flood: FloodEmergency | None = None
     fire: FireEmergency | None = None
+    smoke: SmokeEmergency | None = None
     obstacle_map: PixelObstacleMap | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def ensure_default_floor(cls, data: object) -> object:
+        if not isinstance(data, dict):
+            return data
+        floors = data.get("floors")
+        if not floors:
+            data = dict(data)
+            data["floors"] = [
+                {
+                    "id": DEFAULT_FLOOR_ID,
+                    "name": "Ground",
+                    "elevation_m": 0.0,
+                    "order": 0,
+                }
+            ]
+        return data
 
     @model_validator(mode="after")
     def validate_references(self) -> BuildingLayout:
-        if self.flood and (self.flood.x > self.width or self.flood.y > self.height):
-            raise ValueError("Flood centre must be inside the building bounds")
-        if self.fire and (self.fire.x > self.width or self.fire.y > self.height):
-            raise ValueError("Fire centre must be inside the building bounds")
+        if not self.floors:
+            object.__setattr__(
+                self,
+                "floors",
+                [Floor(id=DEFAULT_FLOOR_ID, name="Ground", elevation_m=0.0, order=0)],
+            )
+        floor_ids = {f.id for f in self.floors}
+
+        def _check_hazard(name: str, hazard) -> None:
+            if hazard is None:
+                return
+            if hazard.x > self.width or hazard.y > self.height:
+                raise ValueError(f"{name} centre must be inside the building bounds")
+            if hazard.floor_id not in floor_ids:
+                raise ValueError(f"{name} references unknown floor '{hazard.floor_id}'")
+
+        _check_hazard("Flood", self.flood)
+        _check_hazard("Fire", self.fire)
+        _check_hazard("Smoke", self.smoke)
+
         space_ids = {s.id for s in self.spaces}
         spaces_by_id = {s.id: s for s in self.spaces}
         exit_ids = {e.id for e in self.exits}
 
+        for space in self.spaces:
+            if space.floor_id not in floor_ids:
+                raise ValueError(
+                    f"Space '{space.id}' references unknown floor '{space.floor_id}'"
+                )
+
         for door in self.doors:
+            if door.floor_id not in floor_ids:
+                raise ValueError(
+                    f"Door '{door.id}' references unknown floor '{door.floor_id}'"
+                )
             for sid in door.connects:
                 if sid not in space_ids:
                     raise ValueError(f"Door '{door.id}' references unknown space '{sid}'")
+            a, b = spaces_by_id[door.connects[0]], spaces_by_id[door.connects[1]]
+            if a.floor_id != b.floor_id:
+                raise ValueError(
+                    f"Door '{door.id}' cannot connect spaces on different floors"
+                )
+            if a.floor_id != door.floor_id:
+                raise ValueError(
+                    f"Door '{door.id}' floor_id must match its connected spaces"
+                )
 
         for exit_ in self.exits:
+            if exit_.floor_id not in floor_ids:
+                raise ValueError(
+                    f"Exit '{exit_.id}' references unknown floor '{exit_.floor_id}'"
+                )
             if exit_.connected_space_id not in space_ids:
                 raise ValueError(
                     f"Exit '{exit_.id}' references unknown space '{exit_.connected_space_id}'"
+                )
+            host = spaces_by_id[exit_.connected_space_id]
+            if host.floor_id != exit_.floor_id:
+                raise ValueError(
+                    f"Exit '{exit_.id}' floor_id must match its connected space"
                 )
 
         for space in self.spaces:
@@ -190,11 +278,24 @@ class BuildingLayout(BaseModel):
                 raise ValueError(
                     f"Stairs '{space.id}' links to non-stairs space '{space.linked_stair_id}'"
                 )
+            if other.floor_id == space.floor_id:
+                raise ValueError(
+                    f"Stairs '{space.id}' must link to stairs on a different floor"
+                )
 
         for group in self.occupant_groups:
+            if group.floor_id not in floor_ids:
+                raise ValueError(
+                    f"Occupant group '{group.id}' references unknown floor '{group.floor_id}'"
+                )
             if group.space_id not in space_ids:
                 raise ValueError(
                     f"Occupant group '{group.id}' references unknown space '{group.space_id}'"
+                )
+            host = spaces_by_id[group.space_id]
+            if host.floor_id != group.floor_id:
+                raise ValueError(
+                    f"Occupant group '{group.id}' floor_id must match its space"
                 )
             if group.destination_exit_id is not None and group.destination_exit_id not in exit_ids:
                 raise ValueError(

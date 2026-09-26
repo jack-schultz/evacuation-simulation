@@ -11,6 +11,7 @@ import { SCALE, snap, uid, polygonBBox, samePoint, type Point } from '../../util
 import { exitSpaceAt } from '../../exitPlacement';
 import { translateSelection } from '../../layout/clipboard';
 import { findNearestSpaces, spaceContaining } from './geometryHelpers';
+import { filterLayoutByFloor } from '../../layout/emptyLayout';
 
 type DraftApi = {
   draftPoints: Point[];
@@ -41,6 +42,7 @@ export function useCanvasInteraction({
   onChange,
   draft,
   onContextMenuRequest,
+  activeFloorId,
 }: {
   layout: BuildingLayout;
   tool: EditorTool;
@@ -54,9 +56,11 @@ export function useCanvasInteraction({
   onChange: (layout: BuildingLayout) => void;
   draft: DraftApi;
   onContextMenuRequest?: (request: ContextMenuRequest) => void;
+  activeFloorId: string;
 }) {
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
+  const floorLayout = filterLayoutByFloor(layout, activeFloorId);
 
   const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
   const dragRefRef = useRef<ObjectRef | null>(null);
@@ -99,7 +103,7 @@ export function useCanvasInteraction({
     }
 
     if (tool === 'door') {
-      const nearest = findNearestSpaces(layout, p.x, p.y, 2);
+      const nearest = findNearestSpaces(floorLayout, p.x, p.y, 2);
       if (nearest.length < 2) return;
       const id = uid('door');
       onChange({
@@ -114,6 +118,7 @@ export function useCanvasInteraction({
             width: 0.9,
             connects: [nearest[0], nearest[1]],
             flow_rate_per_s: 0.8,
+            floor_id: activeFloorId,
           },
         ],
       });
@@ -122,7 +127,7 @@ export function useCanvasInteraction({
     }
 
     if (tool === 'exit') {
-      const spaceId = exitSpaceAt(layout, p.x, p.y);
+      const spaceId = exitSpaceAt(floorLayout, p.x, p.y);
       if (!spaceId) return;
       const id = uid('exit');
       onChange({
@@ -137,6 +142,7 @@ export function useCanvasInteraction({
             width: 1.2,
             connected_space_id: spaceId,
             flow_rate_per_s: 1.0,
+            floor_id: activeFloorId,
           },
         ],
       });
@@ -145,7 +151,7 @@ export function useCanvasInteraction({
     }
 
     if (tool === 'occupants') {
-      const spaceId = spaceContaining(layout, p.x, p.y);
+      const spaceId = spaceContaining(floorLayout, p.x, p.y);
       if (!spaceId) return;
       const id = uid('group');
       onChange({
@@ -161,6 +167,7 @@ export function useCanvasInteraction({
             spawn_y: p.y,
             walking_speed_mps: 1.2,
             destination_exit_id: null,
+            floor_id: activeFloorId,
           },
         ],
       });

@@ -36,13 +36,25 @@ export interface OccupantFrameState {
   id: string;
   x: number;
   y: number;
-  status: 'active' | 'waiting' | 'evacuated' | 'trapped';
+  status: 'active' | 'waiting' | 'evacuated' | 'trapped' | 'climbing';
   group_id: string;
+  floor_id?: string;
+  climb_progress?: number | null;
+}
+
+export interface SmokeFloorState {
+  floor_id: string;
+  radius_m: number;
+  x: number;
+  y: number;
+  intensity: number;
 }
 
 export interface SimulationFrame {
   flood_radius_m?: number | null;
   fire_radius_m?: number | null;
+  fire_floors?: SmokeFloorState[];
+  smoke_floors?: SmokeFloorState[];
   t: number;
   occupants: OccupantFrameState[];
 }

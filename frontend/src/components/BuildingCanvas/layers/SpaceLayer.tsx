@@ -22,6 +22,8 @@ interface Props {
   interactive: boolean;
   congestedIds?: Set<string>;
   floorPlanImage: HTMLImageElement | null;
+  activeFloorId: string;
+  showAllFloors?: boolean;
   onObjectClick: HandleObjectClickFn;
   onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
@@ -37,6 +39,8 @@ export function SpaceLayer({
   interactive,
   congestedIds,
   floorPlanImage,
+  activeFloorId,
+  showAllFloors = false,
   onObjectClick,
   onHover,
   onChange,
@@ -48,22 +52,37 @@ export function SpaceLayer({
     isRefSelected(selected, { kind: 'space', id });
 
   // Rooms (and corridors) behind stairs so nested stair openings stay visible.
-  const rooms = layout.spaces.filter((s) => s.type !== 'stairs');
-  const stairs = layout.spaces.filter((s) => s.type === 'stairs');
+  // During playback show every floor so the whole building moves at once;
+  // inactive floors are drawn ghosted under the active plan.
+  const floorSpaces = showAllFloors
+    ? [...layout.spaces].sort((a, b) => {
+        const aActive = (a.floor_id ?? 'floor-0') === activeFloorId ? 1 : 0;
+        const bActive = (b.floor_id ?? 'floor-0') === activeFloorId ? 1 : 0;
+        return aActive - bActive;
+      })
+    : layout.spaces.filter((s) => (s.floor_id ?? 'floor-0') === activeFloorId);
+  const rooms = floorSpaces.filter((s) => s.type !== 'stairs');
+  const stairs = floorSpaces.filter((s) => s.type === 'stairs');
 
   const renderSpace = (s: (typeof layout.spaces)[number]) => {
     const box = polygonBBox(s.vertices);
     const [cx, cy] = spaceCentroid(s.vertices);
     const active = selectedSpace(s.id);
     const ref: ObjectRef = { kind: 'space', id: s.id };
+    const onActiveFloor = (s.floor_id ?? 'floor-0') === activeFloorId;
+    const ghost = showAllFloors && !onActiveFloor;
     return (
       <Group
         key={s.id}
         x={box.x * SCALE}
         y={box.y * SCALE}
+        opacity={ghost ? 0.35 : 1}
+        listening={!ghost && interactive}
         onClick={(e) => onObjectClick(ref, e)}
         onContextMenu={(e) => onObjectContextMenu(ref, e)}
-        {...dragProps(
+        {...(ghost
+          ? {}
+          : dragProps(
           ref,
           (nx, ny) => {
             const dx = nx - box.x;
@@ -86,14 +105,16 @@ export function SpaceLayer({
           box.width,
           box.height,
           { x: box.x, y: box.y },
-        )}
+        ))}
         onMouseEnter={(event) => {
+          if (ghost) return;
           onHover(ref);
           if (interactive && tool === 'select') {
             event.target.getStage()!.container().style.cursor = 'grab';
           }
         }}
         onMouseLeave={(event) => {
+          if (ghost) return;
           onHover(null);
           event.target.getStage()!.container().style.cursor = '';
         }}

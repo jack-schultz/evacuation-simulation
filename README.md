@@ -90,13 +90,13 @@ Health: http://localhost:8000/api/health
 
 See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 
-* Rectangle geometry; shortest-path routing; no fire/smoke/panic
-* Capacity queues at doors/stairs/exits
+* Polygonal multi-floor geometry; shortest-path routing; illustrative fire/flood/smoke
+* Capacity queues at doors/stairs/exits; stairs slow ascent/descent along a directed path
 * Results are estimates only
 
 ## Known limitations
 
-* Single-floor style canvas (linked stairs teleport between paired stair centers; not continuous multi-level physics)
+* Floors are stacked 2D plans with climb time — not continuous 3D mesh physics
 * Space edges block movement except at door/exit gaps; connectivity is doors, exits, and linked stairs
 * No live WebSocket streaming (full timeline computed server-side)
 * No authentication or multi-user collaboration
@@ -106,8 +106,6 @@ See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 
 * Smarter route choice (familiar exits, congestion avoidance, replanning)
 * Continuous-space / social-force movement models
-* True multi-floor geometry and stair bidirectional flow (beyond linked-stair teleport)
-* Hazard layers (smoke) affecting speed and visibility
 * Import from DXF / simple BIM subsets
 * Scenario comparison and report export
 

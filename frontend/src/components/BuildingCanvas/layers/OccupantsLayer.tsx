@@ -20,6 +20,9 @@ interface Props {
   interactive: boolean;
   occupants: OccupantFrameState[];
   occupantRadiusPx: number;
+  activeFloorId: string;
+  /** When true (playback), show sim people on every floor at once. */
+  showAllFloors?: boolean;
   onObjectClick: HandleObjectClickFn;
   onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
@@ -33,6 +36,8 @@ export function OccupantsLayer({
   interactive,
   occupants,
   occupantRadiusPx,
+  activeFloorId,
+  showAllFloors = false,
   onObjectClick,
   onHover,
   onChange,
@@ -41,7 +46,12 @@ export function OccupantsLayer({
 }: Props) {
   return (
     <>
-      {layout.occupant_groups.map((g) => {
+      {layout.occupant_groups
+        .filter(
+          (g) =>
+            showAllFloors || (g.floor_id ?? 'floor-0') === activeFloorId,
+        )
+        .map((g) => {
         const space = layout.spaces.find((s) => s.id === g.space_id);
         if (!space) return null;
         const [centerX, centerY] = spaceCentroid(space.vertices);
@@ -106,19 +116,26 @@ export function OccupantsLayer({
       })}
 
       {occupants
-        .filter((o) => o.status !== 'evacuated')
+        .filter((o) => {
+          if (o.status === 'evacuated') return false;
+          if (showAllFloors) return true;
+          return (o.floor_id ?? 'floor-0') === activeFloorId;
+        })
         .map((o) => (
           <Circle
             key={o.id}
             x={o.x * SCALE}
             y={o.y * SCALE}
             radius={occupantRadiusPx}
+            opacity={o.status === 'climbing' ? 0.55 + 0.45 * (o.climb_progress ?? 0) : 1}
             fill={
               o.status === 'trapped'
                 ? '#7c3aed'
-                : o.status === 'waiting'
-                  ? '#ef4444'
-                  : '#2563eb'
+                : o.status === 'climbing'
+                  ? '#d97706'
+                  : o.status === 'waiting'
+                    ? '#ef4444'
+                    : '#2563eb'
             }
             listening={false}
           />

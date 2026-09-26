@@ -11,12 +11,14 @@ export function usePolygonDraft({
   layout,
   onChange,
   onSelect,
+  activeFloorId,
 }: {
   tool: EditorTool;
   interactive: boolean;
   layout: BuildingLayout;
   onChange: (layout: BuildingLayout) => void;
   onSelect: (selection: Selection) => void;
+  activeFloorId: string;
 }) {
   const [draftPoints, setDraftPoints] = useState<Point[]>([]);
   const [cursor, setCursor] = useState<Point | null>(null);
@@ -56,6 +58,7 @@ export function usePolygonDraft({
           type: tool,
           vertices,
           capacity_density_per_m2: null,
+          floor_id: activeFloorId,
         },
       ],
     });

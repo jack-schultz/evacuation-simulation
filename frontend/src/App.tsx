@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FloodPanel } from './components/FloodPanel';
 import { EmergencyPanel } from './components/EmergencyPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
 import { ColumnResizer } from './components/ColumnResizer';
 import { FloorPlanLibrary } from './components/FloorPlanLibrary';
+import { FloorStrip } from './components/FloorStrip';
 import { AppHeader } from './components/AppHeader';
 import { PanelRail, type PanelId } from './components/PanelRail';
 import { PropertiesPanel } from './components/PropertiesPanel';
@@ -13,6 +14,7 @@ import { ToolPalette } from './components/ToolPalette';
 import { useBuildingEditor } from './hooks/useBuildingEditor';
 import { useBuildingPersistence } from './hooks/useBuildingPersistence';
 import { useSimulationSession } from './hooks/useSimulationSession';
+import { activeFloorId as resolveActiveFloorId } from './layout/emptyLayout';
 
 const DEFAULT_OPEN: PanelId[] = ['tools'];
 
@@ -23,6 +25,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showPaths, setShowPaths] = useState(false);
   const [openPanels, setOpenPanels] = useState<Set<PanelId>>(() => new Set(DEFAULT_OPEN));
+  const [activeFloorId, setActiveFloorId] = useState('floor-0');
 
   const session = useSimulationSession({ setBusy, setError });
   const editor = useBuildingEditor({
@@ -43,6 +46,14 @@ export default function App() {
   });
 
   const disabled = busy || session.simulating;
+
+  useEffect(() => {
+    setActiveFloorId((current) => resolveActiveFloorId(editor.layout, current));
+  }, [editor.layout.floors, editor.layout]);
+
+  const liveEvacuated = session.playback.currentFrame
+    ? session.playback.currentFrame.occupants.filter((o) => o.status === 'evacuated').length
+    : null;
 
   const togglePanel = (id: PanelId) => {
     setOpenPanels((current) => {
@@ -119,6 +130,7 @@ export default function App() {
         onReset={session.onReset}
         running={busy}
         results={session.playback.results}
+        evacuatedCount={liveEvacuated}
         showPaths={showPaths}
         onShowPathsChange={setShowPaths}
         error={error}
@@ -148,12 +160,25 @@ export default function App() {
               <FloodPanel layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
             ),
             fire: (
-              <EmergencyPanel kind="fire" layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
+              <EmergencyPanel
+                kind="fire"
+                layout={editor.layout}
+                onChange={editor.updateLayout}
+                disabled={disabled}
+                activeFloorId={activeFloorId}
+              />
             ),
           }}
         />
 
         <main className="canvas-area">
+          <FloorStrip
+            layout={editor.layout}
+            activeFloorId={activeFloorId}
+            onActiveFloorChange={setActiveFloorId}
+            onChange={editor.updateLayout}
+            disabled={disabled}
+          />
           <BuildingCanvas
             layout={editor.layout}
             floorPlanUrl={persistence.floorPlanUrl}
@@ -177,6 +202,9 @@ export default function App() {
             occupantRadiusM={session.occupantRadiusM}
             floodRadiusM={session.playback.currentFrame?.flood_radius_m}
             fireRadiusM={session.playback.currentFrame?.fire_radius_m}
+            fireFloors={session.playback.currentFrame?.fire_floors ?? []}
+            smokeFloors={session.playback.currentFrame?.smoke_floors ?? []}
+            activeFloorId={activeFloorId}
           />
         </main>
 
@@ -211,7 +239,10 @@ export default function App() {
 
       </div>
 
-      <ResultsPanel results={session.playback.results} />
+      <ResultsPanel
+        results={session.playback.results}
+        evacuatedCount={liveEvacuated}
+      />
     </div>
   );
 }

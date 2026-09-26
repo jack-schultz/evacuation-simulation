@@ -31,6 +31,9 @@ function isTeleport(
   b: OccupantFrameState,
   dt: number,
 ): boolean {
+  // Directed stair climbs already emit intermediate positions — don't snap.
+  if (a.status === 'climbing' || b.status === 'climbing') return false;
+  if (a.climb_progress != null || b.climb_progress != null) return false;
   const limit = Math.max(TELEPORT_MIN_M, TELEPORT_SPEED_MPS * Math.max(dt, 0));
   return distance(a.x, a.y, b.x, b.y) > limit;
 }
@@ -44,12 +47,22 @@ function interpolateOccupant(
   const teleport = isTeleport(a, b, dt);
   const posAlpha = teleport ? (alpha < 0.5 ? 0 : 1) : alpha;
   const meta = alpha < 1 ? a : b;
+  const climbA = a.climb_progress;
+  const climbB = b.climb_progress;
+  let climb_progress: number | null | undefined = meta.climb_progress;
+  if (climbA != null && climbB != null) {
+    climb_progress = lerp(climbA, climbB, alpha);
+  } else if (climbA != null || climbB != null) {
+    climb_progress = climbA ?? climbB;
+  }
   return {
     id: a.id,
     x: lerp(a.x, b.x, posAlpha),
     y: lerp(a.y, b.y, posAlpha),
     status: meta.status,
     group_id: meta.group_id,
+    floor_id: meta.floor_id,
+    climb_progress,
   };
 }
 
@@ -107,6 +120,8 @@ export function interpolateFrame(
     t,
     flood_radius_m: lerpRadius(a.flood_radius_m, b.flood_radius_m, alpha),
     fire_radius_m: lerpRadius(a.fire_radius_m, b.fire_radius_m, alpha),
+    fire_floors: alpha < 0.5 ? (a.fire_floors ?? []) : (b.fire_floors ?? []),
+    smoke_floors: alpha < 0.5 ? (a.smoke_floors ?? []) : (b.smoke_floors ?? []),
     occupants,
   };
 }

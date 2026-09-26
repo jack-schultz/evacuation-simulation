@@ -67,9 +67,11 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 ## Known simplifications
 
-- Single-floor style canvas; paired stairs (`linked_stair_id`) teleport between
+- Multi-floor tabs with stacked plans; linked stairs use a directed slowed climb between
   stair centers for multi-level pathing (not continuous vertical physics).
-- No fire, smoke, panic, or disability-specific movement.
+- Illustrative circular fire/flood/smoke (smoke expands faster than fire; both
+  climb stairs then cascade down from the top floor); no panic or
+  disability-specific movement.
 - Space edges block movement except at door/exit widths; they do not carve the navigation graph.
 - Occupants do not replan or follow crowds mid-run.
 

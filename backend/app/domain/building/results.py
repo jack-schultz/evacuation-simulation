@@ -5,13 +5,15 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 
 class OccupantStatus(str, Enum):
     ACTIVE = "active"
     WAITING = "waiting"
     EVACUATED = "evacuated"
     TRAPPED = "trapped"
+    CLIMBING = "climbing"
 
 
 class OccupantFrameState(BaseModel):
@@ -20,11 +22,26 @@ class OccupantFrameState(BaseModel):
     y: float
     status: OccupantStatus
     group_id: str
+    floor_id: str = "floor-0"
+    climb_progress: float | None = Field(
+        default=None,
+        description="0..1 along a stair transfer when status is climbing.",
+    )
+
+
+class SmokeFloorState(BaseModel):
+    floor_id: str
+    radius_m: float
+    x: float
+    y: float
+    intensity: float = 50.0
 
 
 class SimulationFrame(BaseModel):
     flood_radius_m: float | None = None
     fire_radius_m: float | None = None
+    fire_floors: list[SmokeFloorState] = Field(default_factory=list)
+    smoke_floors: list[SmokeFloorState] = Field(default_factory=list)
     t: float
     occupants: list[OccupantFrameState]
 

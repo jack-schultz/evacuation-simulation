@@ -12,6 +12,8 @@ interface Props {
   onReset: () => void;
   running: boolean;
   results: SimulationResults | null;
+  /** Live count from the current playback frame; falls back to final results. */
+  evacuatedCount?: number | null;
   showPaths: boolean;
   onShowPathsChange: (show: boolean) => void;
   error?: string | null;
@@ -28,10 +30,15 @@ export function SimulationControls({
   onReset,
   running,
   results,
+  evacuatedCount,
   showPaths,
   onShowPathsChange,
   error,
 }: Props) {
+  const evacuated =
+    evacuatedCount != null
+      ? evacuatedCount
+      : results?.evacuated_count;
   return (
     <div className="controls-bar">
       <div className="controls-left">
@@ -77,7 +84,7 @@ export function SimulationControls({
         {results && (
           <>
             <span>
-              Evacuated: {results.evacuated_count} / {results.total_occupants}
+              Evacuated: {evacuated ?? 0} / {results.total_occupants}
             </span>
             <span>
               Est. total:{' '}

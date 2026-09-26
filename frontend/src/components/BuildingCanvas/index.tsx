@@ -19,6 +19,8 @@ import { HazardLayer } from './layers/HazardLayer';
 import { OpeningsLayer } from './layers/OpeningsLayer';
 import { PathsLayer } from './layers/PathsLayer';
 import { OccupantsLayer } from './layers/OccupantsLayer';
+import { StairArrowLayer } from './layers/StairArrowLayer';
+import type { SmokeFloorState } from '../../types/api';
 
 interface Props {
   layout: BuildingLayout;
@@ -45,8 +47,13 @@ interface Props {
   occupantRadiusM?: number;
   floodRadiusM?: number | null;
   fireRadiusM?: number | null;
+  fireFloors?: SmokeFloorState[];
+  smokeFloors?: SmokeFloorState[];
   floorPlanUrl?: string | null;
   floorPlanOpacity?: number;
+  activeFloorId: string;
+  /** Playback: render every floor's geometry and people together. */
+  showAllFloors?: boolean;
 }
 
 export function BuildingCanvas({
@@ -70,8 +77,12 @@ export function BuildingCanvas({
   occupantRadiusM = 0.25,
   floodRadiusM,
   fireRadiusM,
+  fireFloors = [],
+  smokeFloors = [],
   floorPlanUrl = null,
   floorPlanOpacity = 0.2,
+  activeFloorId,
+  showAllFloors = false,
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
   const [hoveredObject, setHoveredObject] = useState<ObjectRef | null>(null);
@@ -146,6 +157,7 @@ export function BuildingCanvas({
     layout,
     onChange,
     onSelect,
+    activeFloorId,
   });
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
@@ -160,6 +172,7 @@ export function BuildingCanvas({
       onSelectObject,
       onChange,
       draft,
+      activeFloorId,
       onContextMenuRequest: (request) => {
         setContextMenu({
           x: request.clientX,
@@ -241,6 +254,8 @@ export function BuildingCanvas({
             interactive={interactive}
             congestedIds={congestedIds}
             floorPlanImage={floorPlanImage}
+            activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             onObjectClick={handleObjectClick}
             onHover={setHoveredObject}
             onChange={onChange}
@@ -249,11 +264,19 @@ export function BuildingCanvas({
             onObjectContextMenu={openObjectContextMenu}
           />
 
+          <StairArrowLayer
+            layout={layout}
+            activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
+          />
+
           <OpeningsLayer
             layout={layout}
             selected={selected}
             interactive={interactive}
             congestedIds={congestedIds}
+            activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             onObjectClick={handleObjectClick}
             onHover={setHoveredObject}
             onChange={onChange}
@@ -265,8 +288,12 @@ export function BuildingCanvas({
             layout={layout}
             tool={tool}
             interactive={interactive}
+            activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             floodRadiusM={floodRadiusM}
             fireRadiusM={fireRadiusM}
+            fireFloors={fireFloors}
+            smokeFloors={smokeFloors}
             onChange={onChange}
             dragProps={dragProps}
           />
@@ -279,6 +306,8 @@ export function BuildingCanvas({
             interactive={interactive}
             occupants={occupants}
             occupantRadiusPx={occupantRadiusPx}
+            activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             onObjectClick={handleObjectClick}
             onHover={setHoveredObject}
             onChange={onChange}

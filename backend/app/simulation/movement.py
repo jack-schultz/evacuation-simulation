@@ -34,6 +34,10 @@ class SimulatedOccupant:
     wait_time_s: float = 0.0
     evacuated_at: float | None = None
     aperture_slot: int = 0
+    floor_id: str = "floor-0"
+    climb_progress: float | None = None
+    climb_from_space_id: str | None = None
+    climb_to_space_id: str | None = None
 
     @property
     def current_node_id(self) -> str:
@@ -318,6 +322,9 @@ class SpatialMovementModel:
             and edge is not None
         )
 
+        if not admitted and stair_transfer:
+            return
+
         if stair_transfer:
             reached = dist(occupant.x, occupant.y, from_node.x, from_node.y) <= reach
         else:
@@ -342,11 +349,12 @@ class SpatialMovementModel:
             return
 
         if stair_transfer:
-            occupant.x, occupant.y = waypoint.x, waypoint.y
-            # Land in the room/corridor that hosts the destination stair
-            occupant.current_space_id = graph.stair_host_space_ids.get(
-                waypoint.ref_id, waypoint.ref_id
-            )
+            # Begin directed climb along the stair centreline (completed in step.py).
+            occupant.status = OccupantStatus.CLIMBING
+            occupant.climb_progress = 0.0
+            occupant.climb_from_space_id = from_node.ref_id
+            occupant.climb_to_space_id = waypoint.ref_id
+            return
 
         occupant.route_index += 1
         occupant.progress_on_edge = 0.0

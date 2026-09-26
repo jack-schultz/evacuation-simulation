@@ -47,7 +47,7 @@ class FloodTests(unittest.TestCase):
     def test_people_inside_flood_move_outward_to_dry_exit(self):
         for intensity in (1, 50, 80, 100):
             with self.subTest(intensity=intensity):
-                config = dict(x=6, y=5, radius_m=2, intensity=intensity)
+                config = dict(x=6, y=5, radius_m=2, intensity=intensity, spread_speed_mps=0)
                 output = SimulationEngine().run(
                     layout(config, preferred='near'), SimulationParameters(max_time_s=60)
                 )

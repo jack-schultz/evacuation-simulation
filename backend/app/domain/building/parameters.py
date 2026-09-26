@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+
 class SimulationParameters(BaseModel):
     timestep_s: float = Field(default=0.25, gt=0, le=2.0)
     max_time_s: float = Field(default=600.0, gt=0)
@@ -33,4 +34,16 @@ class SimulationParameters(BaseModel):
         default=0.5,
         gt=0,
         description="Seconds between stored animation frames (reduces payload size)",
+    )
+    stair_descent_speed_factor: float = Field(
+        default=0.55,
+        gt=0,
+        le=1.0,
+        description="Fraction of flat walking speed when descending stairs.",
+    )
+    stair_ascent_speed_factor: float = Field(
+        default=0.35,
+        gt=0,
+        le=1.0,
+        description="Fraction of flat walking speed when ascending stairs.",
     )

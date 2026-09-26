@@ -9,6 +9,10 @@ regulatory compliance calculation.
 * Building spaces are closed polygons (rooms, stairs). Rectangles are
   the special case of four corners; the editor draws arbitrary polygons by
   clicking corners and closing on the start point.
+* Layouts have named **floors** (storeys) with elevations. Spaces, doors,
+  exits, and occupant groups carry a `floor_id`. Doors only connect spaces
+  on the same floor. Stacked storeys share the same XY plan; collisions are
+  floor-scoped.
 * Coordinates use a top-left origin; one grid unit defaults to one metre
   (`meters_per_cell`).
 * Each space has a centroid/interior node used for spawn start and to decide which
@@ -18,13 +22,12 @@ regulatory compliance calculation.
 * Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
   navigation graph beyond defining which openings may connect.
-* Stairs spaces may set `linked_stair_id` to another stairs space. The pair
-  adds a navigation edge between the two stair centroids; when an occupant
-  reaches the center of one stair they teleport to the other. A stair whose
-  center lies inside a room is treated as an opening of that host
-  space (no extra door required) and does not emit its own collision walls.
-  Stairs can also sit as their own polygons entered via doors. This is a
-  flat-canvas multi-level shortcut, not continuous vertical geometry.
+* Stairs spaces may set `linked_stair_id` to stairs on a **different floor**.
+  Occupants walk a directed centreline along the stair polygon (ascent slower
+  than descent), then continue on the partner floor. Capacity still limits
+  concurrent climbers. A stair whose center lies inside a same-floor room is
+  treated as an opening of that host. This is stacked 2D geometry with climb
+  time — not a continuous 3D mesh.
 
 ## Occupant knowledge and behaviour
 
@@ -66,11 +69,12 @@ regulatory compliance calculation.
 
 ## Hazards not modelled
 
-* Fire / smoke dynamics are not simulated.
-* Structural collapse is not simulated.
-* Toxicity, heat, visibility loss, and disability-specific movement are not
-  simulated.
-* Human panic is not explicitly simulated.
+* Combustion, fuel, heat, toxicity, CFD smoke, and structural collapse are not
+  simulated. Circular fire/flood/smoke are illustrative scenario overlays only.
+* Disability-specific movement and panic are not simulated.
+* Smoke reduces speed and usable sightline length, expands faster than fire, and
+  spreads through linked stairs (up, then down once the top floor is reached);
+  it does not model optical density physics or incapacitation.
 
 ## Results interpretation
 
@@ -133,9 +137,26 @@ People avoid entering active fire and cannot use exits within it. People already
 inside can escape outward along available routes at a speed multiplier of
 max(0.1, 1 - intensity/100). Intensity is a relative scenario control, not a
 physical temperature or heat-release rate. Routes are chosen at spawn; spreading
-fire can trap people on their fixed route. With both fire and flood enabled,
-the strongest restriction applies, including blocking by either hazard.
+fire can trap people on their fixed route. Fire also spreads through linked
+stairs using the same up-then-down-from-top rules as smoke, with a longer stair
+delay. With both fire and flood enabled, the strongest restriction applies,
+including blocking by either hazard.
 
-This illustrative model does not simulate combustion, fuel, heat, smoke,
+This illustrative model does not simulate combustion, fuel, heat,
 ventilation, injury, or wall-dependent spread. It is an evacuation estimate,
 not a fire engineering or safety certification model.
+
+## Smoke scenario
+
+Smoke is part of the **fire** disaster (`emit_smoke`, on by default). It expands
+horizontally **faster** than the fire (about 2.5× the fire spread speed) and
+starts from a larger initial radius. Inside the plume, walking speed is
+multiplied by `max(0.25, 1 - intensity/100)`. Long visibility-graph chords are
+heavily costed so people prefer shorter sightlines. Smoke does **not** hard-block
+exits.
+
+Both smoke and fire climb linked stairs. After `smoke_stair_spread_delay_s`
+(smoke) or that delay × 2.5 (fire), a weaker plume starts on the partner floor.
+Once the **top** floor of the building is reached, spread continues **downward**
+through stairs. Fire uses the same path and rules, only slower. There is no
+separate standalone smoke emergency in the editor.
