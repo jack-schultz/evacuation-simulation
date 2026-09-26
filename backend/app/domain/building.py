@@ -82,6 +82,16 @@ class OccupantGroup(BaseModel):
     behaviour: dict[str, float | str | bool] = Field(default_factory=dict)
 
 
+class FloodEmergency(BaseModel):
+    """Static, illustrative flood area; intensity is a relative scenario control."""
+
+    enabled: bool = True
+    x: float = Field(ge=0, allow_inf_nan=False)
+    y: float = Field(ge=0, allow_inf_nan=False)
+    radius_m: float = Field(default=3.0, gt=0, allow_inf_nan=False)
+    intensity: float = Field(default=50.0, ge=0, le=100, allow_inf_nan=False)
+
+
 class BuildingLayout(BaseModel):
     """Serializable building configuration (API + persistence payload)."""
 
@@ -94,9 +104,12 @@ class BuildingLayout(BaseModel):
     doors: list[Door] = Field(default_factory=list)
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
+    flood: FloodEmergency | None = None
 
     @model_validator(mode="after")
     def validate_references(self) -> BuildingLayout:
+        if self.flood and (self.flood.x > self.width or self.flood.y > self.height):
+            raise ValueError("Flood centre must be inside the building bounds")
         space_ids = {s.id for s in self.spaces}
         exit_ids = {e.id for e in self.exits}
 

@@ -43,6 +43,7 @@ class GraphEdge:
     capacity_density_per_m2: float | None
     area_m2: float | None
     element_id: str
+    speed_factor: float = 1.0
 
 
 @dataclass
