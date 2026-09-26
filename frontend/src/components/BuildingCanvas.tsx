@@ -272,6 +272,48 @@ export function BuildingCanvas({
   const isSelected = (kind: string, id: string) =>
     selected?.kind === kind && selected.id === id;
 
+  const resizeSpace = (
+    space: BuildingLayout['spaces'][number],
+    corner: 'nw' | 'ne' | 'sw' | 'se',
+    localX: number,
+    localY: number,
+  ) => {
+    const pointerX = snap(space.x + localX / SCALE);
+    const pointerY = snap(space.y + localY / SCALE);
+    const right = space.x + space.width;
+    const bottom = space.y + space.height;
+    const minimumSize = 1;
+    let nextX = space.x;
+    let nextY = space.y;
+    let nextWidth = space.width;
+    let nextHeight = space.height;
+
+    if (corner.includes('w')) {
+      nextX = Math.min(Math.max(0, pointerX), right - minimumSize);
+      nextWidth = right - nextX;
+    } else {
+      const nextRight = Math.min(Math.max(space.x + minimumSize, pointerX), layout.width);
+      nextWidth = nextRight - space.x;
+    }
+
+    if (corner.includes('n')) {
+      nextY = Math.min(Math.max(0, pointerY), bottom - minimumSize);
+      nextHeight = bottom - nextY;
+    } else {
+      const nextBottom = Math.min(Math.max(space.y + minimumSize, pointerY), layout.height);
+      nextHeight = nextBottom - space.y;
+    }
+
+    onChange({
+      ...layout,
+      spaces: layout.spaces.map((candidate) =>
+        candidate.id === space.id
+          ? { ...candidate, x: nextX, y: nextY, width: nextWidth, height: nextHeight }
+          : candidate,
+      ),
+    });
+  };
+
   return (
     <div className="canvas-wrap">
       <Stage
@@ -322,6 +364,31 @@ export function BuildingCanvas({
                 fill="#334155"
                 listening={false}
               />
+              {isSelected('space', s.id) && interactive && tool === 'select' &&
+                (['nw', 'ne', 'sw', 'se'] as const).map((corner) => {
+                  const handleX = corner.includes('w') ? 0 : s.width * SCALE;
+                  const handleY = corner.includes('n') ? 0 : s.height * SCALE;
+                  return (
+                    <Rect
+                      key={corner}
+                      x={handleX - 5}
+                      y={handleY - 5}
+                      width={10}
+                      height={10}
+                      fill="#2563eb"
+                      stroke="#ffffff"
+                      strokeWidth={1}
+                      draggable
+                      onMouseDown={(e) => { e.cancelBubble = true; }}
+                      onDragStart={(e) => { e.cancelBubble = true; }}
+                      onDragEnd={(e) => {
+                        e.cancelBubble = true;
+                        resizeSpace(s, corner, e.target.x() + 5, e.target.y() + 5);
+                        e.target.position({ x: handleX - 5, y: handleY - 5 });
+                      }}
+                    />
+                  );
+                })}
             </Group>
           ))}
 
