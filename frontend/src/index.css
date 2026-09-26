@@ -276,3 +276,5 @@ button.danger {
 
 .flood-panel { background: #f0f9ff; }
 .properties .flood-toggle { display: flex; align-items: center; gap: 0.5rem; }
+
+.fire-panel { background: #fff7ed; }

@@ -8,14 +8,22 @@ import math
 
 from app.domain.building import (
     BuildingLayout,
+    FloodEmergency,
+    FireEmergency,
     OccupantFrameState,
     OccupantStatus,
+    PixelObstacleMap,
     SimulationFrame,
     SimulationParameters,
     SimulationResults,
 )
+from app.domain.geometry import (
+    clamp_into_polygon,
+    distance_to_boundary,
+    point_in_polygon,
+)
 from app.simulation.collision import (
-    Aabb,
+    WallSegment,
     aperture_slots,
     build_collision_solids,
     clamp_outside_throat,
@@ -25,7 +33,7 @@ from app.simulation.collision import (
     resolve_space_containment,
     resolve_wall_collisions,
 )
-from app.simulation.flood import FloodRouteSelector, apply_flood
+from app.simulation.hazards import HazardRouteSelector, apply_hazards, hazard_radius_at, hazards_speed_factor
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
 from app.simulation.graph import EdgeKind, NavigationGraphBuilder, NodeKind
 from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
@@ -43,7 +51,7 @@ class SimulationOutput:
 class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
-    Occupants steer continuously toward fixed Dijkstra waypoints, collide via
+    Occupants steer continuously toward fixed Dijkstra opening waypoints, collide via
     body radius and space boundaries, and pass doors/exits through width-limited
     apertures.
     """
@@ -78,7 +86,7 @@ class SimulationEngine:
             "corridor_density_per_m2": params.corridor_density_per_m2,
         }
         graph = self.graph_builder.build(layout, defaults)
-        apply_flood(graph, layout.flood)
+        apply_hazards(graph, (layout.flood, layout.fire))
 
         boundary_solids = build_collision_solids(
             layout.spaces, layout.doors, layout.exits
@@ -93,7 +101,7 @@ class SimulationEngine:
         t = 0.0
         next_frame_t = 0.0
 
-        frames.append(self._capture_frame(t, occupants))
+        frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
         next_frame_t = params.frame_interval_s
 
         while t < params.max_time_s:
@@ -102,16 +110,27 @@ class SimulationEngine:
 
             t += params.timestep_s
             self._step(
-                occupants, graph, queues, params, t, boundary_solids, spaces, doors,
-                layout.obstacle_map, layout.width, layout.height,
+                occupants,
+                graph,
+                queues,
+                params,
+                t,
+                boundary_solids,
+                spaces,
+                doors,
+                layout.flood,
+                layout.fire,
+                layout.obstacle_map,
+                layout.width,
+                layout.height,
             )
 
             if t + 1e-9 >= next_frame_t:
-                frames.append(self._capture_frame(t, occupants))
+                frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
                 next_frame_t += params.frame_interval_s
 
         if not frames or frames[-1].t < t:
-            frames.append(self._capture_frame(t, occupants))
+            frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
 
         results = build_results(occupants, queues, t)
         return SimulationOutput(results=results, frames=frames)
@@ -121,7 +140,7 @@ class SimulationEngine:
         layout: BuildingLayout,
         graph,
         radius_m: float,
-        boundary_solids: list[Aabb] | None = None,
+        boundary_solids: list[WallSegment] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
     ) -> list[SimulatedOccupant]:
@@ -135,10 +154,8 @@ class SimulationEngine:
         for group in layout.occupant_groups:
             start_node = graph.space_node_ids[group.space_id]
             selector = (
-                FloodRouteSelector()
-                if layout.flood
-                and layout.flood.enabled
-                and layout.flood.intensity > 0
+                HazardRouteSelector()
+                if any(hazard_radius_at(h, 0) is not None for h in (layout.flood, layout.fire))
                 and isinstance(self.route_selector, DijkstraRouteSelector)
                 else self.route_selector
             )
@@ -146,35 +163,31 @@ class SimulationEngine:
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )
             space = spaces[group.space_id]
+            min_x, min_y, width, height = space.bbox
+            usable_w = max(width - 2 * margin, spacing)
+            cols = max(1, int(usable_w / spacing) + 1)
+            rows = math.ceil(group.count / cols)
             node = graph.nodes[start_node]
             spawn_x = group.spawn_x if group.spawn_x is not None else node.x
             spawn_y = group.spawn_y if group.spawn_y is not None else node.y
-            interior_left = space.x + margin
-            interior_right = space.x + space.width - margin
-            interior_top = space.y + margin
-            interior_bottom = space.y + space.height - margin
-            max_cols = max(1, int(max(space.width - 2 * margin, 0) / spacing) + 1)
-            cols = min(max_cols, max(1, math.ceil(math.sqrt(group.count))))
-            rows = math.ceil(group.count / cols)
-            half_width = (cols - 1) * spacing / 2
-            half_height = (rows - 1) * spacing / 2
-            center_x = min(max(spawn_x, interior_left + half_width), interior_right - half_width)
-            center_y = min(max(spawn_y, interior_top + half_height), interior_bottom - half_height)
-            # If the formation is larger than the room's usable area, center it
-            # in the room and let overlap resolution handle the tight spacing.
-            if interior_left + half_width > interior_right - half_width:
-                center_x = (interior_left + interior_right) / 2
-            if interior_top + half_height > interior_bottom - half_height:
-                center_y = (interior_top + interior_bottom) / 2
+
             for i in range(group.count):
                 if group.count == 1:
                     ox, oy = spawn_x, spawn_y
                 else:
-                    col = i % cols
                     row = i // cols
-                    row_size = min(cols, group.count - row * cols)
-                    ox = center_x + (col - (row_size - 1) / 2) * spacing
-                    oy = center_y + (row - (rows - 1) / 2) * spacing
+                    row_count = min(cols, group.count - row * cols)
+                    ox = spawn_x + (i % cols - (row_count - 1) / 2) * spacing
+                    oy = spawn_y + (row - (rows - 1) / 2) * spacing
+                    ox = min(max(ox, min_x + margin), min_x + width - margin)
+                    oy = min(max(oy, min_y + margin), min_y + height - margin)
+                    if not (
+                        point_in_polygon(ox, oy, space.vertices)
+                        and distance_to_boundary(ox, oy, space.vertices) >= margin - 1e-6
+                    ):
+                        ox, oy = clamp_into_polygon(
+                            ox, oy, space.vertices, inset_m=margin
+                        )
                 occupants.append(
                     SimulatedOccupant(
                         id=f"{group.id}:{i}",
@@ -191,38 +204,7 @@ class SimulationEngine:
         resolve_overlaps(occupants, radius_m, iterations=6)
         resolve_wall_collisions(occupants, solids, radius_m)
         resolve_space_containment(occupants, spaces, doors, graph, radius_m)
-        for occupant in occupants:
-            if not position_is_walkable(
-                layout.obstacle_map, occupant.x, occupant.y, radius_m, layout.width, layout.height
-            ):
-                replacement = self._nearby_walkable_point(
-                    layout, occupant.x, occupant.y, radius_m, spaces[occupant.current_space_id]
-                )
-                if replacement is None:
-                    occupant.status = OccupantStatus.TRAPPED
-                else:
-                    occupant.x, occupant.y = replacement
         return occupants
-
-    @staticmethod
-    def _nearby_walkable_point(layout: BuildingLayout, x: float, y: float, radius: float, space):
-        raster = layout.obstacle_map
-        if raster is None:
-            return None
-        step = min(layout.width / raster.width, layout.height / raster.height)
-        for ring in range(1, max(raster.width, raster.height)):
-            distance = ring * step
-            if distance > 3.0:
-                break
-            sample_count = max(8, int(8 * ring))
-            for i in range(sample_count):
-                angle = 2 * 3.141592653589793 * i / sample_count
-                px, py = x + distance * math.cos(angle), y + distance * math.sin(angle)
-                if space.x <= px <= space.x + space.width and space.y <= py <= space.y + space.height and position_is_walkable(
-                    raster, px, py, radius, layout.width, layout.height
-                ):
-                    return px, py
-        return None
 
     def _step(
         self,
@@ -231,10 +213,12 @@ class SimulationEngine:
         queues: dict[str, ElementQueueState],
         params: SimulationParameters,
         t: float,
-        boundary_solids: list[Aabb] | None = None,
+        boundary_solids: list[WallSegment] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
-        obstacle_map=None,
+        flood: FloodEmergency | None = None,
+        fire: FireEmergency | None = None,
+        obstacle_map: PixelObstacleMap | None = None,
         world_width: float = 0.0,
         world_height: float = 0.0,
     ) -> None:
@@ -242,7 +226,9 @@ class SimulationEngine:
         solids = boundary_solids or []
         spaces = spaces or {}
         doors = doors or {}
-        flood_active = any(e.speed_factor != 1.0 for e in graph.edges.values())
+        hazards = (flood, fire)
+        has_hazard = any(hazard_radius_at(h, t) is not None for h in hazards)
+        speed_factors: dict[str, float] = {}
 
         contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
         element_edge: dict = {}
@@ -253,10 +239,16 @@ class SimulationEngine:
                 continue
             nxt = occ.next_node_id
             if nxt is None:
-                self.movement_model.try_advance_route(occ, graph, radius, t)
+                self.movement_model.try_advance_route(occ, graph, radius, t, doors=doors)
                 continue
             edge = edge_between(graph, occ.current_node_id, nxt)
-            if edge is None or edge.speed_factor <= 0:
+            waypoint = graph.nodes[nxt]
+            factor = hazards_speed_factor(
+                hazards, t, occ.x, occ.y, waypoint.x, waypoint.y,
+                is_exit=waypoint.kind == NodeKind.EXIT,
+            ) if has_hazard else (edge.speed_factor if edge else 0.0)
+            speed_factors[occ.id] = factor
+            if edge is None or factor <= 0:
                 occ.status = OccupantStatus.TRAPPED
                 continue
             contenders[edge.element_id].append(occ)
@@ -267,9 +259,8 @@ class SimulationEngine:
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
-            node = graph.nodes[occ.current_node_id]
-            if node.kind.value == "space":
-                occupants_on[node.ref_id] += 1
+            if occ.current_space_id:
+                occupants_on[occ.current_space_id] += 1
 
         admitted: set[str] = set()
 
@@ -338,29 +329,35 @@ class SimulationEngine:
                         q.total_wait_s += params.timestep_s
 
         moved_by: dict[str, float] = {}
-        safe_positions: dict[str, tuple[float, float]] = {}
 
-        def move_without_crossing_black_pixels(occupant, target_x: float, target_y: float, distance: float) -> float:
+        def move_without_crossing_obstacles(
+            occupant: SimulatedOccupant,
+            target_x: float,
+            target_y: float,
+            distance: float,
+        ) -> float:
             old_x, old_y = occupant.x, occupant.y
             old_progress = occupant.progress_on_edge
-            moved = self.movement_model.step_toward(occupant, target_x, target_y, distance)
+            moved = self.movement_model.step_toward(
+                occupant, target_x, target_y, distance
+            )
             if obstacle_map is None or moved <= 1e-9:
                 return moved
             new_x, new_y = occupant.x, occupant.y
             cell = min(world_width / obstacle_map.width, world_height / obstacle_map.height)
-            steps = max(1, math.ceil(moved / max(cell * 0.4, 1e-4)))
-            last_x, last_y = old_x, old_y
-            for i in range(1, steps + 1):
-                fraction = i / steps
-                sample_x = old_x + (new_x - old_x) * fraction
-                sample_y = old_y + (new_y - old_y) * fraction
+            samples = max(1, math.ceil(moved / max(cell * 0.4, 1e-4)))
+            safe_x, safe_y = old_x, old_y
+            for sample in range(1, samples + 1):
+                fraction = sample / samples
+                x = old_x + (new_x - old_x) * fraction
+                y = old_y + (new_y - old_y) * fraction
                 if not position_is_walkable(
-                    obstacle_map, sample_x, sample_y, radius, world_width, world_height
+                    obstacle_map, x, y, radius, world_width, world_height
                 ):
                     break
-                last_x, last_y = sample_x, sample_y
-            actual = dist(old_x, old_y, last_x, last_y)
-            occupant.x, occupant.y = last_x, last_y
+                safe_x, safe_y = x, y
+            actual = dist(old_x, old_y, safe_x, safe_y)
+            occupant.x, occupant.y = safe_x, safe_y
             occupant.progress_on_edge = old_progress + actual
             return actual
 
@@ -378,8 +375,12 @@ class SimulationEngine:
             )
 
             desired = occ.speed_mps * params.timestep_s
-            if flood_active and edge is not None:
-                desired *= edge.speed_factor  # type: ignore[union-attr]
+            desired *= speed_factors[occ.id]
+            # Aperture slots can deviate from the centreline checked above.
+            if has_hazard and hazards_speed_factor(
+                hazards, t, occ.x, occ.y, target_x, target_y
+            ) == 0:
+                desired = 0.0
 
             if edge is not None and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):  # type: ignore[union-attr]
                 next_node = graph.nodes[occ.next_node_id]
@@ -388,7 +389,7 @@ class SimulationEngine:
                     # Can shuffle toward hold point but cannot enter throat
                     waypoint = next_node
                     old_x, old_y = occ.x, occ.y
-                    moved = move_without_crossing_black_pixels(occ, target_x, target_y, desired)
+                    moved = move_without_crossing_obstacles(occ, target_x, target_y, desired)
                     occ.x, occ.y = clamp_outside_throat(
                         occ.x, occ.y, waypoint.x, waypoint.y, radius
                     )
@@ -396,7 +397,7 @@ class SimulationEngine:
                     moved_by[occ.id] = moved
                     continue
 
-            moved = move_without_crossing_black_pixels(occ, target_x, target_y, desired)
+            moved = move_without_crossing_obstacles(occ, target_x, target_y, desired)
             moved_by[occ.id] = moved
             if (
                 is_admitted
@@ -413,11 +414,13 @@ class SimulationEngine:
 
         resolve_wall_collisions(occupants, solids, radius)
         resolve_overlaps(occupants, radius)
-        if obstacle_map is not None:
-            safe_positions = {
-                o.id: (o.x, o.y) for o in occupants
-                if position_is_walkable(obstacle_map, o.x, o.y, radius, world_width, world_height)
-            }
+        safe_positions = {
+            o.id: (o.x, o.y)
+            for o in occupants
+            if obstacle_map is None or position_is_walkable(
+                obstacle_map, o.x, o.y, radius, world_width, world_height
+            )
+        }
 
         # Re-clamp non-admitted after overlap resolution so pushes don't sneak them in
         for occ in occupants:
@@ -440,15 +443,13 @@ class SimulationEngine:
             occupants, spaces, doors, graph, radius, admitted=admitted
         )
         if obstacle_map is not None:
-            for occupant in occupants:
-                if occupant.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+            for occ in occupants:
+                if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                     continue
                 if not position_is_walkable(
-                    obstacle_map, occupant.x, occupant.y, radius, world_width, world_height
-                ):
-                    occupant.x, occupant.y = safe_positions.get(
-                        occupant.id, (occupant.x, occupant.y)
-                    )
+                    obstacle_map, occ.x, occ.y, radius, world_width, world_height
+                ) and occ.id in safe_positions:
+                    occ.x, occ.y = safe_positions[occ.id]
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
@@ -483,7 +484,12 @@ class SimulationEngine:
             can_advance = not blocked
             if can_advance:
                 self.movement_model.try_advance_route(
-                    occ, graph, radius, t, admitted=occ.id in admitted or not approaching_opening
+                    occ,
+                    graph,
+                    radius,
+                    t,
+                    admitted=occ.id in admitted or not approaching_opening,
+                    doors=doors,
                 )
             if occ.status == OccupantStatus.EVACUATED and occ.evacuated_at is None:
                 occ.evacuated_at = t
@@ -494,9 +500,11 @@ class SimulationEngine:
                 occ.travel_time_s += params.timestep_s
 
     @staticmethod
-    def _capture_frame(t: float, occupants: list[SimulatedOccupant]) -> SimulationFrame:
+    def _capture_frame(t: float, occupants: list[SimulatedOccupant], flood: FloodEmergency | None = None, fire: FireEmergency | None = None) -> SimulationFrame:
         return SimulationFrame(
             t=round(t, 3),
+            flood_radius_m=hazard_radius_at(flood, t),
+            fire_radius_m=hazard_radius_at(fire, t),
             occupants=[
                 OccupantFrameState(
                     id=o.id,

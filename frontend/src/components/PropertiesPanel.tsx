@@ -1,4 +1,5 @@
 import type { BuildingLayout, SelectedRef } from '../types/building';
+import { polygonArea, polygonCentroid } from '../utils';
 
 interface Props {
   layout: BuildingLayout;
@@ -39,42 +40,9 @@ export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, 
             }
           />
         </label>
-        <label>
-          Width (m)
-          <input
-            type="number"
-            step="0.5"
-            min="1"
-            disabled={disabled}
-            value={space.width}
-            onChange={(e) =>
-              onChange({
-                ...layout,
-                spaces: layout.spaces.map((s) =>
-                  s.id === space.id ? { ...s, width: Number(e.target.value) } : s,
-                ),
-              })
-            }
-          />
-        </label>
-        <label>
-          Height (m)
-          <input
-            type="number"
-            step="0.5"
-            min="1"
-            disabled={disabled}
-            value={space.height}
-            onChange={(e) =>
-              onChange({
-                ...layout,
-                spaces: layout.spaces.map((s) =>
-                  s.id === space.id ? { ...s, height: Number(e.target.value) } : s,
-                ),
-              })
-            }
-          />
-        </label>
+        <p className="hint">
+          {space.vertices.length} corners · {polygonArea(space.vertices).toFixed(1)} m²
+        </p>
         <button type="button" className="danger" disabled={disabled} onClick={onDeleteSelected}>
           Delete
         </button>
@@ -264,8 +232,9 @@ export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, 
     const group = layout.occupant_groups.find((g) => g.id === selected.id);
     if (!group) return null;
     const groupSpace = layout.spaces.find((s) => s.id === group.space_id);
-    const defaultSpawnX = groupSpace ? groupSpace.x + groupSpace.width / 2 : 0;
-    const defaultSpawnY = groupSpace ? groupSpace.y + groupSpace.height / 2 : 0;
+    const [defaultSpawnX, defaultSpawnY] = groupSpace
+      ? polygonCentroid(groupSpace.vertices)
+      : [0, 0];
     return (
       <div className="panel properties">
         <h2>Occupant group</h2>

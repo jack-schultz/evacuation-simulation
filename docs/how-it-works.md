@@ -27,14 +27,20 @@ flowchart LR
 
 ## Building blocks
 
-- **Spaces** — Axis-aligned rectangles: rooms, corridors, or stairs.
+- **Spaces** — Closed polygons (rooms, corridors, or stairs). Draw by clicking
+  corners and closing on the first point. Centroid nodes define connectivity
+  between openings; people do not walk to room centroids as waypoints.
 - **Doors** — Connect two spaces. Clear opening width limits how many people
   fit through at once (body radius vs width).
 - **Exits** — Attached to a space; people leave the building here (also
   width-limited).
 - **Occupant groups** — A count of people in a space, with walking speed and optional preferred exit.
 
-Under the hood, the simulator builds a **navigation graph**: space centroids, doors, and exits as nodes, linked by distance. Occupants steer in continuous space toward those waypoints, collide with each other and with space boundaries, and squeeze through openings.
+Under the hood, the simulator builds a **navigation graph**: space interior points
+(connectivity / spawn), doors, exits, and reflex-corner waypoints. Openings that
+share a space are linked only when the segment stays inside the polygon; otherwise
+routes detour via waypoints. Occupants steer along those nodes, collide with each
+other and with space-edge segments, and squeeze through openings.
 
 ## What happens when you click Run
 

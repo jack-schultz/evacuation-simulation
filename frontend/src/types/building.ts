@@ -4,10 +4,8 @@ export interface Space {
   id: string;
   name: string;
   type: SpaceType;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  /** Closed polygon ring in metres (closing duplicate omitted). */
+  vertices: [number, number][];
   capacity_density_per_m2?: number | null;
 }
 
@@ -43,13 +41,17 @@ export interface OccupantGroup {
   behaviour?: Record<string, string | number | boolean>;
 }
 
-export interface FloodEmergency {
+export interface RadialEmergency {
   enabled: boolean;
   x: number;
   y: number;
   radius_m: number;
+  spread_speed_mps?: number;
   intensity: number;
 }
+
+export type FloodEmergency = RadialEmergency;
+export type FireEmergency = RadialEmergency;
 
 export interface PixelObstacleMap {
   width: number;
@@ -68,6 +70,7 @@ export interface BuildingLayout {
   exits: Exit[];
   occupant_groups: OccupantGroup[];
   flood?: FloodEmergency | null;
+  fire?: FireEmergency | null;
   obstacle_map?: PixelObstacleMap | null;
 }
 
@@ -106,6 +109,8 @@ export interface OccupantFrameState {
 }
 
 export interface SimulationFrame {
+  flood_radius_m?: number | null;
+  fire_radius_m?: number | null;
   t: number;
   occupants: OccupantFrameState[];
 }

@@ -10,6 +10,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.domain.geometry import area as polygon_area
+from app.domain.geometry import bbox as polygon_bbox
+from app.domain.geometry import centroid as polygon_centroid
+from app.domain.geometry import rect_vertices
+
 
 class SpaceType(str, Enum):
     ROOM = "room"
@@ -21,14 +26,71 @@ class Space(BaseModel):
     id: str
     name: str
     type: SpaceType
-    x: float
-    y: float
-    width: float = Field(gt=0)
-    height: float = Field(gt=0)
+    vertices: list[tuple[float, float]] = Field(
+        min_length=3,
+        description="Closed polygon ring in metres (closing duplicate omitted).",
+    )
     capacity_density_per_m2: float | None = Field(
         default=None,
         description="Max occupants per m²; None uses simulation defaults for corridors/stairs.",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def legacy_aabb_to_vertices(cls, data: object) -> object:
+        """Accept legacy x/y/width/height spaces and expand to four corners."""
+        if not isinstance(data, dict):
+            return data
+        if data.get("vertices"):
+            return data
+        if all(k in data for k in ("x", "y", "width", "height")):
+            converted = dict(data)
+            converted["vertices"] = rect_vertices(
+                float(data["x"]),
+                float(data["y"]),
+                float(data["width"]),
+                float(data["height"]),
+            )
+            for key in ("x", "y", "width", "height"):
+                converted.pop(key, None)
+            return converted
+        return data
+
+    @field_validator("vertices")
+    @classmethod
+    def validate_vertices(
+        cls, v: list[tuple[float, float]]
+    ) -> list[tuple[float, float]]:
+        pts = [(float(x), float(y)) for x, y in v]
+        if len(pts) >= 2 and pts[0] == pts[-1]:
+            pts = pts[:-1]
+        if len(pts) < 3:
+            raise ValueError("Space must have at least 3 vertices")
+        cleaned: list[tuple[float, float]] = []
+        for p in pts:
+            if cleaned and cleaned[-1] == p:
+                continue
+            cleaned.append(p)
+        if len(cleaned) >= 2 and cleaned[0] == cleaned[-1]:
+            cleaned = cleaned[:-1]
+        if len(cleaned) < 3:
+            raise ValueError("Space must have at least 3 distinct vertices")
+        if polygon_area(cleaned) < 1e-6:
+            raise ValueError("Space polygon must have positive area")
+        return cleaned
+
+    @property
+    def centroid(self) -> tuple[float, float]:
+        return polygon_centroid(self.vertices)
+
+    @property
+    def area_m2(self) -> float:
+        return polygon_area(self.vertices)
+
+    @property
+    def bbox(self) -> tuple[float, float, float, float]:
+        """(min_x, min_y, width, height)."""
+        return polygon_bbox(self.vertices)
 
 
 class Door(BaseModel):
@@ -75,14 +137,23 @@ class OccupantGroup(BaseModel):
     behaviour: dict[str, float | str | bool] = Field(default_factory=dict)
 
 
-class FloodEmergency(BaseModel):
-    """Static, illustrative flood area; intensity is a relative scenario control."""
+class RadialEmergency(BaseModel):
+    """Expanding illustrative hazard area; speeds use metres per simulation second."""
 
     enabled: bool = True
     x: float = Field(ge=0, allow_inf_nan=False)
     y: float = Field(ge=0, allow_inf_nan=False)
     radius_m: float = Field(default=3.0, gt=0, allow_inf_nan=False)
+    spread_speed_mps: float = Field(default=0.1, ge=0, allow_inf_nan=False)
     intensity: float = Field(default=50.0, ge=0, le=100, allow_inf_nan=False)
+
+
+class FloodEmergency(RadialEmergency):
+    """Illustrative flood scenario."""
+
+
+class FireEmergency(RadialEmergency):
+    """Illustrative fire scenario; intensity is a relative slowdown, not heat."""
 
 
 class PixelObstacleMap(BaseModel):
@@ -113,12 +184,15 @@ class BuildingLayout(BaseModel):
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
     flood: FloodEmergency | None = None
+    fire: FireEmergency | None = None
     obstacle_map: PixelObstacleMap | None = None
 
     @model_validator(mode="after")
     def validate_references(self) -> BuildingLayout:
         if self.flood and (self.flood.x > self.width or self.flood.y > self.height):
             raise ValueError("Flood centre must be inside the building bounds")
+        if self.fire and (self.fire.x > self.width or self.fire.y > self.height):
+            raise ValueError("Fire centre must be inside the building bounds")
         space_ids = {s.id for s in self.spaces}
         exit_ids = {e.id for e in self.exits}
 
@@ -200,6 +274,8 @@ class OccupantFrameState(BaseModel):
 
 
 class SimulationFrame(BaseModel):
+    flood_radius_m: float | None = None
+    fire_radius_m: float | None = None
     t: float
     occupants: list[OccupantFrameState]
 
