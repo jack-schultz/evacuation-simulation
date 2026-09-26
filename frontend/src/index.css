@@ -240,3 +240,6 @@ button.danger {
 .error-text {
   color: #fecaca;
 }
+
+.flood-panel { background: #f0f9ff; }
+.properties .flood-toggle { display: flex; align-items: center; gap: 0.5rem; }

@@ -50,6 +50,14 @@ export interface OccupantGroup {
   behaviour?: Record<string, string | number | boolean>;
 }
 
+export interface FloodEmergency {
+  enabled: boolean;
+  x: number;
+  y: number;
+  radius_m: number;
+  intensity: number;
+}
+
 export interface BuildingLayout {
   name: string;
   width: number;
@@ -60,6 +68,7 @@ export interface BuildingLayout {
   doors: Door[];
   exits: Exit[];
   occupant_groups: OccupantGroup[];
+  flood?: FloodEmergency | null;
 }
 
 export interface BuildingSummary {

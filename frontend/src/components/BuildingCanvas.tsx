@@ -320,6 +320,21 @@ export function BuildingCanvas({
             />
           ))}
 
+          {layout.flood?.enabled && (
+            <Group listening={false}>
+              <Circle x={layout.flood.x * SCALE} y={layout.flood.y * SCALE}
+                radius={layout.flood.radius_m * SCALE}
+                fill={`rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`}
+                stroke={layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7'}
+                strokeWidth={2} dash={[6, 4]} />
+              <Text x={layout.flood.x * SCALE - 55} y={layout.flood.y * SCALE - 20}
+                width={110} align="center" text={`Flood ${layout.flood.intensity}%`}
+                fill="#075985" fontSize={12} />
+              <Circle x={layout.flood.x * SCALE} y={layout.flood.y * SCALE}
+                radius={3} fill="#075985" />
+            </Group>
+          )}
+
           {layout.doors.map((d) => (
             <Rect
               key={d.id}
@@ -395,7 +410,7 @@ export function BuildingCanvas({
                 x={o.x * SCALE}
                 y={o.y * SCALE}
                 radius={4}
-                fill={o.status === 'waiting' ? '#ef4444' : '#2563eb'}
+                fill={o.status === 'trapped' ? '#7c3aed' : o.status === 'waiting' ? '#ef4444' : '#2563eb'}
                 listening={false}
               />
             ))}
