@@ -22,39 +22,79 @@ export function HazardLayer({
   onChange,
   dragProps,
 }: Props) {
+  const connectedSpaceIds = (x: number, y: number) => {
+    const containsPoint = (vertices: [number, number][], x: number, y: number) => {
+      let inside = false;
+      for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i, i += 1) {
+        const [xi, yi] = vertices[i];
+        const [xj, yj] = vertices[j];
+        const cross = (x - xi) * (yj - yi) - (y - yi) * (xj - xi);
+        const onSegment = Math.abs(cross) < 1e-8
+          && x >= Math.min(xi, xj) - 1e-8 && x <= Math.max(xi, xj) + 1e-8
+          && y >= Math.min(yi, yj) - 1e-8 && y <= Math.max(yi, yj) + 1e-8;
+        if (onSegment) return true;
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    };
+
+    const knownIds = new Set(layout.spaces.map((space) => space.id));
+    const reachable = new Set(
+      layout.spaces.filter((space) => containsPoint(space.vertices, x, y)).map((space) => space.id),
+    );
+    const queue = [...reachable];
+    for (let index = 0; index < queue.length; index += 1) {
+      const current = queue[index];
+      for (const door of layout.doors) {
+        const [a, b] = door.connects;
+        const next = a === current ? b : b === current ? a : null;
+        if (next && knownIds.has(next) && !reachable.has(next)) {
+          reachable.add(next);
+          queue.push(next);
+        }
+      }
+    }
+    return reachable;
+  };
+
   const clippedHazard = (
     x: number,
     y: number,
     radius: number,
     fill: string,
     stroke: string,
-  ) => layout.spaces.map((space) => (
-    <Group
-      key={`${space.id}-${x}-${y}-${radius}`}
-      clipFunc={(context) => {
-        const vertices = space.vertices;
-        if (vertices.length < 3) return;
-        context.beginPath();
-        context.moveTo(vertices[0][0] * SCALE, vertices[0][1] * SCALE);
-        for (let i = 1; i < vertices.length; i += 1) {
-          context.lineTo(vertices[i][0] * SCALE, vertices[i][1] * SCALE);
-        }
-        context.closePath();
-      }}
-      listening={false}
-    >
-      <Circle
-        x={x * SCALE}
-        y={y * SCALE}
-        radius={radius * SCALE}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={2}
-        dash={[6, 4]}
+  ) => {
+    const reachable = connectedSpaceIds(x, y);
+    return layout.spaces.filter((space) => reachable.has(space.id)).map((space) => (
+      <Group
+        key={`${space.id}-${x}-${y}-${radius}-${fill}`}
+        clipFunc={(context) => {
+          const vertices = space.vertices;
+          if (vertices.length < 3) return;
+          context.beginPath();
+          context.moveTo(vertices[0][0] * SCALE, vertices[0][1] * SCALE);
+          for (let i = 1; i < vertices.length; i += 1) {
+            context.lineTo(vertices[i][0] * SCALE, vertices[i][1] * SCALE);
+          }
+          context.closePath();
+        }}
         listening={false}
-      />
-    </Group>
-  ));
+      >
+        <Circle
+          x={x * SCALE}
+          y={y * SCALE}
+          radius={radius * SCALE}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={2}
+          dash={[6, 4]}
+          listening={false}
+        />
+      </Group>
+    ));
+  };
 
   return (
     <>
