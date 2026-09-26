@@ -8,9 +8,11 @@ import math
 from app.domain.building import (
     FloodEmergency,
     FireEmergency,
+    Floor,
     OccupantStatus,
     PixelObstacleMap,
     SimulationParameters,
+    SmokeEmergency,
 )
 from app.simulation.collision import (
     WallSegment,
@@ -23,13 +25,90 @@ from app.simulation.collision import (
     resolve_wall_collisions,
     update_space_membership_from_position,
 )
-from app.simulation.hazards import hazard_radius_at, hazards_speed_factor
+from app.simulation.hazards import (
+    active_smoke_plumes,
+    hazard_radius_at,
+    hazards_speed_factor,
+    smoke_factor_at,
+)
 from app.simulation.hazard_avoidance import flood_detour_target
 from app.simulation.flow import ElementQueueState
 from app.simulation.graph import EdgeKind, NodeKind
 from app.simulation.movement import SimulatedOccupant
 from app.simulation.pixel_obstacles import position_is_walkable
 from app.simulation.routing import edge_between
+from app.simulation.stair_geometry import climb_path_length_m, climb_position
+
+
+def _advance_climbers(
+    occupants: list[SimulatedOccupant],
+    spaces: dict,
+    floors: dict[str, Floor],
+    graph,
+    params: SimulationParameters,
+    t: float,
+    smoke_plumes,
+) -> None:
+    """Walk climbing occupants along the directed stair path at reduced speed."""
+    for occ in occupants:
+        if occ.status != OccupantStatus.CLIMBING:
+            continue
+        from_id = occ.climb_from_space_id
+        to_id = occ.climb_to_space_id
+        if not from_id or not to_id:
+            occ.status = OccupantStatus.ACTIVE
+            continue
+        from_space = spaces.get(from_id)
+        to_space = spaces.get(to_id)
+        if from_space is None or to_space is None:
+            occ.status = OccupantStatus.ACTIVE
+            continue
+        edge = edge_between(
+            graph,
+            graph.space_node_ids.get(from_id, ""),
+            graph.space_node_ids.get(to_id, ""),
+        )
+        path_len = max(
+            climb_path_length_m(from_space, to_space, floors),
+            edge.distance_m if edge else 1.0,
+            0.5,
+        )
+        base = edge.base_speed_factor if edge is not None else params.stair_descent_speed_factor
+        smoke = smoke_factor_at(smoke_plumes, occ.floor_id, occ.x, occ.y)
+        speed = occ.speed_mps * base * smoke
+        delta = (speed * params.timestep_s) / path_len
+        progress = (occ.climb_progress or 0.0) + delta
+        occ.distance_m += speed * params.timestep_s
+        occ.travel_time_s += params.timestep_s
+        if progress >= 1.0:
+            occ.climb_progress = 1.0
+            x, y, floor_id = climb_position(from_space, to_space, floors, 1.0)
+            occ.x, occ.y = x, y
+            occ.floor_id = floor_id
+            occ.current_space_id = graph.stair_host_space_ids.get(to_id, to_id)
+            occ.status = OccupantStatus.ACTIVE
+            occ.climb_progress = None
+            occ.climb_from_space_id = None
+            occ.climb_to_space_id = None
+            occ.route_index += 1
+            occ.progress_on_edge = 0.0
+            waypoint = graph.nodes.get(occ.current_node_id)
+            if waypoint is not None and (
+                waypoint.kind == NodeKind.EXIT or occ.next_node_id is None
+            ):
+                occ.status = OccupantStatus.EVACUATED
+                if occ.evacuated_at is None:
+                    occ.evacuated_at = t
+                occ.x, occ.y = waypoint.x, waypoint.y
+            continue
+        occ.climb_progress = progress
+        x, y, floor_id = climb_position(from_space, to_space, floors, progress)
+        occ.x, occ.y = x, y
+        occ.floor_id = floor_id
+        occ.current_space_id = (
+            from_id if progress < 0.5 else graph.stair_host_space_ids.get(to_id, to_id)
+        )
+
 
 def advance_timestep(
     flow_model,
@@ -44,24 +123,42 @@ def advance_timestep(
     doors: dict | None = None,
     flood: FloodEmergency | None = None,
     fire: FireEmergency | None = None,
+    smoke: SmokeEmergency | None = None,
     obstacle_map: PixelObstacleMap | None = None,
     world_width: float = 0.0,
     world_height: float = 0.0,
+    floors: dict[str, Floor] | None = None,
+    smoke_plumes=None,
 ) -> None:
     radius = params.occupant_radius_m
     solids = boundary_solids or []
     spaces = spaces or {}
     doors = doors or {}
+    floors = floors or {}
+    smoke_plumes = smoke_plumes or []
     hazards = (flood, fire)
     has_hazard = any(hazard_radius_at(h, t) is not None for h in hazards)
     speed_factors: dict[str, float] = {}
+
+    _advance_climbers(occupants, spaces, floors, graph, params, t, smoke_plumes)
 
     contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
     element_edge: dict = {}
     occ_edge: dict[str, object] = {}
 
+    climbing_on: dict[str, int] = defaultdict(int)
     for occ in occupants:
-        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if occ.status == OccupantStatus.CLIMBING and occ.climb_from_space_id:
+            climbing_on[occ.climb_from_space_id] += 1
+            if occ.climb_to_space_id:
+                climbing_on[occ.climb_to_space_id] += 1
+
+    for occ in occupants:
+        if occ.status in (
+            OccupantStatus.EVACUATED,
+            OccupantStatus.TRAPPED,
+            OccupantStatus.CLIMBING,
+        ):
             continue
         nxt = occ.next_node_id
         if nxt is None:
@@ -81,10 +178,15 @@ def advance_timestep(
             occ.status = OccupantStatus.TRAPPED
             continue
         target_x, target_y = flood_target or (waypoint.x, waypoint.y)
-        factor = hazards_speed_factor(
-            hazards, t, occ.x, occ.y, target_x, target_y,
-            is_exit=waypoint.kind == NodeKind.EXIT,
-        ) if has_hazard else (edge.speed_factor if edge else 0.0)
+        factor = 1.0
+        if has_hazard:
+            factor = hazards_speed_factor(
+                hazards, t, occ.x, occ.y, target_x, target_y,
+                is_exit=waypoint.kind == NodeKind.EXIT,
+            )
+        if edge is not None:
+            factor *= edge.base_speed_factor
+        factor *= smoke_factor_at(smoke_plumes, occ.floor_id, occ.x, occ.y)
         speed_factors[occ.id] = factor
         if edge is None or factor <= 0:
             occ.status = OccupantStatus.TRAPPED
@@ -99,6 +201,8 @@ def advance_timestep(
             continue
         if occ.current_space_id:
             occupants_on[occ.current_space_id] += 1
+        if occ.status == OccupantStatus.CLIMBING and occ.climb_from_space_id:
+            occupants_on[occ.climb_from_space_id] += 1
 
     admitted: set[str] = set()
 
@@ -124,9 +228,35 @@ def advance_timestep(
             # Gate only when approaching an opening node, not when leaving into a space
             sample_next = graph.nodes[group[0].next_node_id]  # type: ignore[index]
             approaching_opening = sample_next.kind in (NodeKind.DOOR, NodeKind.EXIT)
+            stair_transfer = (
+                edge.kind == EdgeKind.STAIRS
+                and sample_next.kind == NodeKind.SPACE
+                and group[0].current_node_id in graph.stair_space_node_ids
+            )
 
-            if not approaching_opening:
+            if not approaching_opening and not stair_transfer:
                 for o in group:
+                    admitted.add(o.id)
+                continue
+
+            if stair_transfer:
+                slots = (
+                    int(capacity)
+                    if capacity != float("inf")
+                    else aperture_slots(edge.width_m, radius)
+                )
+                already = climbing_on.get(element_id, 0)
+                free = max(0, slots - already)
+                # Prefer people closest to the stair centre
+                ordered = sorted(
+                    group,
+                    key=lambda o: dist(
+                        o.x, o.y,
+                        graph.nodes[o.current_node_id].x,
+                        graph.nodes[o.current_node_id].y,
+                    ),
+                )
+                for o in ordered[:free]:
                     admitted.add(o.id)
                 continue
 
@@ -200,7 +330,11 @@ def advance_timestep(
         return actual
 
     for occ in occupants:
-        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if occ.status in (
+            OccupantStatus.EVACUATED,
+            OccupantStatus.TRAPPED,
+            OccupantStatus.CLIMBING,
+        ):
             continue
         if occ.next_node_id is None:
             continue
@@ -310,7 +444,11 @@ def advance_timestep(
                 occ.x, occ.y = safe_positions[occ.id]
 
     for occ in occupants:
-        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if occ.status in (
+            OccupantStatus.EVACUATED,
+            OccupantStatus.TRAPPED,
+            OccupantStatus.CLIMBING,
+        ):
             continue
         moved = moved_by.get(occ.id, 0.0)
         edge = occ_edge.get(occ.id)

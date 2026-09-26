@@ -22,6 +22,7 @@ interface Props {
   interactive: boolean;
   congestedIds?: Set<string>;
   floorPlanImage: HTMLImageElement | null;
+  activeFloorId: string;
   onObjectClick: HandleObjectClickFn;
   onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
@@ -37,6 +38,7 @@ export function SpaceLayer({
   interactive,
   congestedIds,
   floorPlanImage,
+  activeFloorId,
   onObjectClick,
   onHover,
   onChange,
@@ -48,8 +50,11 @@ export function SpaceLayer({
     isRefSelected(selected, { kind: 'space', id });
 
   // Rooms (and corridors) behind stairs so nested stair openings stay visible.
-  const rooms = layout.spaces.filter((s) => s.type !== 'stairs');
-  const stairs = layout.spaces.filter((s) => s.type === 'stairs');
+  const floorSpaces = layout.spaces.filter(
+    (s) => (s.floor_id ?? 'floor-0') === activeFloorId,
+  );
+  const rooms = floorSpaces.filter((s) => s.type !== 'stairs');
+  const stairs = floorSpaces.filter((s) => s.type === 'stairs');
 
   const renderSpace = (s: (typeof layout.spaces)[number]) => {
     const box = polygonBBox(s.vertices);

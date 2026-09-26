@@ -1,0 +1,161 @@
+"""Smoke hazard: soft slowdown, visibility, and chimney spread up stairs."""
+
+import unittest
+
+from app.domain.building import BuildingLayout, SimulationParameters, SmokeEmergency
+from app.simulation.engine import SimulationEngine
+from app.simulation.hazards import active_smoke_plumes, resolve_origin_smoke, smoke_speed_factor
+from app.simulation.graph import NavigationGraphBuilder
+from tests.test_stair_link import linked_floors_layout
+
+
+class SmokeUnitTests(unittest.TestCase):
+    def test_smoke_never_hard_blocks(self):
+        smoke = SmokeEmergency(
+            enabled=True, x=5, y=5, radius_m=3, intensity=100, floor_id="floor-0"
+        )
+        self.assertGreater(smoke_speed_factor(smoke, 3.0, 5.0, 5.0), 0.0)
+        self.assertLess(smoke_speed_factor(smoke, 3.0, 5.0, 5.0), 1.0)
+
+    def test_fire_emit_smoke_synthesizes_plume(self):
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 20,
+                "height": 20,
+                "spaces": [
+                    {
+                        "id": "r",
+                        "name": "R",
+                        "type": "room",
+                        "vertices": [[0, 0], [10, 0], [10, 10], [0, 10]],
+                    }
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 10,
+                        "y": 5,
+                        "width": 1,
+                        "connected_space_id": "r",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "G",
+                        "count": 1,
+                        "space_id": "r",
+                        "spawn_x": 2,
+                        "spawn_y": 5,
+                        "walking_speed_mps": 1.2,
+                    }
+                ],
+                "fire": {
+                    "enabled": True,
+                    "x": 8,
+                    "y": 5,
+                    "radius_m": 2,
+                    "intensity": 80,
+                    "emit_smoke": True,
+                },
+            }
+        )
+        origin = resolve_origin_smoke(layout)
+        self.assertIsNotNone(origin)
+        plumes = active_smoke_plumes(layout, 0.0)
+        self.assertEqual(len(plumes), 1)
+        self.assertGreater(plumes[0].radius_m, 2.0)
+
+
+class SmokeChimneyTests(unittest.TestCase):
+    def test_smoke_rises_through_linked_stairs(self):
+        layout = linked_floors_layout(count=1)
+        layout.smoke = SmokeEmergency(
+            enabled=True,
+            x=4.0,
+            y=4.0,
+            radius_m=1.0,
+            spread_speed_mps=2.0,
+            intensity=70,
+            floor_id="floor-0",
+            stair_spread_delay_s=1.0,
+            stair_spread_intensity_factor=0.8,
+        )
+        # Place smoke near ground stairs so it hits quickly.
+        layout.smoke.x = 10.0
+        layout.smoke.y = 4.0
+        early = active_smoke_plumes(layout, 0.0)
+        self.assertEqual({p.floor_id for p in early}, {"floor-0"})
+        late = active_smoke_plumes(layout, 30.0)
+        floors = {p.floor_id for p in late}
+        self.assertIn("floor-0", floors)
+        self.assertIn("floor-1", floors)
+
+    def test_smoke_does_not_spread_downward(self):
+        layout = linked_floors_layout(count=1)
+        layout.smoke = SmokeEmergency(
+            enabled=True,
+            x=10.0,
+            y=4.0,
+            radius_m=5.0,
+            spread_speed_mps=0.0,
+            intensity=70,
+            floor_id="floor-1",
+            stair_spread_delay_s=0.0,
+        )
+        plumes = active_smoke_plumes(layout, 20.0)
+        self.assertEqual({p.floor_id for p in plumes}, {"floor-1"})
+
+
+class SmokeSimTests(unittest.TestCase):
+    def test_smoke_slows_but_does_not_trap(self):
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 20,
+                "height": 12,
+                "spaces": [
+                    {
+                        "id": "r",
+                        "name": "R",
+                        "type": "room",
+                        "vertices": [[0, 0], [16, 0], [16, 10], [0, 10]],
+                    }
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 16,
+                        "y": 5,
+                        "width": 1.2,
+                        "connected_space_id": "r",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "G",
+                        "count": 1,
+                        "space_id": "r",
+                        "spawn_x": 2,
+                        "spawn_y": 5,
+                        "walking_speed_mps": 1.2,
+                    }
+                ],
+                "smoke": {
+                    "enabled": True,
+                    "x": 8,
+                    "y": 5,
+                    "radius_m": 4,
+                    "spread_speed_mps": 0,
+                    "intensity": 80,
+                    "visibility_m": 8,
+                },
+            }
+        )
+        out = SimulationEngine().run(layout, SimulationParameters(max_time_s=60))
+        self.assertEqual(out.results.evacuated_count, 1)
+        self.assertTrue(any(f.smoke_floors for f in out.frames))
+
+
+if __name__ == "__main__":
+    unittest.main()

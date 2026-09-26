@@ -15,7 +15,13 @@ from app.domain.building import (
     SimulationResults,
 )
 from app.simulation.collision import build_collision_solids
-from app.simulation.hazards import apply_hazards, hazard_radius_at
+from app.simulation.hazards import (
+    active_smoke_plumes,
+    apply_hazards,
+    hazard_radius_at,
+    resolve_origin_smoke,
+    smoke_emergencies_from_plumes,
+)
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
 from app.simulation.graph import NavigationGraphBuilder
 from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
@@ -68,15 +74,23 @@ class SimulationEngine:
             "exit_flow_per_s": params.exit_flow_per_s,
             "corridor_density_per_m2": params.corridor_density_per_m2,
             "occupant_radius_m": params.occupant_radius_m,
+            "stair_descent_speed_factor": params.stair_descent_speed_factor,
+            "stair_ascent_speed_factor": params.stair_ascent_speed_factor,
         }
         graph = self.graph_builder.build(layout, defaults)
-        apply_hazards(graph, (layout.flood, layout.fire))
+        origin_smoke = resolve_origin_smoke(layout)
+        plumes0 = active_smoke_plumes(layout, 0.0)
+        apply_hazards(
+            graph,
+            (layout.flood, layout.fire, *smoke_emergencies_from_plumes(plumes0)),
+        )
 
         boundary_solids = build_collision_solids(
             layout.spaces, layout.doors, layout.exits
         )
         spaces = {s.id: s for s in layout.spaces}
         doors = {d.id: d for d in layout.doors}
+        floors = {f.id: f for f in layout.floors}
         occupants = spawn_occupants(
             self.route_selector,
             layout,
@@ -92,14 +106,18 @@ class SimulationEngine:
         t = 0.0
         next_frame_t = 0.0
 
-        frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
+        frames.append(self._capture_frame(t, occupants, layout))
         next_frame_t = params.frame_interval_s
 
         while t < params.max_time_s:
-            if all(o.status == OccupantStatus.EVACUATED for o in occupants):
+            if all(
+                o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED)
+                for o in occupants
+            ):
                 break
 
             t += params.timestep_s
+            plumes = active_smoke_plumes(layout, t)
             advance_timestep(
                 self.flow_model,
                 self.movement_model,
@@ -113,17 +131,20 @@ class SimulationEngine:
                 doors,
                 layout.flood,
                 layout.fire,
+                origin_smoke,
                 layout.obstacle_map,
                 layout.width,
                 layout.height,
+                floors,
+                plumes,
             )
 
             if t + 1e-9 >= next_frame_t:
-                frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
+                frames.append(self._capture_frame(t, occupants, layout))
                 next_frame_t += params.frame_interval_s
 
         if not frames or frames[-1].t < t:
-            frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
+            frames.append(self._capture_frame(t, occupants, layout))
 
         results = build_results(occupants, queues, t, graph=graph)
         return SimulationOutput(results=results, frames=frames)
@@ -132,13 +153,13 @@ class SimulationEngine:
     def _capture_frame(
         t: float,
         occupants: list[SimulatedOccupant],
-        flood: FloodEmergency | None = None,
-        fire: FireEmergency | None = None,
+        layout: BuildingLayout,
     ) -> SimulationFrame:
         return SimulationFrame(
             t=round(t, 3),
-            flood_radius_m=hazard_radius_at(flood, t),
-            fire_radius_m=hazard_radius_at(fire, t),
+            flood_radius_m=hazard_radius_at(layout.flood, t),
+            fire_radius_m=hazard_radius_at(layout.fire, t),
+            smoke_floors=active_smoke_plumes(layout, t),
             occupants=[
                 OccupantFrameState(
                     id=o.id,
@@ -146,6 +167,12 @@ class SimulationEngine:
                     y=round(o.y, 3),
                     status=o.status,
                     group_id=o.group_id,
+                    floor_id=o.floor_id,
+                    climb_progress=(
+                        round(o.climb_progress, 3)
+                        if o.climb_progress is not None
+                        else None
+                    ),
                 )
                 for o in occupants
             ],

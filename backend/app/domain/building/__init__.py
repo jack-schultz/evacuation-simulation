@@ -8,15 +8,18 @@ Compatibility barrel — prefer importing from app.domain.building.
 from __future__ import annotations
 
 from app.domain.building.hazards import (
+    DEFAULT_FLOOR_ID,
     FireEmergency,
     FloodEmergency,
     PixelObstacleMap,
     RadialEmergency,
+    SmokeEmergency,
 )
 from app.domain.building.layout import (
     BuildingLayout,
     Door,
     Exit,
+    Floor,
     OccupantGroup,
     Space,
     SpaceType,
@@ -29,15 +32,18 @@ from app.domain.building.results import (
     OccupantStatus,
     SimulationFrame,
     SimulationResults,
+    SmokeFloorState,
 )
 
 __all__ = [
     "BuildingLayout",
     "CongestionHotspot",
+    "DEFAULT_FLOOR_ID",
     "Door",
     "Exit",
     "FireEmergency",
     "FloodEmergency",
+    "Floor",
     "OccupantFrameState",
     "OccupantGroup",
     "OccupantResult",
@@ -47,6 +53,8 @@ __all__ = [
     "SimulationFrame",
     "SimulationParameters",
     "SimulationResults",
+    "SmokeEmergency",
+    "SmokeFloorState",
     "Space",
     "SpaceType",
 ]

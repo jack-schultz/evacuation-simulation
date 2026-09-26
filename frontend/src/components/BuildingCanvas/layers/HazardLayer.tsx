@@ -1,5 +1,6 @@
 import { Circle, Group, Text } from 'react-konva';
 import type { BuildingLayout, EditorTool } from '../../../types/building';
+import type { SmokeFloorState } from '../../../types/api';
 import { SCALE } from '../../../utils';
 import type { DragPropsFn } from '../useCanvasInteraction';
 
@@ -7,8 +8,10 @@ interface Props {
   layout: BuildingLayout;
   tool: EditorTool;
   interactive: boolean;
+  activeFloorId: string;
   floodRadiusM?: number | null;
   fireRadiusM?: number | null;
+  smokeFloors?: SmokeFloorState[];
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
 }
@@ -17,8 +20,10 @@ export function HazardLayer({
   layout,
   tool,
   interactive,
+  activeFloorId,
   floodRadiusM,
   fireRadiusM,
+  smokeFloors = [],
   onChange,
   dragProps,
 }: Props) {
@@ -40,14 +45,18 @@ export function HazardLayer({
       return inside;
     };
 
-    const knownIds = new Set(layout.spaces.map((space) => space.id));
+    const floorSpaces = layout.spaces.filter(
+      (space) => (space.floor_id ?? 'floor-0') === activeFloorId,
+    );
+    const knownIds = new Set(floorSpaces.map((space) => space.id));
     const reachable = new Set(
-      layout.spaces.filter((space) => containsPoint(space.vertices, x, y)).map((space) => space.id),
+      floorSpaces.filter((space) => containsPoint(space.vertices, x, y)).map((space) => space.id),
     );
     const queue = [...reachable];
     for (let index = 0; index < queue.length; index += 1) {
       const current = queue[index];
       for (const door of layout.doors) {
+        if ((door.floor_id ?? 'floor-0') !== activeFloorId) continue;
         const [a, b] = door.connects;
         const next = a === current ? b : b === current ? a : null;
         if (next && knownIds.has(next) && !reachable.has(next)) {
@@ -67,7 +76,12 @@ export function HazardLayer({
     stroke: string,
   ) => {
     const reachable = connectedSpaceIds(x, y);
-    return layout.spaces.filter((space) => reachable.has(space.id)).map((space) => (
+    return layout.spaces
+      .filter(
+        (space) =>
+          (space.floor_id ?? 'floor-0') === activeFloorId && reachable.has(space.id),
+      )
+      .map((space) => (
       <Group
         key={`${space.id}-${x}-${y}-${radius}-${fill}`}
         clipFunc={(context) => {
@@ -96,9 +110,19 @@ export function HazardLayer({
     ));
   };
 
+  const floodOnFloor =
+    layout.flood?.enabled && (layout.flood.floor_id ?? 'floor-0') === activeFloorId;
+  const fireOnFloor =
+    layout.fire?.enabled && (layout.fire.floor_id ?? 'floor-0') === activeFloorId;
+  const smokeOnFloor = smokeFloors.filter((p) => p.floor_id === activeFloorId);
+  const smokeEdit =
+    layout.smoke?.enabled && (layout.smoke.floor_id ?? 'floor-0') === activeFloorId
+      ? layout.smoke
+      : null;
+
   return (
     <>
-      {layout.flood?.enabled && (
+      {floodOnFloor && layout.flood && (
         clippedHazard(
           layout.flood.x,
           layout.flood.y,
@@ -107,7 +131,7 @@ export function HazardLayer({
           layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7',
         )
       )}
-      {layout.flood?.enabled && (
+      {floodOnFloor && layout.flood && (
         <Group
           x={layout.flood.x * SCALE}
           y={layout.flood.y * SCALE}
@@ -136,7 +160,7 @@ export function HazardLayer({
         </Group>
       )}
 
-      {layout.fire?.enabled && (
+      {fireOnFloor && layout.fire && (
         clippedHazard(
           layout.fire.x,
           layout.fire.y,
@@ -145,7 +169,7 @@ export function HazardLayer({
           layout.fire.intensity >= 80 ? '#b91c1c' : '#ea580c',
         )
       )}
-      {layout.fire?.enabled && (
+      {fireOnFloor && layout.fire && (
         <Group
           x={layout.fire.x * SCALE}
           y={layout.fire.y * SCALE}
@@ -163,8 +187,6 @@ export function HazardLayer({
             fontSize={12}
             listening={false}
           />
-          {/* Only the centre handle catches input, so the fire area does
-              not obstruct selecting or dragging the layout beneath it. */}
           <Circle
             radius={10}
             fill="#ffedd5"
@@ -173,6 +195,53 @@ export function HazardLayer({
             listening={interactive && tool === 'select'}
           />
           <Circle radius={3} fill="#9a3412" listening={false} />
+        </Group>
+      )}
+
+      {smokeOnFloor.map((plume) =>
+        clippedHazard(
+          plume.x,
+          plume.y,
+          plume.radius_m,
+          `rgba(100, 116, 139, ${0.12 + plume.intensity / 280})`,
+          '#475569',
+        ),
+      )}
+      {smokeEdit && smokeOnFloor.length === 0 && (
+        clippedHazard(
+          smokeEdit.x,
+          smokeEdit.y,
+          smokeEdit.radius_m,
+          `rgba(100, 116, 139, ${0.12 + smokeEdit.intensity / 280})`,
+          '#475569',
+        )
+      )}
+      {smokeEdit && (
+        <Group
+          x={smokeEdit.x * SCALE}
+          y={smokeEdit.y * SCALE}
+          {...dragProps(null, (x, y) => {
+            if (layout.smoke) onChange({ ...layout, smoke: { ...layout.smoke, x, y } });
+          })}
+        >
+          <Text
+            x={-55}
+            y={-30}
+            width={110}
+            align="center"
+            text={`Smoke ${smokeEdit.intensity}%`}
+            fill="#334155"
+            fontSize={12}
+            listening={false}
+          />
+          <Circle
+            radius={10}
+            fill="#e2e8f0"
+            stroke="#334155"
+            strokeWidth={2}
+            listening={interactive && tool === 'select'}
+          />
+          <Circle radius={3} fill="#334155" listening={false} />
         </Group>
       )}
     </>

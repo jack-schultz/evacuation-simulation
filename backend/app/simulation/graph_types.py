@@ -42,6 +42,8 @@ class GraphEdge:
     area_m2: float | None
     element_id: str
     speed_factor: float = 1.0
+    # Intrinsic slowdown (e.g. stair ascent/descent); hazards multiply this.
+    base_speed_factor: float = 1.0
 
 
 @dataclass
@@ -51,10 +53,12 @@ class NavigationGraph:
     adjacency: dict[str, list[str]] = field(default_factory=dict)
     exit_node_ids: list[str] = field(default_factory=list)
     space_node_ids: dict[str, str] = field(default_factory=dict)  # space_id -> node_id
-    # Space nodes retained on movement routes (linked stair teleport waypoints)
+    # Space nodes retained on movement routes (linked stair climb waypoints)
     stair_space_node_ids: set[str] = field(default_factory=set)
     # stair space id -> host room/corridor that contains the stair center
     stair_host_space_ids: dict[str, str] = field(default_factory=dict)
+    # space id -> floor id
+    space_floor_ids: dict[str, str] = field(default_factory=dict)
 
     def add_node(self, node: GraphNode) -> None:
         self.nodes[node.id] = node
@@ -79,6 +83,8 @@ class NavigationGraph:
                 capacity_density_per_m2=edge.capacity_density_per_m2,
                 area_m2=edge.area_m2,
                 element_id=edge.element_id,
+                speed_factor=edge.speed_factor,
+                base_speed_factor=edge.base_speed_factor,
             )
             self.edges[mirror_id] = mirror
             self.adjacency.setdefault(mirror.from_id, []).append(mirror_id)

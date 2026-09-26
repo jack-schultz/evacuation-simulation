@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import { ColumnResizer } from './ColumnResizer';
 
-export type PanelId = 'tools' | 'flood' | 'fire';
+export type PanelId = 'tools' | 'flood' | 'fire' | 'smoke';
 
 const PANEL_META: { id: PanelId; label: string; short: string }[] = [
   { id: 'tools', label: 'Building tools', short: 'Tools' },
   { id: 'flood', label: 'Flood emergency', short: 'Flood' },
   { id: 'fire', label: 'Fire emergency', short: 'Fire' },
+  { id: 'smoke', label: 'Smoke emergency', short: 'Smoke' },
 ];
 
 interface Props {

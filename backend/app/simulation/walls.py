@@ -43,6 +43,7 @@ class WallSegment:
     bx: float
     by: float
     thickness: float = 0.1
+    floor_id: str = "floor-0"
 
     @property
     def length(self) -> float:
@@ -82,6 +83,7 @@ def _split_segment_for_opening(
     oy: float,
     width_m: float,
     thickness_m: float,
+    floor_id: str = "floor-0",
 ) -> list[WallSegment] | None:
     """If opening lands on this edge, return remaining solid pieces; else None."""
     length = dist(ax, ay, bx, by)
@@ -106,6 +108,7 @@ def _split_segment_for_opening(
                 ax + (bx - ax) * t0,
                 ay + (by - ay) * t0,
                 thickness_m,
+                floor_id,
             )
         )
     if t1 < 1.0 - 1e-6:
@@ -116,6 +119,7 @@ def _split_segment_for_opening(
                 bx,
                 by,
                 thickness_m,
+                floor_id,
             )
         )
     return pieces
@@ -125,15 +129,16 @@ def _punch_openings_on_edges(
     edges: list[tuple[tuple[float, float], tuple[float, float]]],
     openings: list[tuple[float, float, float]],
     thickness_m: float,
+    floor_id: str = "floor-0",
 ) -> list[WallSegment]:
     solids: list[WallSegment] = []
     for (a, b) in edges:
-        pieces = [WallSegment(a[0], a[1], b[0], b[1], thickness_m)]
+        pieces = [WallSegment(a[0], a[1], b[0], b[1], thickness_m, floor_id)]
         for ox, oy, ow in openings:
             next_pieces: list[WallSegment] = []
             for seg in pieces:
                 split = _split_segment_for_opening(
-                    seg.ax, seg.ay, seg.bx, seg.by, ox, oy, ow, thickness_m
+                    seg.ax, seg.ay, seg.bx, seg.by, ox, oy, ow, thickness_m, floor_id
                 )
                 if split is None:
                     next_pieces.append(seg)
@@ -158,6 +163,8 @@ def _is_overlay_stair(space: Space, spaces: list[Space]) -> bool:
     for other in spaces:
         if other.id == space.id or other.type == SpaceType.STAIRS:
             continue
+        if getattr(other, "floor_id", None) != getattr(space, "floor_id", None):
+            continue
         if point_in_polygon(cx, cy, other.vertices):
             return True
     return False
@@ -173,16 +180,27 @@ def space_boundary_segments(
 
     Overlay stairs (center inside a host room/corridor) do not emit walls — they are
     portals, and their edges would otherwise trap anyone who teleports to the center.
+    Solids are tagged with floor_id so stacked storeys do not collide across floors.
     """
     from app.domain.geometry import edges as polygon_edges
 
-    edge_list: list[tuple[tuple[float, float], tuple[float, float]]] = []
-    for s in spaces:
-        if _is_overlay_stair(s, spaces):
-            continue
-        edge_list.extend(polygon_edges(s.vertices))
-    openings = [(d.x, d.y, d.width) for d in doors] + [(e.x, e.y, e.width) for e in exits]
-    return _punch_openings_on_edges(edge_list, openings, thickness_m)
+    solids: list[WallSegment] = []
+    floor_ids = {s.floor_id for s in spaces}
+    for floor_id in floor_ids:
+        floor_spaces = [s for s in spaces if s.floor_id == floor_id]
+        edge_list: list[tuple[tuple[float, float], tuple[float, float]]] = []
+        for s in floor_spaces:
+            if _is_overlay_stair(s, floor_spaces):
+                continue
+            edge_list.extend(polygon_edges(s.vertices))
+        openings = [
+            (d.x, d.y, d.width) for d in doors if d.floor_id == floor_id
+        ] + [
+            (e.x, e.y, e.width) for e in exits if e.floor_id == floor_id
+        ]
+        punched = _punch_openings_on_edges(edge_list, openings, thickness_m, floor_id)
+        solids.extend(punched)
+    return solids
 
 
 def space_boundary_rects(

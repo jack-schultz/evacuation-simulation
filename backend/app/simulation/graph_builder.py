@@ -125,6 +125,7 @@ class NavigationGraphBuilder:
             )
             graph.add_node(node)
             graph.space_node_ids[space.id] = node.id
+            graph.space_floor_ids[space.id] = space.floor_id
             if space.type == SpaceType.STAIRS:
                 graph.stair_space_node_ids.add(node.id)
 
@@ -235,7 +236,7 @@ class NavigationGraphBuilder:
                 graph, space, opening_ids, doors, exits, defaults
             )
 
-        self._add_stair_link_edges(graph, spaces, defaults)
+        self._add_stair_link_edges(graph, spaces, defaults, layout)
 
         return graph
 
@@ -245,7 +246,7 @@ class NavigationGraphBuilder:
         spaces: dict[str, Space],
         openings_by_space: dict[str, list[str]],
     ) -> None:
-        """Treat each stair as an opening inside spaces that contain its center."""
+        """Treat each stair as an opening inside same-floor spaces that contain its center."""
         for space in spaces.values():
             if space.type != SpaceType.STAIRS:
                 continue
@@ -254,6 +255,8 @@ class NavigationGraphBuilder:
             hosts: list[Space] = []
             for other in spaces.values():
                 if other.id == space.id or other.type == SpaceType.STAIRS:
+                    continue
+                if other.floor_id != space.floor_id:
                     continue
                 if point_in_polygon(sn.x, sn.y, other.vertices):
                     hosts.append(other)
@@ -268,8 +271,12 @@ class NavigationGraphBuilder:
         graph: NavigationGraph,
         spaces: dict[str, Space],
         defaults: dict[str, float],
+        layout: BuildingLayout,
     ) -> None:
-        """Bidirectional teleport portals between linked stair space nodes."""
+        """Directed climb edges between linked stair space nodes (ascent slower)."""
+        from app.simulation.stair_geometry import climb_path_length_m, floor_elevation
+
+        floors = {f.id: f for f in layout.floors}
         seen_pairs: set[frozenset[str]] = set()
         for space in spaces.values():
             if space.type != SpaceType.STAIRS or not space.linked_stair_id:
@@ -284,11 +291,15 @@ class NavigationGraphBuilder:
 
             a_id = graph.space_node_ids[space.id]
             b_id = graph.space_node_ids[other.id]
-            an = graph.nodes[a_id]
-            bn = graph.nodes[b_id]
-            distance = max(_dist(an.x, an.y, bn.x, bn.y), 0.5)
+            distance = max(climb_path_length_m(space, other, floors), 0.5)
             _, _, bw, bh = space.bbox
             width = min(bw, bh) if bw > 0 and bh > 0 else 1.0
+            elev_a = floor_elevation(floors, space.floor_id)
+            elev_b = floor_elevation(floors, other.floor_id)
+            descent = float(defaults.get("stair_descent_speed_factor", 0.55))
+            ascent = float(defaults.get("stair_ascent_speed_factor", 0.35))
+            a_to_b = descent if elev_a >= elev_b else ascent
+            b_to_a = descent if elev_b >= elev_a else ascent
             graph.add_edge(
                 GraphEdge(
                     id=f"edge:stair_link:{space.id}:{other.id}",
@@ -301,7 +312,27 @@ class NavigationGraphBuilder:
                     capacity_density_per_m2=None,
                     area_m2=None,
                     element_id=space.id,
-                )
+                    base_speed_factor=a_to_b,
+                    speed_factor=a_to_b,
+                ),
+                bidirectional=False,
+            )
+            graph.add_edge(
+                GraphEdge(
+                    id=f"edge:stair_link:{other.id}:{space.id}",
+                    from_id=b_id,
+                    to_id=a_id,
+                    distance_m=distance,
+                    kind=EdgeKind.STAIRS,
+                    width_m=width,
+                    flow_rate_per_s=defaults.get("stairs_flow_per_s"),
+                    capacity_density_per_m2=None,
+                    area_m2=None,
+                    element_id=other.id,
+                    base_speed_factor=b_to_a,
+                    speed_factor=b_to_a,
+                ),
+                bidirectional=False,
             )
 
     def _add_visibility_edges(

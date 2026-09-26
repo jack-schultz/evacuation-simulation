@@ -151,7 +151,7 @@ def update_space_membership_from_position(
     from app.domain.geometry import point_in_polygon
 
     for o in occupants:
-        if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED, OccupantStatus.CLIMBING):
             continue
         if not o.current_space_id:
             continue
@@ -199,7 +199,7 @@ def resolve_space_containment(
     doors = doors or {}
 
     for o in occupants:
-        if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED, OccupantStatus.CLIMBING):
             continue
         if o.current_space_id not in spaces:
             continue
@@ -234,11 +234,14 @@ def resolve_wall_collisions(
     active = [
         o
         for o in occupants
-        if o.status not in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED)
+        if o.status not in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED, OccupantStatus.CLIMBING)
     ]
     for o in active:
+        floor = getattr(o, "floor_id", None)
         for solid in solids:
             if isinstance(solid, WallSegment):
+                if floor is not None and getattr(solid, "floor_id", floor) != floor:
+                    continue
                 o.x, o.y = solid.push_out(o.x, o.y, r)
             else:
                 inflated = Aabb(

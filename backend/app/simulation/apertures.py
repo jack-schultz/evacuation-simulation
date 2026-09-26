@@ -93,7 +93,7 @@ def resolve_overlaps(
     active = [
         o
         for o in occupants
-        if o.status not in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED)
+        if o.status not in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED, OccupantStatus.CLIMBING)
     ]
 
     for _ in range(iterations):
@@ -101,6 +101,8 @@ def resolve_overlaps(
             a = active[i]
             for j in range(i + 1, len(active)):
                 b = active[j]
+                if getattr(a, "floor_id", None) != getattr(b, "floor_id", None):
+                    continue
                 dx = b.x - a.x
                 dy = b.y - a.y
                 d = (dx * dx + dy * dy) ** 0.5
