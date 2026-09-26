@@ -245,26 +245,26 @@ class DoorJamTests(unittest.TestCase):
         self.assertEqual(output.results.evacuated_count, 12)
 
         door_x, door_y = 13.0, 15.0
-        # While jammed near the door, waiting bodies should sit on the office side
-        # (y <= door), not wrapped into a ring on the corridor side of the sealed edge.
+        # Waiters away from the door gap (x well west of the opening) must stay
+        # on the office side — they must not wrap through the sealed edge.
         saw_jam = False
         for frame in output.frames:
-            near = [
+            west_waiting = [
                 o
                 for o in frame.occupants
-                if o.status != "evacuated"
-                and dist(o.x, o.y, door_x, door_y) < 2.0
+                if o.status == "waiting"
+                and dist(o.x, o.y, door_x, door_y) < 2.5
+                and o.x <= door_x - 0.6
             ]
-            # Require a dense queue (not the last few mid-crossing).
-            if len(near) < 6:
+            if len(west_waiting) < 3:
                 continue
             saw_jam = True
-            office_side = sum(1 for o in near if o.y <= door_y + 0.05)
-            self.assertGreaterEqual(
-                office_side,
-                len(near) // 2,
-                f"expected queue mostly on office side at t={frame.t}",
-            )
+            for o in west_waiting:
+                self.assertLessEqual(
+                    o.y,
+                    door_y + 0.05,
+                    f"waiter west of door gap wrapped to corridor at t={frame.t}",
+                )
         self.assertTrue(saw_jam, "expected a multi-person jam near the door")
 
 
@@ -287,7 +287,7 @@ class SpaceContainmentTests(unittest.TestCase):
             id="g:0",
             group_id="g",
             speed_mps=1.4,
-            route=["space:office", "door:d1", "space:corridor", "exit:out"],
+            route=["space:office", "door:d1", "exit:out"],
             current_space_id="office",
             x=12.0,
             y=18.0,
@@ -311,7 +311,7 @@ class SpaceContainmentTests(unittest.TestCase):
             id="g:0",
             group_id="g",
             speed_mps=1.4,
-            route=["space:office", "door:d1", "space:corridor", "exit:out"],
+            route=["space:office", "door:d1", "exit:out"],
             current_space_id="office",
             x=corridor_inset.x + corridor_inset.width / 2,
             y=corridor_inset.y + corridor_inset.height / 2,
@@ -324,24 +324,37 @@ class SpaceContainmentTests(unittest.TestCase):
             "admitted toward door should allow destination inset",
         )
 
-        # After claiming the door and advancing onto the destination space node
-        occ.route_index = 1  # on door
+        # Claiming the door keeps origin membership; leaving the door toward
+        # the exit flips current_space_id as the route advances off the door.
+        occ.route_index = 0
+        occ.x, occ.y = 13.0, 15.0
         SpatialMovementModel().try_advance_route(
-            occ, graph, radius, t=1.0, admitted=True
+            occ, graph, radius, t=1.0, admitted=True, doors=doors
         )
-        # Force position at corridor centroid and advance again if still on door
-        if occ.current_node_id.startswith("door:"):
-            dest = graph.nodes["space:corridor"]
-            occ.x, occ.y = dest.x, dest.y
-            SpatialMovementModel().try_advance_route(
-                occ, graph, radius, t=1.0, admitted=True
-            )
-        self.assertEqual(occ.current_space_id, "corridor")
+        self.assertEqual(occ.current_node_id, "door:d1")
+        self.assertEqual(occ.current_space_id, "office")
 
-        # Without admission back to office, clamp stays in corridor
-        occ.x, occ.y = 10.0, 8.0  # deep in office
-        resolve_space_containment([occ], spaces, doors, graph, radius, admitted=set())
-        self.assertTrue(corridor_inset.contains_point(occ.x, occ.y))
+        # Reach the exit to leave the door node
+        occ.x, occ.y = 12.0, 22.0
+        SpatialMovementModel().try_advance_route(
+            occ, graph, radius, t=1.0, admitted=True, doors=doors
+        )
+        self.assertEqual(occ.current_space_id, "corridor")
+        self.assertEqual(occ.status.value, "evacuated")
+
+        # Corridor member without door transit is clamped out of the office
+        occ2 = SimulatedOccupant(
+            id="g:1",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:corridor", "exit:out"],
+            route_index=0,
+            current_space_id="corridor",
+            x=10.0,
+            y=8.0,
+        )
+        resolve_space_containment([occ2], spaces, doors, graph, radius, admitted=set())
+        self.assertTrue(corridor_inset.contains_point(occ2.x, occ2.y))
 
     def test_large_step_toward_solid_edge_stays_inside(self):
         layout = packed_room(door_width=0.9, count=1)

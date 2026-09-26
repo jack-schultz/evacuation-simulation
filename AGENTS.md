@@ -57,9 +57,9 @@ API routers → services → domain / simulation engine
 ## Domain invariants
 
 - Layout pieces: **spaces** (`room` \| `corridor` \| `stairs` as closed polygons), **doors**, **exits**, **occupant_groups**.
-- Connectivity is **doors + exits only** on the nav graph. Each space node sits at the polygon **centroid**. Space edges act as solid barriers for movement (door/exit widths are the only gaps). Space edges do not cut the navigation graph.
+- Connectivity is **doors + exits only** for people pathing. Space nodes sit at polygon **centroids** and define which openings share a room; routes go opening-to-opening (plus a start space node to leave the spawn room). Space edges act as solid barriers for movement (door/exit widths are the only gaps).
 - Occupant groups expand to individuals; each gets a **fixed route at spawn** (no replanning).
-- Occupants steer in continuous `(x, y)` toward waypoints with body radius collisions against people and space-edge solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
+- Occupants steer in continuous `(x, y)` toward door/exit waypoints with body radius collisions against people and space-edge solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
 - Soft validation on **save** (incomplete layouts OK). Hard validation on **run** (need spaces, exits, occupant groups).
 - Creating a simulation **snapshots** the building layout; later edits do not change that sim (UI creates a new sim on Run).
 - Editor: room/corridor/stairs tools click corners to draw a polygon; click the first point to close.

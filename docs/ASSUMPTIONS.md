@@ -11,10 +11,12 @@ regulatory compliance calculation.
   clicking corners and closing on the start point.
 * Coordinates use a top-left origin; one grid unit defaults to one metre
   (`meters_per_cell`).
-* Each space’s navigation node is its polygon centroid.
+* Each space has a centroid node used for spawn start and to decide which
+  openings share that room. People path **opening-to-opening** within a space
+  (door↔door, door↔exit); they do not walk to room centroids as waypoints.
 * Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
-  navigation graph (spaces/doors/exits define connectivity).
+  navigation graph beyond defining which openings may connect.
 
 ## Occupant knowledge and behaviour
 
@@ -29,8 +31,9 @@ regulatory compliance calculation.
 ## Movement and congestion
 
 * Discrete-time simulation (default timestep 0.25 s).
-* Occupants steer continuously in 2D toward fixed route waypoints (space
-  centroids, doors, exits) rather than sliding on a single shared edge line.
+* Occupants steer continuously in 2D toward fixed route waypoints (doors and
+  exits; plus the spawn space node only to leave the starting room) rather than
+  sliding on a single shared edge line.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
   cannot cross space boundaries except through door/exit gaps.

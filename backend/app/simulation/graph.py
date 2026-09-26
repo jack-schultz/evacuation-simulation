@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from app.domain.building import BuildingLayout, SpaceType
+from app.domain.building import BuildingLayout, Door, Exit, SpaceType
 
 
 class NodeKind(str, Enum):
@@ -58,9 +58,11 @@ class NavigationGraph:
         self.nodes[node.id] = node
         self.adjacency.setdefault(node.id, [])
 
-    def add_edge(self, edge: GraphEdge) -> None:
+    def add_edge(self, edge: GraphEdge, *, bidirectional: bool = True) -> None:
         self.edges[edge.id] = edge
         self.adjacency.setdefault(edge.from_id, []).append(edge.id)
+        if not bidirectional:
+            return
         # undirected: mirror edge
         mirror_id = f"{edge.id}__rev"
         if mirror_id not in self.edges:
@@ -96,18 +98,50 @@ def _edge_kind_for_space(space_type: SpaceType) -> EdgeKind:
     return EdgeKind.SPACE
 
 
+def _opening_edge_props(
+    node: GraphNode,
+    doors: dict[str, Door],
+    exits: dict[str, Exit],
+    defaults: dict[str, float],
+) -> tuple[EdgeKind, float, float | None, str]:
+    """kind, width, flow, element_id for approaching this opening."""
+    if node.kind == NodeKind.DOOR:
+        door = doors[node.ref_id]
+        flow = (
+            door.flow_rate_per_s
+            if door.flow_rate_per_s is not None
+            else defaults["door_flow_per_s"]
+        )
+        return EdgeKind.DOOR, door.width, flow, door.id
+    exit_ = exits[node.ref_id]
+    flow = (
+        exit_.flow_rate_per_s
+        if exit_.flow_rate_per_s is not None
+        else defaults["exit_flow_per_s"]
+    )
+    return EdgeKind.EXIT, exit_.width, flow, exit_.id
+
+
 class NavigationGraphBuilder:
-    """Builds a navigable graph from polygonal spaces, doors, and exits."""
+    """Builds a navigable graph from polygonal spaces, doors, and exits.
+
+    Space nodes define connectivity (which openings share a room) and spawn
+    start points. People path opening-to-opening within each space.
+    """
 
     def build(self, layout: BuildingLayout, defaults: dict[str, float]) -> NavigationGraph:
         graph = NavigationGraph()
         spaces = {s.id: s for s in layout.spaces}
+        doors = {d.id: d for d in layout.doors}
+        exits = {e.id: e for e in layout.exits}
 
         for space in layout.spaces:
             cx, cy = _space_center(space)
             node = GraphNode(id=f"space:{space.id}", kind=NodeKind.SPACE, x=cx, y=cy, ref_id=space.id)
             graph.add_node(node)
             graph.space_node_ids[space.id] = node.id
+
+        openings_by_space: dict[str, list[str]] = {s.id: [] for s in layout.spaces}
 
         for door in layout.doors:
             node = GraphNode(
@@ -162,6 +196,7 @@ class NavigationGraphBuilder:
                 )
                 # Space self-edges are tracked for capacity bookkeeping only (not for routing)
                 graph.edges[space_edge.id] = space_edge
+                openings_by_space[space_id].append(node.id)
 
         for exit_ in layout.exits:
             node = GraphNode(
@@ -194,5 +229,50 @@ class NavigationGraphBuilder:
                 element_id=exit_.id,
             )
             graph.add_edge(edge)
+            openings_by_space[exit_.connected_space_id].append(node.id)
+
+        # Opening-to-opening edges within each space (people path these, not centroids)
+        for space_id, opening_ids in openings_by_space.items():
+            for i, from_id in enumerate(opening_ids):
+                for to_id in opening_ids[i + 1 :]:
+                    a = graph.nodes[from_id]
+                    b = graph.nodes[to_id]
+                    distance = max(_dist(a.x, a.y, b.x, b.y), 0.5)
+                    kind_b, width_b, flow_b, elem_b = _opening_edge_props(
+                        b, doors, exits, defaults
+                    )
+                    kind_a, width_a, flow_a, elem_a = _opening_edge_props(
+                        a, doors, exits, defaults
+                    )
+                    graph.add_edge(
+                        GraphEdge(
+                            id=f"edge:open:{a.ref_id}->{b.ref_id}:{space_id}",
+                            from_id=from_id,
+                            to_id=to_id,
+                            distance_m=distance,
+                            kind=kind_b,
+                            width_m=width_b,
+                            flow_rate_per_s=flow_b,
+                            capacity_density_per_m2=None,
+                            area_m2=None,
+                            element_id=elem_b,
+                        ),
+                        bidirectional=False,
+                    )
+                    graph.add_edge(
+                        GraphEdge(
+                            id=f"edge:open:{b.ref_id}->{a.ref_id}:{space_id}",
+                            from_id=to_id,
+                            to_id=from_id,
+                            distance_m=distance,
+                            kind=kind_a,
+                            width_m=width_a,
+                            flow_rate_per_s=flow_a,
+                            capacity_density_per_m2=None,
+                            area_m2=None,
+                            element_id=elem_a,
+                        ),
+                        bidirectional=False,
+                    )
 
         return graph

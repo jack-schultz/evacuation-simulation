@@ -46,7 +46,7 @@ class SimulationOutput:
 class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
-    Occupants steer continuously toward fixed Dijkstra waypoints, collide via
+    Occupants steer continuously toward fixed Dijkstra opening waypoints, collide via
     body radius and space boundaries, and pass doors/exits through width-limited
     apertures.
     """
@@ -212,7 +212,7 @@ class SimulationEngine:
                 continue
             nxt = occ.next_node_id
             if nxt is None:
-                self.movement_model.try_advance_route(occ, graph, radius, t)
+                self.movement_model.try_advance_route(occ, graph, radius, t, doors=doors)
                 continue
             edge = edge_between(graph, occ.current_node_id, nxt)
             if edge is None or edge.speed_factor <= 0:
@@ -226,9 +226,8 @@ class SimulationEngine:
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
-            node = graph.nodes[occ.current_node_id]
-            if node.kind.value == "space":
-                occupants_on[node.ref_id] += 1
+            if occ.current_space_id:
+                occupants_on[occ.current_space_id] += 1
 
         admitted: set[str] = set()
 
@@ -402,7 +401,12 @@ class SimulationEngine:
             can_advance = not blocked
             if can_advance:
                 self.movement_model.try_advance_route(
-                    occ, graph, radius, t, admitted=occ.id in admitted or not approaching_opening
+                    occ,
+                    graph,
+                    radius,
+                    t,
+                    admitted=occ.id in admitted or not approaching_opening,
+                    doors=doors,
                 )
             if occ.status == OccupantStatus.EVACUATED and occ.evacuated_at is None:
                 occ.evacuated_at = t
