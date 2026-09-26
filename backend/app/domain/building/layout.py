@@ -1,12 +1,8 @@
-"""Pure domain types for building geometry and occupants.
-
-Coordinates use a top-left origin in metres (or grid cells scaled by meters_per_cell).
-"""
+"""Layout geometry entities: spaces, doors, exits, occupant groups."""
 
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -14,7 +10,7 @@ from app.domain.geometry import area as polygon_area
 from app.domain.geometry import bbox as polygon_bbox
 from app.domain.geometry import centroid as polygon_centroid
 from app.domain.geometry import rect_vertices
-
+from app.domain.building.hazards import FireEmergency, FloodEmergency, PixelObstacleMap
 
 class SpaceType(str, Enum):
     ROOM = "room"
@@ -136,42 +132,6 @@ class OccupantGroup(BaseModel):
     # Reserved for future behavioural parameters
     behaviour: dict[str, float | str | bool] = Field(default_factory=dict)
 
-
-class RadialEmergency(BaseModel):
-    """Expanding illustrative hazard area; speeds use metres per simulation second."""
-
-    enabled: bool = True
-    x: float = Field(ge=0, allow_inf_nan=False)
-    y: float = Field(ge=0, allow_inf_nan=False)
-    radius_m: float = Field(default=3.0, gt=0, allow_inf_nan=False)
-    spread_speed_mps: float = Field(default=0.1, ge=0, allow_inf_nan=False)
-    intensity: float = Field(default=50.0, ge=0, le=100, allow_inf_nan=False)
-
-
-class FloodEmergency(RadialEmergency):
-    """Illustrative flood scenario."""
-
-
-class FireEmergency(RadialEmergency):
-    """Illustrative fire scenario; intensity is a relative slowdown, not heat."""
-
-
-class PixelObstacleMap(BaseModel):
-    """Downsampled binary plan: 1 is solid black, 0 is walkable white."""
-
-    width: int = Field(gt=0, le=512)
-    height: int = Field(gt=0, le=512)
-    rows: list[str]
-
-    @model_validator(mode="after")
-    def validate_raster(self) -> PixelObstacleMap:
-        if len(self.rows) != self.height or any(
-            len(row) != self.width or set(row) - {"0", "1"} for row in self.rows
-        ):
-            raise ValueError("Obstacle map rows must match dimensions and contain only 0 or 1")
-        return self
-
-
 class BuildingLayout(BaseModel):
     """Serializable building configuration (API + persistence payload)."""
 
@@ -224,91 +184,3 @@ class BuildingLayout(BaseModel):
                 raise ValueError(f"Occupant group '{group.id}' spawn point must be inside the building")
 
         return self
-
-
-class SimulationParameters(BaseModel):
-    timestep_s: float = Field(default=0.25, gt=0, le=2.0)
-    max_time_s: float = Field(default=600.0, gt=0)
-    door_flow_per_s: float = Field(
-        default=1.2,
-        gt=0,
-        description="Legacy; door throughput is aperture-based (width / body diameter).",
-    )
-    stairs_flow_per_s: float = Field(
-        default=0.8,
-        gt=0,
-        description="Legacy; stairs throughput is aperture-based when width is set.",
-    )
-    exit_flow_per_s: float = Field(
-        default=1.5,
-        gt=0,
-        description="Legacy; exit throughput is aperture-based (width / body diameter).",
-    )
-    corridor_density_per_m2: float = Field(default=2.0, gt=0)
-    occupant_radius_m: float = Field(
-        default=0.25,
-        gt=0,
-        le=1.0,
-        description="Body radius for collision and door aperture capacity",
-    )
-    frame_interval_s: float = Field(
-        default=0.5,
-        gt=0,
-        description="Seconds between stored animation frames (reduces payload size)",
-    )
-
-
-class OccupantStatus(str, Enum):
-    ACTIVE = "active"
-    WAITING = "waiting"
-    EVACUATED = "evacuated"
-    TRAPPED = "trapped"
-
-
-class OccupantFrameState(BaseModel):
-    id: str
-    x: float
-    y: float
-    status: OccupantStatus
-    group_id: str
-
-
-class SimulationFrame(BaseModel):
-    flood_radius_m: float | None = None
-    fire_radius_m: float | None = None
-    t: float
-    occupants: list[OccupantFrameState]
-
-
-class CongestionHotspot(BaseModel):
-    element_id: str
-    element_type: Literal["door", "corridor", "stairs", "exit"]
-    total_wait_s: float
-    peak_queue: int
-
-
-class OccupantResult(BaseModel):
-    id: str
-    group_id: str
-    evacuated: bool
-    distance_m: float
-    travel_time_s: float
-    wait_time_s: float
-    total_time_s: float
-    route_node_ids: list[str]
-
-
-class SimulationResults(BaseModel):
-    total_occupants: int
-    evacuated_count: int
-    remaining_count: int
-    total_evacuation_time_s: float | None
-    average_evacuation_time_s: float | None
-    max_evacuation_time_s: float | None
-    average_distance_m: float | None
-    average_wait_time_s: float | None
-    congestion_hotspots: list[CongestionHotspot]
-    occupants: list[OccupantResult]
-    assumptions_note: str = (
-        "Estimation only — not a safety certification or regulatory compliance calculation."
-    )
