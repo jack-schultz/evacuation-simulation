@@ -6,6 +6,7 @@ import { ResultsPanel } from './components/ResultsPanel';
 import { SimulationControls } from './components/SimulationControls';
 import { ToolPalette } from './components/ToolPalette';
 import { api } from './services/api';
+import { detectFloorPlan } from './utils/floorPlanDetection';
 import { useSimulationPlayback } from './simulation/useSimulationPlayback';
 import type {
   BuildingLayout,
@@ -37,6 +38,7 @@ export default function App() {
   const [dirty, setDirty] = useState(false);
   const [simId, setSimId] = useState<string | null>(null);
   const [floorPlanStatus, setFloorPlanStatus] = useState<string | null>(null);
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
   const [occupantRadiusM, setOccupantRadiusM] = useState(0.25);
 
   const playback = useSimulationPlayback();
@@ -56,6 +58,11 @@ export default function App() {
 
   const loadBuilding = useCallback(async (id: string) => {
     const b = await api.getBuilding(id);
+    const imageUrl = await api.getFloorPlan(id);
+    setFloorPlanUrl((previous) => {
+      if (previous) URL.revokeObjectURL(previous);
+      return imageUrl;
+    });
     setBuildingId(b.id);
     setLayout(b.layout);
     setSelected(null);
@@ -130,6 +137,11 @@ export default function App() {
         setDirty(false);
       }
       const result = await api.uploadFloorPlan(id, file);
+      const imageUrl = await api.getFloorPlan(id);
+      setFloorPlanUrl((previous) => {
+        if (previous) URL.revokeObjectURL(previous);
+        return imageUrl;
+      });
       setFloorPlanStatus(`PNG stored in database: ${result.filename}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -140,12 +152,36 @@ export default function App() {
 
   const onNew = () => {
     setBuildingId(null);
+    if (floorPlanUrl) URL.revokeObjectURL(floorPlanUrl);
+    setFloorPlanUrl(null);
     setLayout(emptyLayout());
     setSelected(null);
     setFloorPlanStatus(null);
     setDirty(true);
     playback.reset();
     setSimId(null);
+  };
+
+  const onDetectFloorPlan = async () => {
+    if (!floorPlanUrl) return;
+    try {
+      setError(null);
+      const image = new window.Image();
+      image.src = floorPlanUrl;
+      await image.decode();
+      const detected = detectFloorPlan(image, layout.width, layout.height);
+      if (!detected.spaces.length && !detected.walls.length) {
+        throw new Error('No rooms or obstacles detected. Use enclosed white areas and separate black obstacle shapes.');
+      }
+      const message = `Detected ${detected.spaces.length} room rectangles and ${detected.walls.length} obstacle rectangles. Applying this map replaces current rooms, obstacles, doors, exits, occupant groups, and the previous pixel map. Continue?`;
+      if (!window.confirm(message)) return;
+      setLayout({ ...layout, spaces: detected.spaces, walls: detected.walls, doors: [], exits: [], occupant_groups: [], obstacle_map: detected.obstacle_map });
+      setSelected(null);
+      setDirty(true);
+      setFloorPlanStatus(`Detected ${detected.spaces.length} rooms and ${detected.walls.length} obstacles. Add doors, exits, and occupants, then save.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
   };
 
   const onDeleteSelected = () => {
@@ -273,6 +309,12 @@ export default function App() {
       </header>
 
       {floorPlanStatus && <div className="import-status" role="status">{floorPlanStatus}</div>}
+      {floorPlanUrl && (
+        <div className="import-status floor-plan-actions" role="note">
+          <span>Black pixels block movement; white pixels are walkable. Detected rooms and obstacles are editable.</span>
+          <button type="button" onClick={() => void onDetectFloorPlan()} disabled={busy}>Detect map from PNG</button>
+        </div>
+      )}
 
       <div className="disclaimer">
         Estimation tool only — not a safety certification or regulatory compliance calculation.
@@ -299,6 +341,29 @@ export default function App() {
             onToolChange={setTool}
             disabled={playback.status === 'playing'}
           />
+          <section className="panel properties">
+            <h2>Building size</h2>
+            {(['width', 'height'] as const).map((dimension) => (
+              <label key={dimension}>
+                {dimension === 'width' ? 'Width' : 'Height'} (m)
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  step="1"
+                  disabled={busy || simulating}
+                  value={layout[dimension]}
+                  onChange={(e) => {
+                    const value = e.target.valueAsNumber;
+                    if (Number.isFinite(value) && e.target.validity.valid) {
+                      updateLayout({ ...layout, [dimension]: value });
+                    }
+                  }}
+                />
+              </label>
+            ))}
+            <p className="hint">Create another building with New, set its size and name, then Save.</p>
+          </section>
           <FloodPanel layout={layout} onChange={updateLayout} disabled={busy || simulating} />
           <PropertiesPanel
             layout={layout}
@@ -311,6 +376,7 @@ export default function App() {
         <main className="canvas-area">
           <BuildingCanvas
             layout={layout}
+            floorPlanUrl={floorPlanUrl}
             tool={tool}
             selected={selected}
             onSelect={setSelected}

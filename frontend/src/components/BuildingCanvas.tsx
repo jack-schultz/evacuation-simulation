@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { Layer, Line, Rect, Stage, Text, Circle, Group } from 'react-konva';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Layer, Line, Rect, Stage, Text, Circle, Group, Image as KonvaImage } from 'react-konva';
 import type Konva from 'konva';
 import type {
   BuildingLayout,
@@ -20,6 +20,7 @@ interface Props {
   interactive?: boolean;
   /** Body radius in metres for playback dots (defaults to 0.25). */
   occupantRadiusM?: number;
+  floorPlanUrl?: string | null;
 }
 
 const SPACE_COLORS: Record<string, string> = {
@@ -63,14 +64,24 @@ export function BuildingCanvas({
   congestedIds,
   interactive = true,
   occupantRadiusM = 0.25,
+  floorPlanUrl = null,
 }: Props) {
   const [draft, setDraft] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
   const drawing = useRef(false);
   const start = useRef<{ x: number; y: number } | null>(null);
   const occupantRadiusPx = Math.max(occupantRadiusM * SCALE, 3);
 
   const widthPx = layout.width * SCALE;
   const heightPx = layout.height * SCALE;
+
+  useEffect(() => {
+    if (!floorPlanUrl) { setFloorPlanImage(null); return; }
+    const image = new window.Image();
+    image.onload = () => setFloorPlanImage(image);
+    image.src = floorPlanUrl;
+    return () => { image.onload = null; };
+  }, [floorPlanUrl]);
 
   const gridLines = useMemo(() => {
     const lines: number[][] = [];
@@ -99,7 +110,7 @@ export function BuildingCanvas({
     const p = toWorld(evt);
     if (!p) return;
 
-    if (tool === 'door' || tool === 'exit' || tool === 'occupants') {
+    if (tool === 'door' || tool === 'exit' || tool === 'occupants' || tool === 'spawn') {
       // handled as click (mouseup with no drag)
       start.current = p;
       drawing.current = true;
@@ -113,7 +124,7 @@ export function BuildingCanvas({
 
   const onMouseMove = (evt: Konva.KonvaEventObject<MouseEvent>) => {
     if (!interactive || !drawing.current || !start.current) return;
-    if (tool === 'door' || tool === 'exit' || tool === 'occupants') return;
+    if (tool === 'door' || tool === 'exit' || tool === 'occupants' || tool === 'spawn') return;
     const p = toWorld(evt);
     if (!p) return;
     const x = Math.min(start.current.x, p.x);
@@ -182,7 +193,7 @@ export function BuildingCanvas({
       return;
     }
 
-    if (tool === 'occupants') {
+    if (tool === 'occupants' || tool === 'spawn') {
       const spaceId = spaceContaining(layout, p.x, p.y);
       if (!spaceId) {
         start.current = null;
@@ -198,6 +209,8 @@ export function BuildingCanvas({
             name: `Group ${layout.occupant_groups.length + 1}`,
             count: 10,
             space_id: spaceId,
+            spawn_x: p.x,
+            spawn_y: p.y,
             walking_speed_mps: 1.2,
             destination_exit_id: null,
           },
@@ -293,6 +306,7 @@ export function BuildingCanvas({
       >
         <Layer>
           <Rect x={0} y={0} width={widthPx} height={heightPx} fill="#f8fafc" listening={false} />
+          {floorPlanImage && <KonvaImage image={floorPlanImage} x={0} y={0} width={widthPx} height={heightPx} opacity={0.38} listening={false} />}
           {gridLines.map((pts, i) => (
             <Line key={i} points={pts} stroke="#e2e8f0" strokeWidth={1} listening={false} />
           ))}
@@ -435,8 +449,10 @@ export function BuildingCanvas({
           {layout.occupant_groups.map((g) => {
             const space = layout.spaces.find((s) => s.id === g.space_id);
             if (!space) return null;
-            const cx = (space.x + space.width / 2) * SCALE;
-            const cy = (space.y + space.height / 2) * SCALE;
+            const spawnX = g.spawn_x ?? space.x + space.width / 2;
+            const spawnY = g.spawn_y ?? space.y + space.height / 2;
+            const cx = spawnX * SCALE;
+            const cy = spawnY * SCALE;
             return (
               <Group
                 key={g.id}
@@ -444,17 +460,17 @@ export function BuildingCanvas({
                 y={cy}
                 {...dragProps({ kind: 'occupants', id: g.id }, () => {})}
                 onDragEnd={(e) => {
-                  // Groups belong to spaces, rather than arbitrary coordinates.
-                  // Restore the node even for a rejected or same-space drop.
-                  const spaceId = spaceContaining(layout, e.target.x() / SCALE, e.target.y() / SCALE);
+                  const x = snap(e.target.x() / SCALE);
+                  const y = snap(e.target.y() / SCALE);
+                  const spaceId = spaceContaining(layout, x, y);
                   e.target.position({ x: cx, y: cy });
                   e.target.getStage()!.container().style.cursor = '';
                   e.cancelBubble = true;
-                  if (spaceId && spaceId !== g.space_id) {
+                  if (spaceId) {
                     onChange({
                       ...layout,
                       occupant_groups: layout.occupant_groups.map((group) =>
-                        group.id === g.id ? { ...group, space_id: spaceId } : group,
+                        group.id === g.id ? { ...group, space_id: spaceId, spawn_x: x, spawn_y: y } : group,
                       ),
                     });
                   }

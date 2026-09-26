@@ -263,6 +263,9 @@ export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, 
   if (selected.kind === 'occupants') {
     const group = layout.occupant_groups.find((g) => g.id === selected.id);
     if (!group) return null;
+    const groupSpace = layout.spaces.find((s) => s.id === group.space_id);
+    const defaultSpawnX = groupSpace ? groupSpace.x + groupSpace.width / 2 : 0;
+    const defaultSpawnY = groupSpace ? groupSpace.y + groupSpace.height / 2 : 0;
     return (
       <div className="panel properties">
         <h2>Occupant group</h2>
@@ -318,6 +321,48 @@ export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, 
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          Spawn X (m)
+          <input
+            type="number"
+            step="0.5"
+            min="0"
+            disabled={disabled}
+            max={layout.width}
+            value={group.spawn_x ?? defaultSpawnX}
+            onChange={(e) => onChange({
+              ...layout,
+              occupant_groups: layout.occupant_groups.map((g) =>
+                g.id === group.id ? {
+                  ...g,
+                  spawn_x: Number(e.target.value),
+                  spawn_y: g.spawn_y ?? defaultSpawnY,
+                } : g,
+              ),
+            })}
+          />
+        </label>
+        <label>
+          Spawn Y (m)
+          <input
+            type="number"
+            step="0.5"
+            min="0"
+            disabled={disabled}
+            max={layout.height}
+            value={group.spawn_y ?? defaultSpawnY}
+            onChange={(e) => onChange({
+              ...layout,
+              occupant_groups: layout.occupant_groups.map((g) =>
+                g.id === group.id ? {
+                  ...g,
+                  spawn_x: g.spawn_x ?? defaultSpawnX,
+                  spawn_y: Number(e.target.value),
+                } : g,
+              ),
+            })}
+          />
         </label>
         <label>
           Walking speed (m/s)

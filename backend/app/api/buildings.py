@@ -1,6 +1,6 @@
 from urllib.parse import unquote
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -56,6 +56,15 @@ async def upload_floor_plan(
         db.add(FloorPlanImageRecord(building_id=building_id, filename=filename, image_data=image_data))
     db.commit()
     return {"stored": True, "filename": filename}
+
+
+@router.get("/{building_id}/floor-plan")
+def get_floor_plan(building_id: str, db: Session = Depends(get_db)) -> Response:
+    BuildingService(db)._get_or_404(building_id)
+    record = db.query(FloorPlanImageRecord).filter_by(building_id=building_id).first()
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No floor plan imported")
+    return Response(content=record.image_data, media_type="image/png")
 
 
 @router.put("/{building_id}", response_model=BuildingResponse)

@@ -76,6 +76,8 @@ class OccupantGroup(BaseModel):
     name: str
     count: int = Field(gt=0, le=5000)
     space_id: str
+    spawn_x: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    spawn_y: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     walking_speed_mps: float = Field(default=1.2, gt=0, le=5.0)
     destination_exit_id: str | None = None
     # Reserved for future behavioural parameters
@@ -92,6 +94,22 @@ class FloodEmergency(BaseModel):
     intensity: float = Field(default=50.0, ge=0, le=100, allow_inf_nan=False)
 
 
+class PixelObstacleMap(BaseModel):
+    """Downsampled binary plan: 1 is solid black, 0 is walkable white."""
+
+    width: int = Field(gt=0, le=512)
+    height: int = Field(gt=0, le=512)
+    rows: list[str]
+
+    @model_validator(mode="after")
+    def validate_raster(self) -> PixelObstacleMap:
+        if len(self.rows) != self.height or any(
+            len(row) != self.width or set(row) - {"0", "1"} for row in self.rows
+        ):
+            raise ValueError("Obstacle map rows must match dimensions and contain only 0 or 1")
+        return self
+
+
 class BuildingLayout(BaseModel):
     """Serializable building configuration (API + persistence payload)."""
 
@@ -105,6 +123,7 @@ class BuildingLayout(BaseModel):
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
     flood: FloodEmergency | None = None
+    obstacle_map: PixelObstacleMap | None = None
 
     @model_validator(mode="after")
     def validate_references(self) -> BuildingLayout:
@@ -133,6 +152,12 @@ class BuildingLayout(BaseModel):
                 raise ValueError(
                     f"Occupant group '{group.id}' references unknown exit '{group.destination_exit_id}'"
                 )
+            if (group.spawn_x is None) != (group.spawn_y is None):
+                raise ValueError(f"Occupant group '{group.id}' must define both spawn coordinates")
+            if group.spawn_x is not None and group.spawn_y is not None and (
+                group.spawn_x > self.width or group.spawn_y > self.height
+            ):
+                raise ValueError(f"Occupant group '{group.id}' spawn point must be inside the building")
 
         return self
 

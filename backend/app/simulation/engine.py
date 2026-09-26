@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
+import math
 
 from app.domain.building import (
     BuildingLayout,
@@ -28,6 +29,7 @@ from app.simulation.flood import FloodRouteSelector, apply_flood
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
 from app.simulation.graph import EdgeKind, NavigationGraphBuilder, NodeKind
 from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
+from app.simulation.pixel_obstacles import position_is_walkable
 from app.simulation.results import build_results
 from app.simulation.routing import DijkstraRouteSelector, RouteSelector, edge_between
 
@@ -99,7 +101,8 @@ class SimulationEngine:
 
             t += params.timestep_s
             self._step(
-                occupants, graph, queues, params, t, wall_solids, spaces, doors
+                occupants, graph, queues, params, t, wall_solids, spaces, doors,
+                layout.obstacle_map, layout.width, layout.height,
             )
 
             if t + 1e-9 >= next_frame_t:
@@ -142,17 +145,35 @@ class SimulationEngine:
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )
             space = spaces[group.space_id]
-            usable_w = max(space.width - 2 * margin, spacing)
-            cols = max(1, int(usable_w / spacing) + 1)
             node = graph.nodes[start_node]
+            spawn_x = group.spawn_x if group.spawn_x is not None else node.x
+            spawn_y = group.spawn_y if group.spawn_y is not None else node.y
+            interior_left = space.x + margin
+            interior_right = space.x + space.width - margin
+            interior_top = space.y + margin
+            interior_bottom = space.y + space.height - margin
+            max_cols = max(1, int(max(space.width - 2 * margin, 0) / spacing) + 1)
+            cols = min(max_cols, max(1, math.ceil(math.sqrt(group.count))))
+            rows = math.ceil(group.count / cols)
+            half_width = (cols - 1) * spacing / 2
+            half_height = (rows - 1) * spacing / 2
+            center_x = min(max(spawn_x, interior_left + half_width), interior_right - half_width)
+            center_y = min(max(spawn_y, interior_top + half_height), interior_bottom - half_height)
+            # If the formation is larger than the room's usable area, center it
+            # in the room and let overlap resolution handle the tight spacing.
+            if interior_left + half_width > interior_right - half_width:
+                center_x = (interior_left + interior_right) / 2
+            if interior_top + half_height > interior_bottom - half_height:
+                center_y = (interior_top + interior_bottom) / 2
             for i in range(group.count):
                 if group.count == 1:
-                    ox, oy = node.x, node.y
+                    ox, oy = spawn_x, spawn_y
                 else:
-                    ox = space.x + margin + (i % cols) * spacing
-                    oy = space.y + margin + (i // cols) * spacing
-                    ox = min(ox, space.x + space.width - margin)
-                    oy = min(oy, space.y + space.height - margin)
+                    col = i % cols
+                    row = i // cols
+                    row_size = min(cols, group.count - row * cols)
+                    ox = center_x + (col - (row_size - 1) / 2) * spacing
+                    oy = center_y + (row - (rows - 1) / 2) * spacing
                 occupants.append(
                     SimulatedOccupant(
                         id=f"{group.id}:{i}",
@@ -169,7 +190,38 @@ class SimulationEngine:
         resolve_overlaps(occupants, radius_m, iterations=6)
         resolve_wall_collisions(occupants, solids, radius_m)
         resolve_space_containment(occupants, spaces, doors, graph, radius_m)
+        for occupant in occupants:
+            if not position_is_walkable(
+                layout.obstacle_map, occupant.x, occupant.y, radius_m, layout.width, layout.height
+            ):
+                replacement = self._nearby_walkable_point(
+                    layout, occupant.x, occupant.y, radius_m, spaces[occupant.current_space_id]
+                )
+                if replacement is None:
+                    occupant.status = OccupantStatus.TRAPPED
+                else:
+                    occupant.x, occupant.y = replacement
         return occupants
+
+    @staticmethod
+    def _nearby_walkable_point(layout: BuildingLayout, x: float, y: float, radius: float, space):
+        raster = layout.obstacle_map
+        if raster is None:
+            return None
+        step = min(layout.width / raster.width, layout.height / raster.height)
+        for ring in range(1, max(raster.width, raster.height)):
+            distance = ring * step
+            if distance > 3.0:
+                break
+            sample_count = max(8, int(8 * ring))
+            for i in range(sample_count):
+                angle = 2 * 3.141592653589793 * i / sample_count
+                px, py = x + distance * math.cos(angle), y + distance * math.sin(angle)
+                if space.x <= px <= space.x + space.width and space.y <= py <= space.y + space.height and position_is_walkable(
+                    raster, px, py, radius, layout.width, layout.height
+                ):
+                    return px, py
+        return None
 
     def _step(
         self,
@@ -181,6 +233,9 @@ class SimulationEngine:
         wall_solids: list[Aabb] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
+        obstacle_map=None,
+        world_width: float = 0.0,
+        world_height: float = 0.0,
     ) -> None:
         radius = params.occupant_radius_m
         solids = wall_solids or []
@@ -282,6 +337,31 @@ class SimulationEngine:
                         q.total_wait_s += params.timestep_s
 
         moved_by: dict[str, float] = {}
+        safe_positions: dict[str, tuple[float, float]] = {}
+
+        def move_without_crossing_black_pixels(occupant, target_x: float, target_y: float, distance: float) -> float:
+            old_x, old_y = occupant.x, occupant.y
+            old_progress = occupant.progress_on_edge
+            moved = self.movement_model.step_toward(occupant, target_x, target_y, distance)
+            if obstacle_map is None or moved <= 1e-9:
+                return moved
+            new_x, new_y = occupant.x, occupant.y
+            cell = min(world_width / obstacle_map.width, world_height / obstacle_map.height)
+            steps = max(1, math.ceil(moved / max(cell * 0.4, 1e-4)))
+            last_x, last_y = old_x, old_y
+            for i in range(1, steps + 1):
+                fraction = i / steps
+                sample_x = old_x + (new_x - old_x) * fraction
+                sample_y = old_y + (new_y - old_y) * fraction
+                if not position_is_walkable(
+                    obstacle_map, sample_x, sample_y, radius, world_width, world_height
+                ):
+                    break
+                last_x, last_y = sample_x, sample_y
+            actual = dist(old_x, old_y, last_x, last_y)
+            occupant.x, occupant.y = last_x, last_y
+            occupant.progress_on_edge = old_progress + actual
+            return actual
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
@@ -307,7 +387,7 @@ class SimulationEngine:
                     # Can shuffle toward hold point but cannot enter throat
                     waypoint = next_node
                     old_x, old_y = occ.x, occ.y
-                    moved = self.movement_model.step_toward(occ, target_x, target_y, desired)
+                    moved = move_without_crossing_black_pixels(occ, target_x, target_y, desired)
                     occ.x, occ.y = clamp_outside_throat(
                         occ.x, occ.y, waypoint.x, waypoint.y, radius
                     )
@@ -315,7 +395,7 @@ class SimulationEngine:
                     moved_by[occ.id] = moved
                     continue
 
-            moved = self.movement_model.step_toward(occ, target_x, target_y, desired)
+            moved = move_without_crossing_black_pixels(occ, target_x, target_y, desired)
             moved_by[occ.id] = moved
             if (
                 is_admitted
@@ -332,6 +412,11 @@ class SimulationEngine:
 
         resolve_wall_collisions(occupants, solids, radius)
         resolve_overlaps(occupants, radius)
+        if obstacle_map is not None:
+            safe_positions = {
+                o.id: (o.x, o.y) for o in occupants
+                if position_is_walkable(obstacle_map, o.x, o.y, radius, world_width, world_height)
+            }
 
         # Re-clamp non-admitted after overlap resolution so pushes don't sneak them in
         for occ in occupants:
@@ -353,6 +438,16 @@ class SimulationEngine:
         resolve_space_containment(
             occupants, spaces, doors, graph, radius, admitted=admitted
         )
+        if obstacle_map is not None:
+            for occupant in occupants:
+                if occupant.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+                    continue
+                if not position_is_walkable(
+                    obstacle_map, occupant.x, occupant.y, radius, world_width, world_height
+                ):
+                    occupant.x, occupant.y = safe_positions.get(
+                        occupant.id, (occupant.x, occupant.y)
+                    )
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):

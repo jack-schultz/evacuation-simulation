@@ -61,6 +61,14 @@ export const api = {
     }
     return res.json() as Promise<{ stored: boolean; filename: string }>;
   },
+  getFloorPlan: async (buildingId: string) => {
+    const res = await fetch(`${API_BASE}/api/buildings/${buildingId}/floor-plan`);
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(res.statusText || 'Could not load floor plan');
+    }
+    return URL.createObjectURL(await res.blob());
+  },
   deleteBuilding: (id: string) =>
     request<void>(`/api/buildings/${id}`, { method: 'DELETE' }),
   createSimulation: (buildingId: string, parameters?: Partial<SimulationParameters>) =>

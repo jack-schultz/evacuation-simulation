@@ -45,6 +45,8 @@ export interface OccupantGroup {
   name: string;
   count: number;
   space_id: string;
+  spawn_x?: number | null;
+  spawn_y?: number | null;
   walking_speed_mps: number;
   destination_exit_id?: string | null;
   behaviour?: Record<string, string | number | boolean>;
@@ -58,6 +60,13 @@ export interface FloodEmergency {
   intensity: number;
 }
 
+export interface PixelObstacleMap {
+  width: number;
+  height: number;
+  /** Row-major strings where 1 is blocked and 0 is walkable. */
+  rows: string[];
+}
+
 export interface BuildingLayout {
   name: string;
   width: number;
@@ -69,6 +78,7 @@ export interface BuildingLayout {
   exits: Exit[];
   occupant_groups: OccupantGroup[];
   flood?: FloodEmergency | null;
+  obstacle_map?: PixelObstacleMap | null;
 }
 
 export interface BuildingSummary {
@@ -148,7 +158,8 @@ export type EditorTool =
   | 'wall'
   | 'door'
   | 'exit'
-  | 'occupants';
+  | 'occupants'
+  | 'spawn';
 
 export type SelectedRef =
   | { kind: 'space'; id: string }
