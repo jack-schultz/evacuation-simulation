@@ -98,3 +98,24 @@ model. Walls do not contain water, and slopes, inflow, drainage, and water volum
 are not modeled. A physical flood rate cannot be inferred from the available
 layout alone. For context on terrain and hydraulic equation requirements, see
 [USACE HEC-RAS 2D hydrodynamics](https://www.hec.usace.army.mil/confluence/rasdocs/ras1dtechref/6.2/theoretical-basis-for-one-dimensional-and-two-dimensional-hydrodynamic-calculations/2d-unsteady-flow-hydrodynamics).
+
+
+## Fire scenario
+
+Fire is an optional circular hazard, configured independently of flood. Set the
+centre, initial size (radius in metres), intensity (0-100%), and radial spread
+rate (metres per second). Radius at time t is initial radius + spread rate * t;
+zero spread keeps the area fixed. Disabled fire or zero intensity has no effect.
+The orange overlay expands on the simulation clock and pauses with playback.
+Settings are saved with the building and snapshotted for each run.
+
+People avoid entering active fire and cannot use exits within it. People already
+inside can escape outward along available routes at a speed multiplier of
+max(0.1, 1 - intensity/100). Intensity is a relative scenario control, not a
+physical temperature or heat-release rate. Routes are chosen at spawn; spreading
+fire can trap people on their fixed route. With both fire and flood enabled,
+the strongest restriction applies, including blocking by either hazard.
+
+This illustrative model does not simulate combustion, fuel, heat, smoke,
+ventilation, injury, or wall-dependent spread. It is an evacuation estimate,
+not a fire engineering or safety certification model.

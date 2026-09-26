@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from app.domain.building import (
     BuildingLayout,
     FloodEmergency,
+    FireEmergency,
     OccupantFrameState,
     OccupantStatus,
     SimulationFrame,
@@ -25,7 +26,7 @@ from app.simulation.collision import (
     resolve_space_containment,
     resolve_wall_collisions,
 )
-from app.simulation.flood import FloodRouteSelector, apply_flood, flood_radius_at, segment_speed_factor
+from app.simulation.hazards import HazardRouteSelector, apply_hazards, hazard_radius_at, hazards_speed_factor
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
 from app.simulation.graph import EdgeKind, NavigationGraphBuilder, NodeKind
 from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
@@ -77,7 +78,7 @@ class SimulationEngine:
             "corridor_density_per_m2": params.corridor_density_per_m2,
         }
         graph = self.graph_builder.build(layout, defaults)
-        apply_flood(graph, layout.flood)
+        apply_hazards(graph, (layout.flood, layout.fire))
 
         boundary_solids = build_collision_solids(
             layout.spaces, layout.doors, layout.exits
@@ -92,7 +93,7 @@ class SimulationEngine:
         t = 0.0
         next_frame_t = 0.0
 
-        frames.append(self._capture_frame(t, occupants, layout.flood))
+        frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
         next_frame_t = params.frame_interval_s
 
         while t < params.max_time_s:
@@ -101,15 +102,15 @@ class SimulationEngine:
 
             t += params.timestep_s
             self._step(
-                occupants, graph, queues, params, t, boundary_solids, spaces, doors, layout.flood
+                occupants, graph, queues, params, t, boundary_solids, spaces, doors, layout.flood, layout.fire
             )
 
             if t + 1e-9 >= next_frame_t:
-                frames.append(self._capture_frame(t, occupants, layout.flood))
+                frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
                 next_frame_t += params.frame_interval_s
 
         if not frames or frames[-1].t < t:
-            frames.append(self._capture_frame(t, occupants, layout.flood))
+            frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
 
         results = build_results(occupants, queues, t)
         return SimulationOutput(results=results, frames=frames)
@@ -133,10 +134,8 @@ class SimulationEngine:
         for group in layout.occupant_groups:
             start_node = graph.space_node_ids[group.space_id]
             selector = (
-                FloodRouteSelector()
-                if layout.flood
-                and layout.flood.enabled
-                and layout.flood.intensity > 0
+                HazardRouteSelector()
+                if any(hazard_radius_at(h, 0) is not None for h in (layout.flood, layout.fire))
                 and isinstance(self.route_selector, DijkstraRouteSelector)
                 else self.route_selector
             )
@@ -184,12 +183,14 @@ class SimulationEngine:
         spaces: dict | None = None,
         doors: dict | None = None,
         flood: FloodEmergency | None = None,
+        fire: FireEmergency | None = None,
     ) -> None:
         radius = params.occupant_radius_m
         solids = boundary_solids or []
         spaces = spaces or {}
         doors = doors or {}
-        flood_radius = flood_radius_at(flood, t)
+        hazards = (flood, fire)
+        has_hazard = any(hazard_radius_at(h, t) is not None for h in hazards)
         speed_factors: dict[str, float] = {}
 
         contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
@@ -205,10 +206,10 @@ class SimulationEngine:
                 continue
             edge = edge_between(graph, occ.current_node_id, nxt)
             waypoint = graph.nodes[nxt]
-            factor = segment_speed_factor(
-                flood, flood_radius, occ.x, occ.y, waypoint.x, waypoint.y,
+            factor = hazards_speed_factor(
+                hazards, t, occ.x, occ.y, waypoint.x, waypoint.y,
                 is_exit=waypoint.kind == NodeKind.EXIT,
-            ) if flood_radius is not None else (edge.speed_factor if edge else 0.0)
+            ) if has_hazard else (edge.speed_factor if edge else 0.0)
             speed_factors[occ.id] = factor
             if edge is None or factor <= 0:
                 occ.status = OccupantStatus.TRAPPED
@@ -309,8 +310,8 @@ class SimulationEngine:
             desired = occ.speed_mps * params.timestep_s
             desired *= speed_factors[occ.id]
             # Aperture slots can deviate from the centreline checked above.
-            if flood_radius is not None and segment_speed_factor(
-                flood, flood_radius, occ.x, occ.y, target_x, target_y
+            if has_hazard and hazards_speed_factor(
+                hazards, t, occ.x, occ.y, target_x, target_y
             ) == 0:
                 desired = 0.0
 
@@ -412,10 +413,11 @@ class SimulationEngine:
                 occ.travel_time_s += params.timestep_s
 
     @staticmethod
-    def _capture_frame(t: float, occupants: list[SimulatedOccupant], flood: FloodEmergency | None = None) -> SimulationFrame:
+    def _capture_frame(t: float, occupants: list[SimulatedOccupant], flood: FloodEmergency | None = None, fire: FireEmergency | None = None) -> SimulationFrame:
         return SimulationFrame(
             t=round(t, 3),
-            flood_radius_m=flood_radius_at(flood, t),
+            flood_radius_m=hazard_radius_at(flood, t),
+            fire_radius_m=hazard_radius_at(fire, t),
             occupants=[
                 OccupantFrameState(
                     id=o.id,

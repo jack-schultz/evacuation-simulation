@@ -41,7 +41,7 @@ export interface OccupantGroup {
   behaviour?: Record<string, string | number | boolean>;
 }
 
-export interface FloodEmergency {
+export interface RadialEmergency {
   enabled: boolean;
   x: number;
   y: number;
@@ -49,6 +49,9 @@ export interface FloodEmergency {
   spread_speed_mps?: number;
   intensity: number;
 }
+
+export type FloodEmergency = RadialEmergency;
+export type FireEmergency = RadialEmergency;
 
 export interface BuildingLayout {
   name: string;
@@ -60,6 +63,7 @@ export interface BuildingLayout {
   exits: Exit[];
   occupant_groups: OccupantGroup[];
   flood?: FloodEmergency | null;
+  fire?: FireEmergency | null;
 }
 
 export interface BuildingSummary {
@@ -98,6 +102,7 @@ export interface OccupantFrameState {
 
 export interface SimulationFrame {
   flood_radius_m?: number | null;
+  fire_radius_m?: number | null;
   t: number;
   occupants: OccupantFrameState[];
 }
