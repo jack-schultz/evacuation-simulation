@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FloodPanel } from './components/FloodPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { ResultsPanel } from './components/ResultsPanel';
@@ -245,6 +246,7 @@ export default function App() {
             onToolChange={setTool}
             disabled={playback.status === 'playing'}
           />
+          <FloodPanel layout={layout} onChange={updateLayout} disabled={busy || simulating} />
           <PropertiesPanel
             layout={layout}
             selected={selected}
