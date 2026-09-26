@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 from urllib.parse import unquote
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 #Refactored!
 from fastapi import APIRouter, Depends
+=======
+#Refactored!
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+>>>>>>> 3047dd7a51192cd9aba62ebb078dc8d51e9f5c71
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db

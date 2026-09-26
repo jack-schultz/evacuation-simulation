@@ -325,27 +325,6 @@ export function BuildingCanvas({
             </Group>
           ))}
 
-          {layout.walls.map((w) => (
-            <Rect
-              key={w.id}
-              {...dragProps({ kind: 'wall', id: w.id }, (x, y) => {
-                onChange({
-                  ...layout,
-                  walls: layout.walls.map((wall) => wall.id === w.id ? { ...wall, x, y } : wall),
-                });
-              }, w.width, w.height)}
-              x={w.x * SCALE}
-              y={w.y * SCALE}
-              width={w.width * SCALE}
-              height={w.height * SCALE}
-              fill="#334155"
-              opacity={0.85}
-              stroke={isSelected('wall', w.id) ? '#2563eb' : undefined}
-              strokeWidth={2}
-              onClick={() => interactive && onSelect({ kind: 'wall', id: w.id })}
-            />
-          ))}
-
           {layout.flood?.enabled && (
             <Group
               x={layout.flood.x * SCALE}
