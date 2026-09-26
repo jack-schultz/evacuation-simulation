@@ -6,11 +6,13 @@ regulatory compliance calculation.
 
 ## Geometry
 
-* Building geometry is simplified to axis-aligned rectangles (rooms, corridors,
-  stairs).
+* Building spaces are closed polygons (rooms, corridors, stairs). Rectangles are
+  the special case of four corners; the editor draws arbitrary polygons by
+  clicking corners and closing on the start point.
 * Coordinates use a top-left origin; one grid unit defaults to one metre
   (`meters_per_cell`).
-* Space rectangle edges are solid for spatial movement; door and exit clear
+* Each space’s navigation node is its polygon centroid.
+* Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
   navigation graph (spaces/doors/exits define connectivity).
 

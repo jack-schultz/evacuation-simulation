@@ -13,8 +13,13 @@ from app.domain.building import (
     SimulationParameters,
     SimulationResults,
 )
+from app.domain.geometry import (
+    clamp_into_polygon,
+    distance_to_boundary,
+    point_in_polygon,
+)
 from app.simulation.collision import (
-    Aabb,
+    WallSegment,
     aperture_slots,
     build_collision_solids,
     clamp_outside_throat,
@@ -118,7 +123,7 @@ class SimulationEngine:
         layout: BuildingLayout,
         graph,
         radius_m: float,
-        boundary_solids: list[Aabb] | None = None,
+        boundary_solids: list[WallSegment] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
     ) -> list[SimulatedOccupant]:
@@ -143,17 +148,26 @@ class SimulationEngine:
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )
             space = spaces[group.space_id]
-            usable_w = max(space.width - 2 * margin, spacing)
+            min_x, min_y, width, height = space.bbox
+            usable_w = max(width - 2 * margin, spacing)
             cols = max(1, int(usable_w / spacing) + 1)
             node = graph.nodes[start_node]
+
             for i in range(group.count):
                 if group.count == 1:
                     ox, oy = node.x, node.y
                 else:
-                    ox = space.x + margin + (i % cols) * spacing
-                    oy = space.y + margin + (i // cols) * spacing
-                    ox = min(ox, space.x + space.width - margin)
-                    oy = min(oy, space.y + space.height - margin)
+                    ox = min_x + margin + (i % cols) * spacing
+                    oy = min_y + margin + (i // cols) * spacing
+                    ox = min(ox, min_x + width - margin)
+                    oy = min(oy, min_y + height - margin)
+                    if not (
+                        point_in_polygon(ox, oy, space.vertices)
+                        and distance_to_boundary(ox, oy, space.vertices) >= margin - 1e-6
+                    ):
+                        ox, oy = clamp_into_polygon(
+                            ox, oy, space.vertices, inset_m=margin
+                        )
                 occupants.append(
                     SimulatedOccupant(
                         id=f"{group.id}:{i}",
@@ -179,7 +193,7 @@ class SimulationEngine:
         queues: dict[str, ElementQueueState],
         params: SimulationParameters,
         t: float,
-        boundary_solids: list[Aabb] | None = None,
+        boundary_solids: list[WallSegment] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
     ) -> None:

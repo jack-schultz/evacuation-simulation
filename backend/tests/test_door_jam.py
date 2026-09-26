@@ -28,10 +28,7 @@ def packed_room(door_width: float, count: int = 12) -> BuildingLayout:
                 "id": "room",
                 "name": "Room",
                 "type": "room",
-                "x": 0,
-                "y": 0,
-                "width": 10,
-                "height": 10,
+                "vertices": [[0, 0], [10, 0], [10, 10], [0, 10]],
             }
         ],
         "exits": [
@@ -67,19 +64,13 @@ def two_room_layout(count: int = 10) -> BuildingLayout:
                     "id": "office",
                     "name": "Office",
                     "type": "room",
-                    "x": 5,
-                    "y": 5,
-                    "width": 20,
-                    "height": 10,
+                    "vertices": [[5, 5], [25, 5], [25, 15], [5, 15]],
                 },
                 {
                     "id": "corridor",
                     "name": "Corridor",
                     "type": "corridor",
-                    "x": 9,
-                    "y": 15,
-                    "width": 6,
-                    "height": 7,
+                    "vertices": [[9, 15], [15, 15], [15, 22], [9, 22]],
                 },
             ],
             "doors": [
@@ -264,7 +255,8 @@ class DoorJamTests(unittest.TestCase):
                 if o.status != "evacuated"
                 and dist(o.x, o.y, door_x, door_y) < 2.0
             ]
-            if len(near) < 4:
+            # Require a dense queue (not the last few mid-crossing).
+            if len(near) < 6:
                 continue
             saw_jam = True
             office_side = sum(1 for o in near if o.y <= door_y + 0.05)

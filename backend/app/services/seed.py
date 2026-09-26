@@ -8,6 +8,7 @@ from app.domain.building import (
     Space,
     SpaceType,
 )
+from app.domain.geometry import rect_vertices
 
 
 def create_seed_layout() -> BuildingLayout:
@@ -26,29 +27,20 @@ def create_seed_layout() -> BuildingLayout:
                 id="office_a",
                 name="Office A",
                 type=SpaceType.ROOM,
-                x=5.0,
-                y=4.0,
-                width=20.0,
-                height=10.0,
+                vertices=rect_vertices(5.0, 4.0, 20.0, 10.0),
             ),
             Space(
                 id="corridor",
                 name="Corridor",
                 type=SpaceType.CORRIDOR,
-                x=12.0,
-                y=14.5,
-                width=6.0,
-                height=7.0,
+                vertices=rect_vertices(12.0, 14.5, 6.0, 7.0),
                 capacity_density_per_m2=1.5,
             ),
             Space(
                 id="office_b",
                 name="Office B",
                 type=SpaceType.ROOM,
-                x=5.0,
-                y=22.0,
-                width=20.0,
-                height=10.0,
+                vertices=rect_vertices(5.0, 22.0, 20.0, 10.0),
             ),
         ],
         doors=[

@@ -85,7 +85,7 @@ def _dist(ax: float, ay: float, bx: float, by: float) -> float:
 
 
 def _space_center(space) -> tuple[float, float]:
-    return space.x + space.width / 2, space.y + space.height / 2
+    return space.centroid
 
 
 def _edge_kind_for_space(space_type: SpaceType) -> EdgeKind:
@@ -97,7 +97,7 @@ def _edge_kind_for_space(space_type: SpaceType) -> EdgeKind:
 
 
 class NavigationGraphBuilder:
-    """Builds a navigable graph from rectangular spaces, doors, and exits."""
+    """Builds a navigable graph from polygonal spaces, doors, and exits."""
 
     def build(self, layout: BuildingLayout, defaults: dict[str, float]) -> NavigationGraph:
         graph = NavigationGraph()
@@ -141,17 +141,18 @@ class NavigationGraphBuilder:
                 graph.add_edge(edge)
 
                 # Space traversal component (room/corridor capacity)
-                area = space.width * space.height
+                area = space.area_m2
                 density = space.capacity_density_per_m2
                 if density is None and space.type in (SpaceType.CORRIDOR, SpaceType.STAIRS):
                     density = defaults["corridor_density_per_m2"]
+                _, _, bw, bh = space.bbox
                 space_edge = GraphEdge(
                     id=f"edge:space:{space_id}:door:{door.id}",
                     from_id=space_node_id,
                     to_id=space_node_id,
                     distance_m=0.0,
                     kind=_edge_kind_for_space(space.type),
-                    width_m=min(space.width, space.height),
+                    width_m=min(bw, bh) if bw > 0 and bh > 0 else 1.0,
                     flow_rate_per_s=(
                         defaults["stairs_flow_per_s"] if space.type == SpaceType.STAIRS else None
                     ),
