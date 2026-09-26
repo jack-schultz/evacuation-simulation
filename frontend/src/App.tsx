@@ -36,6 +36,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [simId, setSimId] = useState<string | null>(null);
+  const [floorPlanStatus, setFloorPlanStatus] = useState<string | null>(null);
   const [occupantRadiusM, setOccupantRadiusM] = useState(0.25);
 
   const playback = useSimulationPlayback();
@@ -59,6 +60,7 @@ export default function App() {
     setLayout(b.layout);
     setSelected(null);
     setDirty(false);
+    setFloorPlanStatus(null);
     playback.reset();
     setSimId(null);
   }, [playback]);
@@ -104,10 +106,43 @@ export default function App() {
     }
   };
 
+  const onImportFloorPlan = async (file?: File) => {
+    if (!file) return;
+    setError(null);
+    setFloorPlanStatus(null);
+    if (!file.name.toLowerCase().endsWith('.png') || (file.type && file.type !== 'image/png')) {
+      setError('Choose a PNG file.');
+      return;
+    }
+    setBusy(true);
+    try {
+      let id = buildingId;
+      if (!id) {
+        const building = await api.createBuilding(layout);
+        id = building.id;
+        setBuildingId(id);
+        setLayout(building.layout);
+        setDirty(false);
+        await refreshList();
+      } else if (dirty) {
+        const building = await api.updateBuilding(id, layout);
+        setLayout(building.layout);
+        setDirty(false);
+      }
+      const result = await api.uploadFloorPlan(id, file);
+      setFloorPlanStatus(`PNG stored in database: ${result.filename}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onNew = () => {
     setBuildingId(null);
     setLayout(emptyLayout());
     setSelected(null);
+    setFloorPlanStatus(null);
     setDirty(true);
     playback.reset();
     setSimId(null);
@@ -222,8 +257,22 @@ export default function App() {
           <button type="button" onClick={onSave} disabled={busy}>
             Save{dirty ? ' *' : ''}
           </button>
+          <label className="file-import">
+            Import PNG
+            <input
+              type="file"
+              accept="image/png,.png"
+              disabled={busy}
+              onChange={(e) => {
+                void onImportFloorPlan(e.currentTarget.files?.[0]);
+                e.currentTarget.value = '';
+              }}
+            />
+          </label>
         </div>
       </header>
+
+      {floorPlanStatus && <div className="import-status" role="status">{floorPlanStatus}</div>}
 
       <div className="disclaimer">
         Estimation tool only — not a safety certification or regulatory compliance calculation.

@@ -45,6 +45,22 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ layout }),
     }),
+  uploadFloorPlan: async (buildingId: string, file: File) => {
+    const res = await fetch(`${API_BASE}/api/buildings/${buildingId}/floor-plan`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'image/png', 'X-Filename': encodeURIComponent(file.name) },
+      body: file,
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail ?? body);
+      } catch { /* ignore */ }
+      throw new Error(detail);
+    }
+    return res.json() as Promise<{ stored: boolean; filename: string }>;
+  },
   deleteBuilding: (id: string) =>
     request<void>(`/api/buildings/${id}`, { method: 'DELETE' }),
   createSimulation: (buildingId: string, parameters?: Partial<SimulationParameters>) =>
