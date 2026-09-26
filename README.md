@@ -19,10 +19,19 @@ regulatory compliance calculation.**
 evacuation-simulation/
 ├── backend/                 # FastAPI app + simulation engine
 ├── frontend/                # React + Vite + Konva editor
-├── docs/ASSUMPTIONS.md      # Simulation assumptions
+├── docs/
+│   ├── how-it-works.md      # How the system works (humans)
+│   └── ASSUMPTIONS.md       # Simulation assumptions
+├── AGENTS.md                # Context for coding agents
 ├── .env.example
 └── README.md
 ```
+
+## Documentation
+
+* [docs/how-it-works.md](docs/how-it-works.md) — how the system works
+* [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) — model assumptions
+* [AGENTS.md](AGENTS.md) — context for coding agents
 
 ## Prerequisites
 
