@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FloodPanel } from './components/FloodPanel';
 import { EmergencyPanel } from './components/EmergencyPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
+import { ColumnResizer } from './components/ColumnResizer';
 import { FloorPlanLibrary } from './components/FloorPlanLibrary';
 import { AppHeader } from './components/AppHeader';
 import { PanelRail, type PanelId } from './components/PanelRail';
@@ -16,6 +17,8 @@ import { useSimulationSession } from './hooks/useSimulationSession';
 const DEFAULT_OPEN: PanelId[] = ['tools'];
 
 export default function App() {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [columnWidths, setColumnWidths] = useState({ tools: 260, properties: 260, library: 260 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaths, setShowPaths] = useState(false);
@@ -47,6 +50,25 @@ export default function App() {
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
+    });
+  };
+
+  const resizeColumn = (column: keyof typeof columnWidths, delta: number) => {
+    const available = mainRef.current?.clientWidth ?? 1100;
+    const inspectorVisible = editor.selected.length > 0;
+    const toolsVisible = openPanels.size > 0;
+    setColumnWidths((current) => {
+      const otherWidths =
+        (column !== 'tools' && toolsVisible ? 44 + current.tools : 0)
+        + (column !== 'properties' && inspectorVisible ? current.properties : 0)
+        + (column !== 'library' ? current.library : 0);
+      const railWidth = column === 'tools' ? 44 : 0;
+      const minWidth = column === 'library' ? 200 : 180;
+      const maxWidth = Math.max(minWidth, available - otherWidths - railWidth - 280);
+      return {
+        ...current,
+        [column]: Math.min(maxWidth, Math.max(minWidth, current[column] + delta)),
+      };
     });
   };
 
@@ -102,10 +124,18 @@ export default function App() {
         error={error}
       />
 
-      <div className="main">
+      <div
+        className="main"
+        ref={mainRef}
+        style={{
+          gridTemplateColumns: `${openPanels.size > 0 ? 44 + columnWidths.tools : 44}px minmax(280px, 1fr) ${editor.selected.length > 0 ? columnWidths.properties : 0}px ${columnWidths.library}px`,
+        }}
+      >
         <PanelRail
           openPanels={openPanels}
           onToggle={togglePanel}
+          panelWidth={columnWidths.tools}
+          onResize={(delta) => resizeColumn('tools', delta)}
           panels={{
             tools: (
               <ToolPalette
@@ -151,7 +181,13 @@ export default function App() {
         </main>
 
         {editor.selected.length > 0 && (
-          <aside className="inspector-sidebar" aria-label="Properties">
+          <aside className="inspector-sidebar" aria-label="Properties" style={{ width: columnWidths.properties }}>
+            <ColumnResizer
+              label="Resize properties panel"
+              side="left"
+              direction={-1}
+              onResize={(delta) => resizeColumn('properties', delta)}
+            />
             <PropertiesPanel
               layout={editor.layout}
               selected={editor.selected}
@@ -169,6 +205,8 @@ export default function App() {
           opacity={persistence.floorPlanOpacity}
           onSelect={persistence.setSelectedFloorPlanId}
           onOpacityChange={persistence.setFloorPlanOpacity}
+          width={columnWidths.library}
+          onResize={(delta) => resizeColumn('library', delta)}
         />
 
       </div>

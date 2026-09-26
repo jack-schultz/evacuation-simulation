@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { emptyLayout } from '../layout/emptyLayout';
-import type { BuildingLayout, BuildingSummary } from '../types/building';
-import type { FloorPlanImageSummary } from '../types/building';
+import type { BuildingLayout, BuildingSummary, FloorPlanImageSummary, Selection } from '../types/building';
 
 export interface FloorPlanLibraryImage extends FloorPlanImageSummary {
   url: string;
