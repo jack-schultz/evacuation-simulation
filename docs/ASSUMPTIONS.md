@@ -62,28 +62,39 @@ regulatory compliance calculation.
 
 ## Flood emergency scenarios
 
-The sidebar can add, disable, remove, and edit one circular flood area (centre X/Y,
- radius in metres, and relative intensity from 0 to 100). It is saved with the
-building and snapshotted with each simulation. Reset playback before editing it.
+The sidebar configures a circular flood with a centre, initial radius (metres),
+spread speed (metres per second), and relative intensity (0-100). These settings
+are saved with the building and snapshotted for each simulation.
 
-Flood geometry and intensity remain constant throughout a run. At any positive
-intensity, routes cannot enter or cross the flood, and exits inside or on the
-flood boundary cannot be used (including preferred exits). Occupants already
-inside may traverse directed graph segments that move continuously farther from
-the flood centre. These escape segments receive a speed factor of
-`max(0.1, 1 - intensity / 100)`, applied to the whole segment. Reverse movement
-back into the flood is blocked. Dry routes still minimize distance; escape routes
-account for their reduced speed. Zero intensity and disabled floods preserve
-baseline behavior.
+The radius at simulation time `t` is `initial_radius + spread_speed_mps * t`.
+The default spread speed is 0.1 m/s (6 m/min), compared with default unobstructed
+walking speed of 1.2 m/s (72 m/min). This is an adjustable scenario assumption,
+not an empirically calibrated rate. It is independent of walking speed: changing
+occupant speed or crowding can change who escapes before an exit floods. Set
+spread speed to zero to keep the original fixed-area scenario. Older layouts
+without a spread speed use 0.1 m/s on new runs.
 
-If a preferred exit has no permitted route, occupants try another exit. Occupants
-without any permitted route remain trapped (purple), count as remaining, and do
-not count as evacuated. A partial evacuation has no total completion time.
-The graph cannot create new detours within a room: if existing door/space/exit
-segments offer no outward or dry path, occupants are reported as trapped.
+The flood and people use the same simulation clock. Each saved frame contains
+its flood radius, so pausing, scrubbing, and playback speed changes keep them
+synchronized. Old frames without a radius show their original fixed area.
 
-This is a deliberately simplified scenario model, not water depth, flow velocity,
-hydrodynamic spread, or a calibrated flood safety threshold. Walls do not contain
-water in this model. Occupants know the flood at spawn and keep their chosen route;
-there is no changing flood or mid-run replanning. Movement stops at graph nodes
-in affected scenarios to apply each segment's speed factor independently.
+At spawn, routes avoid crossing the initial flood and flooded exits, falling
+back from an inaccessible preferred exit where possible. Routes remain fixed.
+Every movement step checks the person's current position and remaining segment
+against the expanded flood (at the end of that step). Newly flooded exits and
+remaining paths into water trap occupants; water behind someone does not block
+their remaining dry path. People already inside may move continuously outward,
+with speed multiplied by `max(0.1, 1 - intensity / 100)` until they are dry.
+Aperture steering targets are checked too. Zero intensity and disabled floods
+preserve dry behavior. Finite timesteps introduce timing uncertainty up to a
+step; smaller steps improve comparisons near flood arrival times.
+
+Trapped occupants appear purple, count as remaining, and do not count as
+evacuated. Partial evacuation has no total completion time. There is no mid-run
+replanning or creation of new detours within rooms.
+
+This remains a simplified radial scenario, not a water-depth or hydraulic
+model. Walls do not contain water, and slopes, inflow, drainage, and water volume
+are not modeled. A physical flood rate cannot be inferred from the available
+layout alone. For context on terrain and hydraulic equation requirements, see
+[USACE HEC-RAS 2D hydrodynamics](https://www.hec.usace.army.mil/confluence/rasdocs/ras1dtechref/6.2/theoretical-basis-for-one-dimensional-and-two-dimensional-hydrodynamic-calculations/2d-unsteady-flow-hydrodynamics).

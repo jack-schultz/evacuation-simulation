@@ -353,6 +353,7 @@ export default function App() {
             congestedIds={congestedIds}
             interactive={!busy && !simulating}
             occupantRadiusM={occupantRadiusM}
+            floodRadiusM={playback.currentFrame?.flood_radius_m}
           />
         </main>
       </div>

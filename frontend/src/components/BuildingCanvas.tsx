@@ -8,6 +8,7 @@ import type {
   SelectedRef,
 } from '../types/building';
 import { SCALE, snap, uid } from '../utils';
+import { exitSpaceAt, moveExit } from '../exitPlacement';
 
 interface Props {
   layout: BuildingLayout;
@@ -20,6 +21,7 @@ interface Props {
   interactive?: boolean;
   /** Body radius in metres for playback dots (defaults to 0.25). */
   occupantRadiusM?: number;
+  floodRadiusM?: number | null;
 }
 
 const SPACE_COLORS: Record<string, string> = {
@@ -63,6 +65,7 @@ export function BuildingCanvas({
   congestedIds,
   interactive = true,
   occupantRadiusM = 0.25,
+  floodRadiusM,
 }: Props) {
   const [draft, setDraft] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const drawing = useRef(false);
@@ -156,7 +159,7 @@ export function BuildingCanvas({
     }
 
     if (tool === 'exit') {
-      const spaceId = spaceContaining(layout, p.x, p.y) ?? findNearestSpaces(layout, p.x, p.y, 1)[0];
+      const spaceId = exitSpaceAt(layout, p.x, p.y);
       if (!spaceId) {
         start.current = null;
         return;
@@ -400,7 +403,7 @@ export function BuildingCanvas({
                 if (layout.flood) onChange({ ...layout, flood: { ...layout.flood, x, y } });
               })}
             >
-              <Circle radius={layout.flood.radius_m * SCALE}
+              <Circle radius={(floodRadiusM ?? layout.flood.radius_m) * SCALE}
                 fill={`rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`}
                 stroke={layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7'}
                 strokeWidth={2} dash={[6, 4]} listening={false} />
@@ -442,10 +445,7 @@ export function BuildingCanvas({
               x={ex.x * SCALE} y={ex.y * SCALE}
               onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}
               {...dragProps({ kind: 'exit', id: ex.id }, (x, y) => {
-                onChange({
-                  ...layout,
-                  exits: layout.exits.map((exit) => exit.id === ex.id ? { ...exit, x, y } : exit),
-                });
+                onChange(moveExit(layout, ex.id, x, y));
               })}
             >
               <Rect
