@@ -36,21 +36,23 @@ API routers → services → domain / simulation engine
 
 | Concern | Path |
 |---------|------|
-| Domain types (layout, params, frames, results) | `backend/app/domain/building.py` |
+| Domain types (layout, params, frames, results) | `backend/app/domain/building/` (`layout.py`, `hazards.py`, `parameters.py`, `results.py`; re-exported from package `__init__`) |
 | Polygon geometry helpers | `backend/app/domain/geometry.py` |
 | API request/response schemas | `backend/app/schemas/api.py` |
 | Building / simulation HTTP routes | `backend/app/api/buildings.py`, `simulations.py` |
 | Persistence + seed | `backend/app/services/`, `backend/app/services/seed.py` |
-| Discrete-time loop | `backend/app/simulation/engine.py` |
-| Nav graph | `backend/app/simulation/graph.py` |
+| Discrete-time loop | `backend/app/simulation/engine.py` (spawn: `spawn.py`, timestep: `step.py`) |
+| Nav graph | `backend/app/simulation/graph.py` (types: `graph_types.py`, builder: `graph_builder.py`) |
 | Route choice (Dijkstra) | `backend/app/simulation/routing.py` |
 | Capacity / queues | `backend/app/simulation/flow.py` |
-| Spatial collision / apertures / space edges | `backend/app/simulation/collision.py` |
+| Spatial collision / apertures / space edges | `backend/app/simulation/collision.py` (impl: `apertures.py`, `walls.py`, `containment.py`, `collision_aabb.py`) |
 | Occupant spatial movement | `backend/app/simulation/movement.py` |
 | Stats / hotspots | `backend/app/simulation/results.py` |
-| TS domain mirrors | `frontend/src/types/building.ts` |
+| TS domain mirrors | `frontend/src/types/building.ts` (barrel over `layout.ts`, `api.ts`, `editor.ts`) |
 | REST client | `frontend/src/services/api.ts` |
-| Editor canvas | `frontend/src/components/BuildingCanvas.tsx` |
+| Editor canvas | `frontend/src/components/BuildingCanvas/` |
+| Properties panel | `frontend/src/components/properties/` |
+| App hooks (editor / persistence / sim) | `frontend/src/hooks/` |
 | Playback | `frontend/src/simulation/useSimulationPlayback.ts` |
 | App wiring (save / run / playback) | `frontend/src/App.tsx` |
 
@@ -70,7 +72,7 @@ API routers → services → domain / simulation engine
 
 ## Sync and extension rules
 
-- When changing domain shapes, update **both** `backend/app/domain/building.py` and `frontend/src/types/building.ts` (and API schemas if exposed).
+- When changing domain shapes, update **both** `backend/app/domain/building/` and `frontend/src/types/` (barrels `building` re-export; and API schemas if exposed).
 - Prefer swapping behaviour via protocols already used by the engine: `RouteSelector`, `FlowModel`, `SpatialMovementModel` — do not hard-wire a new model into the loop unless necessary.
 - Keep layering: do not put simulation logic in API routers or ORM models.
 
