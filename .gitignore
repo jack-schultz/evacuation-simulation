@@ -28,5 +28,5 @@ frontend/.env.local
 *.swo
 .DS_Store
 
-# Docker
+# Local data
 data/

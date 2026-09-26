@@ -12,17 +12,14 @@ regulatory compliance calculation.**
 * Discrete-time simulation engine returning animation frames and statistics
 * React + TypeScript + Vite frontend with Konva layout editor
 * Run / pause / play / reset / speed controls and results panel
-* Unit + E2E API tests for pathfinding, congestion, and full workflow
-* Docker Compose support
 
 ## Project structure
 
 ```text
 evacuation-simulation/
-├── backend/                 # FastAPI app + simulation engine + tests
+├── backend/                 # FastAPI app + simulation engine
 ├── frontend/                # React + Vite + Konva editor
 ├── docs/ASSUMPTIONS.md      # Simulation assumptions
-├── docker-compose.yml
 ├── .env.example
 └── README.md
 ```
@@ -31,7 +28,6 @@ evacuation-simulation/
 
 * Python **3.11–3.13** (3.13 recommended; avoid 3.14 until pydantic wheels catch up)
 * Node.js 20+
-* Optional: Docker + Docker Compose
 
 ## Setup
 
@@ -50,7 +46,7 @@ npm install
 cd ..
 ```
 
-## Run (development)
+## Run
 
 Terminal 1 — backend:
 
@@ -72,23 +68,6 @@ Open http://localhost:5173
 
 API docs: http://localhost:8000/docs  
 Health: http://localhost:8000/api/health
-
-## Run with Docker
-
-```bash
-docker compose up --build
-```
-
-* Frontend: http://localhost:5173  
-* Backend: http://localhost:8000  
-
-## Tests
-
-```bash
-source .venv/bin/activate
-cd backend
-pytest -q
-```
 
 ## Typical workflow
 
