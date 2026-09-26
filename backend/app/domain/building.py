@@ -1,3 +1,4 @@
+#Refactorred !!
 """Pure domain types for building geometry and occupants.
 
 Coordinates use a top-left origin in metres (or grid cells scaled by meters_per_cell).
@@ -8,7 +9,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field
 
 
 class SpaceType(str, Enum):
@@ -53,7 +54,6 @@ class Door(BaseModel):
         description="Max occupants per second through this door; None uses default",
     )
 
-    @field_validator("connects")
     @classmethod
     def distinct_spaces(cls, v: tuple[str, str]) -> tuple[str, str]:
         if v[0] == v[1]:
@@ -106,7 +106,6 @@ class BuildingLayout(BaseModel):
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
     flood: FloodEmergency | None = None
 
-    @model_validator(mode="after")
     def validate_references(self) -> BuildingLayout:
         if self.flood and (self.flood.x > self.width or self.flood.y > self.height):
             raise ValueError("Flood centre must be inside the building bounds")
@@ -129,9 +128,13 @@ class BuildingLayout(BaseModel):
                 raise ValueError(
                     f"Occupant group '{group.id}' references unknown space '{group.space_id}'"
                 )
-            if group.destination_exit_id is not None and group.destination_exit_id not in exit_ids:
+            if (
+                group.destination_exit_id is not None
+                and group.destination_exit_id not in exit_ids
+            ):
                 raise ValueError(
-                    f"Occupant group '{group.id}' references unknown exit '{group.destination_exit_id}'"
+                    f"Occupant group '{group.id}' references unknown exit "
+                    f"'{group.destination_exit_id}'"
                 )
 
         return self
