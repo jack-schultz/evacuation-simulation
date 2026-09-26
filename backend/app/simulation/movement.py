@@ -184,6 +184,9 @@ class SpatialMovementModel:
             )
             if through is not None:
                 return through
+            # Already on the destination side of this door — leave toward the
+            # next route waypoint (do not re-apply aperture approach geometry).
+            return waypoint.x, waypoint.y
 
         edge = edge_between(graph, occupant.current_node_id, nxt)
         if edge is None:

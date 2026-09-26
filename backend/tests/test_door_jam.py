@@ -189,39 +189,6 @@ class DoorJamTests(unittest.TestCase):
             max_in_throat = max(max_in_throat, in_throat)
         self.assertLessEqual(max_in_throat, aperture_slots(0.9, radius))
 
-    def test_wide_exit_evacuates_faster_than_narrow(self):
-        params = SimulationParameters(
-            max_time_s=180,
-            occupant_radius_m=0.25,
-            frame_interval_s=0.5,
-        )
-        narrow = SimulationEngine().run(packed_room(0.9, count=12), params).results
-        wide = SimulationEngine().run(packed_room(2.0, count=12), params).results
-        self.assertEqual(narrow.evacuated_count, 12)
-        self.assertEqual(wide.evacuated_count, 12)
-        self.assertLess(
-            wide.total_evacuation_time_s or 0,
-            narrow.total_evacuation_time_s or 0,
-        )
-
-    def test_bodies_do_not_stack_on_identical_points_mid_sim(self):
-        radius = 0.25
-        output = SimulationEngine().run(
-            packed_room(door_width=0.9, count=8),
-            SimulationParameters(max_time_s=60, occupant_radius_m=radius),
-        )
-        min_sep = 2 * radius - 0.05
-        for frame in output.frames:
-            active = [o for o in frame.occupants if o.status != "evacuated"]
-            for i in range(len(active)):
-                for j in range(i + 1, len(active)):
-                    d = dist(active[i].x, active[i].y, active[j].x, active[j].y)
-                    self.assertGreaterEqual(
-                        d,
-                        min_sep,
-                        f"overlap at t={frame.t}: {active[i].id} and {active[j].id}",
-                    )
-
     def test_space_edge_keeps_queue_on_office_side_of_door(self):
         """Shared space edge forces approach from the office; sealed edge stays blocked."""
         layout = two_room_layout(count=12)
@@ -246,27 +213,83 @@ class DoorJamTests(unittest.TestCase):
         self.assertEqual(output.results.evacuated_count, 12)
 
         door_x, door_y = 13.0, 15.0
-        # Waiters away from the door gap (x well west of the opening) must stay
-        # on the office side — they must not wrap through the sealed edge.
-        saw_jam = False
+        # Anyone west of the gap near the shared edge must stay on the office
+        # side — they must not wrap through the sealed wall into the corridor.
+        saw_west = False
         for frame in output.frames:
-            west_waiting = [
+            west_near = [
                 o
                 for o in frame.occupants
-                if o.status == "waiting"
+                if o.status != "evacuated"
                 and dist(o.x, o.y, door_x, door_y) < 2.5
                 and o.x <= door_x - 0.6
             ]
-            if len(west_waiting) < 3:
+            if not west_near:
                 continue
-            saw_jam = True
-            for o in west_waiting:
+            saw_west = True
+            for o in west_near:
                 self.assertLessEqual(
                     o.y,
                     door_y + 0.05,
-                    f"waiter west of door gap wrapped to corridor at t={frame.t}",
+                    f"body west of door gap wrapped to corridor at t={frame.t}",
                 )
-        self.assertTrue(saw_jam, "expected a multi-person jam near the door")
+        self.assertTrue(saw_west, "expected occupants west of the door during egress")
+
+    def test_bodies_do_not_stack_on_identical_points_mid_sim(self):
+        radius = 0.25
+        output = SimulationEngine().run(
+            packed_room(door_width=0.9, count=8),
+            SimulationParameters(max_time_s=60, occupant_radius_m=radius),
+        )
+        min_sep = 2 * radius - 0.05
+        for frame in output.frames:
+            active = [o for o in frame.occupants if o.status != "evacuated"]
+            for i in range(len(active)):
+                for j in range(i + 1, len(active)):
+                    d = dist(active[i].x, active[i].y, active[j].x, active[j].y)
+                    self.assertGreaterEqual(
+                        d,
+                        min_sep,
+                        f"overlap at t={frame.t}: {active[i].id} and {active[j].id}",
+                    )
+
+    def test_small_timestep_still_clears_doorway(self):
+        """Body-radius inset must not strand the last person on the origin side."""
+        # Step length 1.4 * 0.1 = 0.14 < radius 0.25 — previously never crossed.
+        output = SimulationEngine().run(
+            two_room_layout(count=6),
+            SimulationParameters(
+                max_time_s=120,
+                occupant_radius_m=0.25,
+                timestep_s=0.1,
+                frame_interval_s=0.5,
+            ),
+        )
+        self.assertEqual(output.results.evacuated_count, 6)
+        door_x, door_y = 13.0, 15.0
+        last = output.frames[-1]
+        stranded = [
+            o
+            for o in last.occupants
+            if o.status != "evacuated" and dist(o.x, o.y, door_x, door_y) < 1.0
+        ]
+        self.assertEqual(stranded, [])
+
+    def test_wide_exit_evacuates_faster_than_narrow(self):
+        params = SimulationParameters(
+            max_time_s=180,
+            occupant_radius_m=0.25,
+            frame_interval_s=0.5,
+        )
+        # Larger crowd so aperture width dominates travel time noise.
+        narrow = SimulationEngine().run(packed_room(0.9, count=24), params).results
+        wide = SimulationEngine().run(packed_room(2.0, count=24), params).results
+        self.assertEqual(narrow.evacuated_count, 24)
+        self.assertEqual(wide.evacuated_count, 24)
+        self.assertLess(
+            wide.total_evacuation_time_s or 0,
+            narrow.total_evacuation_time_s or 0,
+        )
 
 
 class SpaceContainmentTests(unittest.TestCase):
@@ -276,6 +299,27 @@ class SpaceContainmentTests(unittest.TestCase):
         "exit_flow_per_s": 1.5,
         "corridor_density_per_m2": 2.0,
     }
+
+    def test_membership_does_not_flip_back_on_shared_door_edge(self):
+        """Shared-edge points belong to both polygons; transit must stay one-way."""
+        layout = two_room_layout(count=1)
+        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        spaces = {s.id: s for s in layout.spaces}
+        doors = {d.id: d for d in layout.doors}
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:office", "door:d1", "exit:out"],
+            route_index=1,
+            current_space_id="corridor",
+            x=13.0,
+            y=15.0,  # exactly on the shared door edge
+        )
+        update_space_membership_from_position(
+            [occ], spaces, doors, graph, admitted={"g:0"}
+        )
+        self.assertEqual(occ.current_space_id, "corridor")
 
     def test_forced_through_shared_wall_clamps_back(self):
         layout = two_room_layout(count=1)

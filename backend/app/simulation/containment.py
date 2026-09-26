@@ -90,6 +90,51 @@ def _crossing_door(
     return doors.get(nxt.ref_id)
 
 
+def _forward_space_for_door(
+    occupant: ContainedOccupant,
+    door: Door,
+    graph: object,
+) -> str | None:
+    """Space the occupant is trying to enter through this door along their route."""
+    nodes = graph.nodes  # type: ignore[attr-defined]
+    space_node_ids = graph.space_node_ids  # type: ignore[attr-defined]
+    a, b = door.connects
+    cur = nodes.get(occupant.current_node_id)
+    if cur is not None and cur.kind == NodeKind.DOOR:
+        nxt_id = occupant.next_node_id
+        if nxt_id is None:
+            return door_other_space(door, occupant.current_space_id)
+        waypoint = nodes.get(nxt_id)
+        a_nid = space_node_ids.get(a)
+        b_nid = space_node_ids.get(b)
+        if waypoint is None or a_nid is None or b_nid is None:
+            return door_other_space(door, occupant.current_space_id)
+        an, bn = nodes[a_nid], nodes[b_nid]
+        da = dist(waypoint.x, waypoint.y, an.x, an.y)
+        db = dist(waypoint.x, waypoint.y, bn.x, bn.y)
+        return a if da <= db else b
+
+    # Approaching the door: forward is the far side from current membership.
+    return door_other_space(door, occupant.current_space_id)
+
+
+def _closer_to_space(
+    x: float,
+    y: float,
+    space_id: str,
+    other_id: str,
+    spaces: dict[str, Space],
+) -> bool:
+    """True if (x, y) is closer to space_id's interior than to other_id's."""
+    from app.domain.geometry import interior_point
+
+    if space_id not in spaces or other_id not in spaces:
+        return False
+    sx, sy = interior_point(spaces[space_id].vertices)
+    ox, oy = interior_point(spaces[other_id].vertices)
+    return dist(x, y, sx, sy) < dist(x, y, ox, oy) - 1e-9
+
+
 def update_space_membership_from_position(
     occupants: list[ContainedOccupant],
     spaces: dict[str, Space],
@@ -97,7 +142,12 @@ def update_space_membership_from_position(
     graph: object,
     admitted: set[str] | None = None,
 ) -> None:
-    """Flip current_space_id when the body enters the far side of an admitted door."""
+    """Flip current_space_id forward through an admitted door (never backward).
+
+    Shared door edges count as inside both polygons, so a naive "enter other
+    space" test oscillates membership. We only move membership toward the
+    route's forward space, and only once the body is clearly on that side.
+    """
     from app.domain.geometry import point_in_polygon
 
     for o in occupants:
@@ -108,30 +158,68 @@ def update_space_membership_from_position(
         door = _crossing_door(o, graph, doors, admitted)
         if door is None:
             continue
-        dest_id = door_other_space(door, o.current_space_id)
-        if dest_id is None or dest_id not in spaces:
+        forward_id = _forward_space_for_door(o, door, graph)
+        if forward_id is None or forward_id not in spaces:
             continue
-        if point_in_polygon(o.x, o.y, spaces[dest_id].vertices):
-            o.current_space_id = dest_id
+        if o.current_space_id == forward_id:
+            continue
+        origin_id = o.current_space_id
+        if forward_id not in door.connects or origin_id not in door.connects:
+            continue
+        in_forward = point_in_polygon(o.x, o.y, spaces[forward_id].vertices)
+        if not in_forward:
+            continue
+        in_origin = point_in_polygon(o.x, o.y, spaces[origin_id].vertices)
+        # Interior of the destination only → always flip. Shared-edge points
+        # belong to both polygons; require being closer to the forward interior
+        # so membership does not oscillate backward.
+        if (not in_origin) or _closer_to_space(
+            o.x, o.y, forward_id, origin_id, spaces
+        ):
+            o.current_space_id = forward_id
 
 
 def resolve_space_containment(
     occupants: list[ContainedOccupant],
     spaces: dict[str, Space],
     radius_m: float,
+    doors: dict[str, Door] | None = None,
+    graph: object | None = None,
+    admitted: set[str] | None = None,
 ) -> None:
-    """Clamp active occupants into their current space only."""
+    """Clamp active occupants into their current space (plus door transit destination).
+
+    While still on the origin side of an admitted door, the destination is also
+    allowed and the body-radius inset is dropped so small timesteps can finish
+    the crossing. After membership flips forward, normal single-space inset
+    resumes. Wall solids still block everything except the punched opening.
+    """
     if radius_m < 0:
         return
+    doors = doors or {}
 
     for o in occupants:
         if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
             continue
         if o.current_space_id not in spaces:
             continue
-        o.x, o.y = _clamp_to_nearest_space(
-            o.x, o.y, [o.current_space_id], spaces, radius_m
-        )
+        allowed = [o.current_space_id]
+        inset = radius_m
+        if graph is not None and doors:
+            door = _crossing_door(o, graph, doors, admitted)
+            if door is not None:
+                forward_id = _forward_space_for_door(o, door, graph)
+                if (
+                    forward_id is not None
+                    and forward_id in spaces
+                    and o.current_space_id != forward_id
+                ):
+                    allowed.append(forward_id)
+                    # Inset against the shared door edge stranded the last person
+                    # in the doorway: they could never step across unless a single
+                    # timestep jumped more than radius_m.
+                    inset = 0.0
+        o.x, o.y = _clamp_to_nearest_space(o.x, o.y, allowed, spaces, inset)
 
 
 def resolve_wall_collisions(

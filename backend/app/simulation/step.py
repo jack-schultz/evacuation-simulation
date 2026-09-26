@@ -292,7 +292,14 @@ def advance_timestep(
     update_space_membership_from_position(
         occupants, spaces, doors, graph, admitted=admitted
     )
-    resolve_space_containment(occupants, spaces, radius)
+    resolve_space_containment(
+        occupants,
+        spaces,
+        radius,
+        doors=doors,
+        graph=graph,
+        admitted=admitted,
+    )
     if obstacle_map is not None:
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
