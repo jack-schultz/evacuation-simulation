@@ -113,31 +113,6 @@ export default function App() {
                 disabled={disabled}
               />
             ),
-            building: (
-              <section className="panel properties">
-                <h2>Building size</h2>
-                {(['width', 'height'] as const).map((dimension) => (
-                  <label key={dimension}>
-                    {dimension === 'width' ? 'Width' : 'Height'} (m)
-                    <input
-                      type="number"
-                      min="1"
-                      max="200"
-                      step="1"
-                      disabled={disabled}
-                      value={editor.layout[dimension]}
-                      onChange={(e) => {
-                        const value = e.target.valueAsNumber;
-                        if (Number.isFinite(value) && e.target.validity.valid) {
-                          editor.updateLayout({ ...editor.layout, [dimension]: value });
-                        }
-                      }}
-                    />
-                  </label>
-                ))}
-                <p className="hint">Create another building with New, set its size and name, then Save.</p>
-              </section>
-            ),
             flood: (
               <FloodPanel layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
             ),

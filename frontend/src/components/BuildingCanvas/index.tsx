@@ -11,6 +11,7 @@ import { SCALE } from '../../utils';
 import { usePolygonDraft } from './usePolygonDraft';
 import { useCanvasInteraction } from './useCanvasInteraction';
 import { useCanvasViewport } from './useCanvasViewport';
+import { BuildingBoundsLayer } from './layers/BuildingBoundsLayer';
 import { SpaceLayer } from './layers/SpaceLayer';
 import { HazardLayer } from './layers/HazardLayer';
 import { OpeningsLayer } from './layers/OpeningsLayer';
@@ -52,11 +53,15 @@ export function BuildingCanvas({
   floorPlanUrl = null,
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
+  const [previewSize, setPreviewSize] = useState<{ width: number; height: number } | null>(null);
   const occupantRadiusPx = Math.max(occupantRadiusM * SCALE, 3);
 
-  const widthPx = layout.width * SCALE;
-  const heightPx = layout.height * SCALE;
+  const displayWidth = previewSize?.width ?? layout.width;
+  const displayHeight = previewSize?.height ?? layout.height;
+  const widthPx = displayWidth * SCALE;
+  const heightPx = displayHeight * SCALE;
 
+  // Viewport fits committed layout only so drag-preview does not refit every move.
   const {
     containerRef,
     size,
@@ -68,7 +73,7 @@ export function BuildingCanvas({
     isPanning,
     zoomBy,
     resetView,
-  } = useCanvasViewport(widthPx, heightPx);
+  } = useCanvasViewport(layout.width * SCALE, layout.height * SCALE);
 
   useEffect(() => {
     if (!floorPlanUrl) {
@@ -81,16 +86,20 @@ export function BuildingCanvas({
     return () => { image.onload = null; };
   }, [floorPlanUrl]);
 
+  useEffect(() => {
+    setPreviewSize(null);
+  }, [layout.width, layout.height]);
+
   const gridLines = useMemo(() => {
     const lines: number[][] = [];
-    for (let x = 0; x <= layout.width; x += 1) {
+    for (let x = 0; x <= displayWidth; x += 1) {
       lines.push([x * SCALE, 0, x * SCALE, heightPx]);
     }
-    for (let y = 0; y <= layout.height; y += 1) {
+    for (let y = 0; y <= displayHeight; y += 1) {
       lines.push([0, y * SCALE, widthPx, y * SCALE]);
     }
     return lines;
-  }, [layout.width, layout.height, widthPx, heightPx]);
+  }, [displayWidth, displayHeight, widthPx, heightPx]);
 
   const draft = usePolygonDraft({
     tool,
@@ -215,6 +224,20 @@ export function BuildingCanvas({
             onSelect={onSelect}
             onChange={onChange}
             dragProps={dragProps}
+          />
+
+          <BuildingBoundsLayer
+            layout={layout}
+            widthM={displayWidth}
+            heightM={displayHeight}
+            tool={tool}
+            interactive={interactive}
+            onPreview={setPreviewSize}
+            onCommit={(next) => {
+              setPreviewSize(null);
+              if (next.width === layout.width && next.height === layout.height) return;
+              onChange({ ...layout, width: next.width, height: next.height });
+            }}
           />
 
           {draft.draftLinePoints && (

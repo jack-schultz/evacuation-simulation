@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 
-export type PanelId = 'tools' | 'building' | 'flood' | 'fire';
+export type PanelId = 'tools' | 'flood' | 'fire';
 
 const PANEL_META: { id: PanelId; label: string; short: string }[] = [
   { id: 'tools', label: 'Building tools', short: 'Tools' },
-  { id: 'building', label: 'Building size', short: 'Size' },
   { id: 'flood', label: 'Flood emergency', short: 'Flood' },
   { id: 'fire', label: 'Fire emergency', short: 'Fire' },
 ];
