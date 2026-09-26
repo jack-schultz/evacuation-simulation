@@ -115,6 +115,12 @@ export function useBuildingEditor({
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
 
+      if (event.key === 'Escape' && !mod && !event.altKey && !event.shiftKey) {
+        event.preventDefault();
+        setTool('select');
+        return;
+      }
+
       if (
         (event.key === 'Delete' || event.key === 'Backspace' || (key === 'q' && !mod && !event.altKey && !event.shiftKey))
         && selected.length > 0
