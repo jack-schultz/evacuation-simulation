@@ -1,66 +1,129 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SimulationFrame, SimulationResults } from '../types/building';
+import { frameIndexAt, interpolateFrame } from './interpolateFrame';
 
 export type PlaybackState = 'idle' | 'playing' | 'paused' | 'finished';
 
 export function useSimulationPlayback() {
   const [frames, setFrames] = useState<SimulationFrame[]>([]);
   const [results, setResults] = useState<SimulationResults | null>(null);
-  const [frameIndex, setFrameIndex] = useState(0);
+  const [simTime, setSimTime] = useState(0);
   const [status, setStatus] = useState<PlaybackState>('idle');
   const [speed, setSpeed] = useState(1);
-  const timerRef = useRef<number | null>(null);
 
-  const clearTimer = () => {
-    if (timerRef.current != null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
+  const rafRef = useRef<number | null>(null);
+  const lastWallRef = useRef<number | null>(null);
+  const simTimeRef = useRef(0);
+  const framesRef = useRef(frames);
+  const speedRef = useRef(speed);
+  const statusRef = useRef(status);
+
+  useEffect(() => {
+    framesRef.current = frames;
+  }, [frames]);
+
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  const clearRaf = () => {
+    if (rafRef.current != null) {
+      window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
+    lastWallRef.current = null;
   };
 
   const load = useCallback((nextFrames: SimulationFrame[], nextResults: SimulationResults | null) => {
-    clearTimer();
+    clearRaf();
+    framesRef.current = nextFrames;
     setFrames(nextFrames);
     setResults(nextResults);
-    setFrameIndex(0);
+    const t = nextFrames[0]?.t ?? 0;
+    simTimeRef.current = t;
+    setSimTime(t);
     setStatus(nextFrames.length ? 'paused' : 'idle');
   }, []);
 
   const reset = useCallback(() => {
-    clearTimer();
+    clearRaf();
+    framesRef.current = [];
     setFrames([]);
     setResults(null);
-    setFrameIndex(0);
+    simTimeRef.current = 0;
+    setSimTime(0);
     setStatus('idle');
   }, []);
 
   const play = useCallback(() => {
-    if (!frames.length) return;
-    setStatus(frameIndex >= frames.length - 1 ? 'finished' : 'playing');
-  }, [frames.length, frameIndex]);
+    const list = framesRef.current;
+    if (!list.length) return;
+    const endT = list[list.length - 1].t;
+    if (simTimeRef.current >= endT) {
+      setStatus('finished');
+      return;
+    }
+    setStatus('playing');
+  }, []);
 
   const pause = useCallback(() => {
     setStatus((s) => (s === 'playing' ? 'paused' : s));
   }, []);
 
+  const seekFrameIndex = useCallback((index: number) => {
+    const list = framesRef.current;
+    if (!list.length) return;
+    const clamped = Math.max(0, Math.min(index, list.length - 1));
+    const t = list[clamped].t;
+    simTimeRef.current = t;
+    setSimTime(t);
+    const endT = list[list.length - 1].t;
+    if (t >= endT) {
+      setStatus('finished');
+    } else if (statusRef.current === 'finished') {
+      setStatus('paused');
+    }
+  }, []);
+
   useEffect(() => {
-    clearTimer();
+    clearRaf();
     if (status !== 'playing' || frames.length === 0) return;
 
-    if (frameIndex >= frames.length - 1) return;
-    // Use recorded simulation seconds for both people and the flood, including
-    // non-default frame intervals and shorter final frames.
-    const intervalMs = Math.max(0, (frames[frameIndex + 1].t - frames[frameIndex].t) * 1000 / speed);
-    timerRef.current = window.setTimeout(() => {
-      setFrameIndex(frameIndex + 1);
-      if (frameIndex + 1 >= frames.length - 1) setStatus('finished');
-    }, intervalMs);
+    const endT = frames[frames.length - 1].t;
+    lastWallRef.current = performance.now();
 
-    return clearTimer;
-  }, [status, speed, frames, frameIndex]);
+    const tick = (now: number) => {
+      const last = lastWallRef.current ?? now;
+      lastWallRef.current = now;
+      const dtWall = Math.max(0, (now - last) / 1000);
+      const next = Math.min(endT, simTimeRef.current + dtWall * speedRef.current);
+      simTimeRef.current = next;
+      setSimTime(next);
+      if (next >= endT) {
+        setStatus('finished');
+        clearRaf();
+        return;
+      }
+      rafRef.current = window.requestAnimationFrame(tick);
+    };
 
-  const currentFrame = frames[frameIndex] ?? null;
-  const simTime = currentFrame?.t ?? 0;
+    rafRef.current = window.requestAnimationFrame(tick);
+    return clearRaf;
+  }, [status, frames]);
+
+  const currentFrame = useMemo(
+    () => interpolateFrame(frames, simTime),
+    [frames, simTime],
+  );
+
+  const frameIndex = useMemo(
+    () => frameIndexAt(frames, simTime),
+    [frames, simTime],
+  );
 
   return {
     frames,
@@ -75,6 +138,6 @@ export function useSimulationPlayback() {
     reset,
     play,
     pause,
-    setFrameIndex,
+    setFrameIndex: seekFrameIndex,
   };
 }
