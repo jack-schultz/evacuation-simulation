@@ -36,7 +36,7 @@ export function SimulationControls({
     <div className="controls-bar">
       <div className="controls-left">
         <button type="button" onClick={onRun} disabled={running}>
-          Run
+          {running ? 'Loading...' : 'Run'}
         </button>
         {status === 'playing' ? (
           <button type="button" onClick={onPause}>
