@@ -51,6 +51,8 @@ interface Props {
   floorPlanUrl?: string | null;
   floorPlanOpacity?: number;
   activeFloorId: string;
+  /** Playback: render every floor's geometry and people together. */
+  showAllFloors?: boolean;
 }
 
 export function BuildingCanvas({
@@ -78,6 +80,7 @@ export function BuildingCanvas({
   floorPlanUrl = null,
   floorPlanOpacity = 0.2,
   activeFloorId,
+  showAllFloors = false,
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
   const [hoveredObject, setHoveredObject] = useState<ObjectRef | null>(null);
@@ -250,6 +253,7 @@ export function BuildingCanvas({
             congestedIds={congestedIds}
             floorPlanImage={floorPlanImage}
             activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             onObjectClick={handleObjectClick}
             onHover={setHoveredObject}
             onChange={onChange}
@@ -258,7 +262,11 @@ export function BuildingCanvas({
             onObjectContextMenu={openObjectContextMenu}
           />
 
-          <StairArrowLayer layout={layout} activeFloorId={activeFloorId} />
+          <StairArrowLayer
+            layout={layout}
+            activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
+          />
 
           <OpeningsLayer
             layout={layout}
@@ -266,6 +274,7 @@ export function BuildingCanvas({
             interactive={interactive}
             congestedIds={congestedIds}
             activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             onObjectClick={handleObjectClick}
             onHover={setHoveredObject}
             onChange={onChange}
@@ -278,6 +287,7 @@ export function BuildingCanvas({
             tool={tool}
             interactive={interactive}
             activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             floodRadiusM={floodRadiusM}
             fireRadiusM={fireRadiusM}
             smokeFloors={smokeFloors}
@@ -294,6 +304,7 @@ export function BuildingCanvas({
             occupants={occupants}
             occupantRadiusPx={occupantRadiusPx}
             activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors}
             onObjectClick={handleObjectClick}
             onHover={setHoveredObject}
             onChange={onChange}

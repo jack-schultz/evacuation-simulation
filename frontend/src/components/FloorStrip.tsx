@@ -53,7 +53,6 @@ export function FloorStrip({
             className={
               floor.id === activeFloorId ? 'floor-tab active' : 'floor-tab'
             }
-            disabled={disabled}
             onClick={() => onActiveFloorChange(floor.id)}
           >
             {floor.name}

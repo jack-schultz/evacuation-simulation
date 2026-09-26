@@ -7,6 +7,7 @@ import { spaceCentroid } from '../geometryHelpers';
 interface Props {
   layout: BuildingLayout;
   activeFloorId: string;
+  showAllFloors?: boolean;
 }
 
 function longAxis(space: Space): [[number, number], [number, number]] {
@@ -28,10 +29,12 @@ function floorMap(layout: BuildingLayout): Record<string, Floor> {
   return Object.fromEntries(ensureFloors(layout).map((f) => [f.id, f]));
 }
 
-export function StairArrowLayer({ layout, activeFloorId }: Props) {
+export function StairArrowLayer({ layout, activeFloorId, showAllFloors = false }: Props) {
   const floors = floorMap(layout);
   const stairs = layout.spaces.filter(
-    (s) => s.type === 'stairs' && entityFloorId(s) === activeFloorId,
+    (s) =>
+      s.type === 'stairs' &&
+      (showAllFloors || entityFloorId(s) === activeFloorId),
   );
 
   return (

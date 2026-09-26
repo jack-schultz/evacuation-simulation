@@ -51,13 +51,9 @@ export default function App() {
     setActiveFloorId((current) => resolveActiveFloorId(editor.layout, current));
   }, [editor.layout.floors, editor.layout]);
 
-  // Follow climbers onto their floor during playback when people are climbing.
-  useEffect(() => {
-    const frame = session.playback.currentFrame;
-    if (!frame || !session.simulating) return;
-    const climber = frame.occupants.find((o) => o.status === 'climbing');
-    if (climber?.floor_id) setActiveFloorId(climber.floor_id);
-  }, [session.playback.currentFrame, session.simulating]);
+  const liveEvacuated = session.playback.currentFrame
+    ? session.playback.currentFrame.occupants.filter((o) => o.status === 'evacuated').length
+    : null;
 
   const togglePanel = (id: PanelId) => {
     setOpenPanels((current) => {
@@ -134,6 +130,7 @@ export default function App() {
         onReset={session.onReset}
         running={busy}
         results={session.playback.results}
+        evacuatedCount={liveEvacuated}
         showPaths={showPaths}
         onShowPathsChange={setShowPaths}
         error={error}
@@ -250,7 +247,10 @@ export default function App() {
 
       </div>
 
-      <ResultsPanel results={session.playback.results} />
+      <ResultsPanel
+        results={session.playback.results}
+        evacuatedCount={liveEvacuated}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ interface Props {
   interactive: boolean;
   congestedIds?: Set<string>;
   activeFloorId: string;
+  showAllFloors?: boolean;
   onObjectClick: HandleObjectClickFn;
   onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
@@ -28,14 +29,19 @@ export function OpeningsLayer({
   interactive,
   congestedIds,
   activeFloorId,
+  showAllFloors = false,
   onObjectClick,
   onHover,
   onChange,
   dragProps,
   onObjectContextMenu,
 }: Props) {
-  const doors = layout.doors.filter((d) => (d.floor_id ?? 'floor-0') === activeFloorId);
-  const exits = layout.exits.filter((e) => (e.floor_id ?? 'floor-0') === activeFloorId);
+  const doors = layout.doors.filter(
+    (d) => showAllFloors || (d.floor_id ?? 'floor-0') === activeFloorId,
+  );
+  const exits = layout.exits.filter(
+    (e) => showAllFloors || (e.floor_id ?? 'floor-0') === activeFloorId,
+  );
   return (
     <>
       {doors.map((d) => {

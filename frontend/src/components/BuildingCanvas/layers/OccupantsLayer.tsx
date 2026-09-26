@@ -21,6 +21,8 @@ interface Props {
   occupants: OccupantFrameState[];
   occupantRadiusPx: number;
   activeFloorId: string;
+  /** When true (playback), show sim people on every floor at once. */
+  showAllFloors?: boolean;
   onObjectClick: HandleObjectClickFn;
   onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
@@ -35,6 +37,7 @@ export function OccupantsLayer({
   occupants,
   occupantRadiusPx,
   activeFloorId,
+  showAllFloors = false,
   onObjectClick,
   onHover,
   onChange,
@@ -44,7 +47,10 @@ export function OccupantsLayer({
   return (
     <>
       {layout.occupant_groups
-        .filter((g) => (g.floor_id ?? 'floor-0') === activeFloorId)
+        .filter(
+          (g) =>
+            showAllFloors || (g.floor_id ?? 'floor-0') === activeFloorId,
+        )
         .map((g) => {
         const space = layout.spaces.find((s) => s.id === g.space_id);
         if (!space) return null;
@@ -110,11 +116,11 @@ export function OccupantsLayer({
       })}
 
       {occupants
-        .filter(
-          (o) =>
-            o.status !== 'evacuated' &&
-            (o.floor_id ?? 'floor-0') === activeFloorId,
-        )
+        .filter((o) => {
+          if (o.status === 'evacuated') return false;
+          if (showAllFloors) return true;
+          return (o.floor_id ?? 'floor-0') === activeFloorId;
+        })
         .map((o) => (
           <Circle
             key={o.id}

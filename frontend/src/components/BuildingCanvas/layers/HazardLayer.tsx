@@ -9,6 +9,7 @@ interface Props {
   tool: EditorTool;
   interactive: boolean;
   activeFloorId: string;
+  showAllFloors?: boolean;
   floodRadiusM?: number | null;
   fireRadiusM?: number | null;
   smokeFloors?: SmokeFloorState[];
@@ -21,13 +22,17 @@ export function HazardLayer({
   tool,
   interactive,
   activeFloorId,
+  showAllFloors = false,
   floodRadiusM,
   fireRadiusM,
   smokeFloors = [],
   onChange,
   dragProps,
 }: Props) {
-  const connectedSpaceIds = (x: number, y: number) => {
+  const onFloor = (floorId?: string | null) =>
+    showAllFloors || (floorId ?? 'floor-0') === activeFloorId;
+
+  const connectedSpaceIds = (x: number, y: number, floorId: string) => {
     const containsPoint = (vertices: [number, number][], x: number, y: number) => {
       let inside = false;
       for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i, i += 1) {
@@ -46,7 +51,7 @@ export function HazardLayer({
     };
 
     const floorSpaces = layout.spaces.filter(
-      (space) => (space.floor_id ?? 'floor-0') === activeFloorId,
+      (space) => (space.floor_id ?? 'floor-0') === floorId,
     );
     const knownIds = new Set(floorSpaces.map((space) => space.id));
     const reachable = new Set(
@@ -56,7 +61,7 @@ export function HazardLayer({
     for (let index = 0; index < queue.length; index += 1) {
       const current = queue[index];
       for (const door of layout.doors) {
-        if ((door.floor_id ?? 'floor-0') !== activeFloorId) continue;
+        if ((door.floor_id ?? 'floor-0') !== floorId) continue;
         const [a, b] = door.connects;
         const next = a === current ? b : b === current ? a : null;
         if (next && knownIds.has(next) && !reachable.has(next)) {
@@ -74,12 +79,13 @@ export function HazardLayer({
     radius: number,
     fill: string,
     stroke: string,
+    floorId: string,
   ) => {
-    const reachable = connectedSpaceIds(x, y);
+    const reachable = connectedSpaceIds(x, y, floorId);
     return layout.spaces
       .filter(
         (space) =>
-          (space.floor_id ?? 'floor-0') === activeFloorId && reachable.has(space.id),
+          (space.floor_id ?? 'floor-0') === floorId && reachable.has(space.id),
       )
       .map((space) => (
       <Group
@@ -110,15 +116,11 @@ export function HazardLayer({
     ));
   };
 
-  const floodOnFloor =
-    layout.flood?.enabled && (layout.flood.floor_id ?? 'floor-0') === activeFloorId;
-  const fireOnFloor =
-    layout.fire?.enabled && (layout.fire.floor_id ?? 'floor-0') === activeFloorId;
-  const smokeOnFloor = smokeFloors.filter((p) => p.floor_id === activeFloorId);
+  const floodOnFloor = layout.flood?.enabled && onFloor(layout.flood.floor_id);
+  const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
+  const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
   const smokeEdit =
-    layout.smoke?.enabled && (layout.smoke.floor_id ?? 'floor-0') === activeFloorId
-      ? layout.smoke
-      : null;
+    layout.smoke?.enabled && onFloor(layout.smoke.floor_id) ? layout.smoke : null;
 
   return (
     <>
@@ -129,6 +131,7 @@ export function HazardLayer({
           floodRadiusM ?? layout.flood.radius_m,
           `rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`,
           layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7',
+          layout.flood.floor_id ?? 'floor-0',
         )
       )}
       {floodOnFloor && layout.flood && (
@@ -167,6 +170,7 @@ export function HazardLayer({
           fireRadiusM ?? layout.fire.radius_m,
           `rgba(249, 115, 22, ${0.1 + layout.fire.intensity / 250})`,
           layout.fire.intensity >= 80 ? '#b91c1c' : '#ea580c',
+          layout.fire.floor_id ?? 'floor-0',
         )
       )}
       {fireOnFloor && layout.fire && (
@@ -205,6 +209,7 @@ export function HazardLayer({
           plume.radius_m,
           `rgba(100, 116, 139, ${0.12 + plume.intensity / 280})`,
           '#475569',
+          plume.floor_id,
         ),
       )}
       {smokeEdit && smokeOnFloor.length === 0 && (
@@ -214,6 +219,7 @@ export function HazardLayer({
           smokeEdit.radius_m,
           `rgba(100, 116, 139, ${0.12 + smokeEdit.intensity / 280})`,
           '#475569',
+          smokeEdit.floor_id ?? 'floor-0',
         )
       )}
       {smokeEdit && (
