@@ -1,0 +1,129 @@
+# Evacuation Simulation
+
+Web application for building planners to model simplified evacuation paths and
+estimate evacuation times. **Estimation only — not a safety certification or
+regulatory compliance calculation.**
+
+## What was implemented (iteration 1)
+
+* FastAPI backend with domain/service separation and SQLite persistence
+* Building CRUD API + seeded example (two offices, corridor bottleneck, ~85 occupants)
+* Navigation graph + Dijkstra routing + capacity-based congestion model
+* Discrete-time simulation engine returning animation frames and statistics
+* React + TypeScript + Vite frontend with Konva layout editor
+* Run / pause / play / reset / speed controls and results panel
+* Unit + E2E API tests for pathfinding, congestion, and full workflow
+* Docker Compose support
+
+## Project structure
+
+```text
+evacuation-simulation/
+├── backend/                 # FastAPI app + simulation engine + tests
+├── frontend/                # React + Vite + Konva editor
+├── docs/ASSUMPTIONS.md      # Simulation assumptions
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+## Prerequisites
+
+* Python **3.11–3.13** (3.13 recommended; avoid 3.14 until pydantic wheels catch up)
+* Node.js 20+
+* Optional: Docker + Docker Compose
+
+## Setup
+
+```bash
+# From repo root
+cp .env.example .env
+
+# Backend
+python3.13 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+
+# Frontend
+cd frontend
+npm install
+cd ..
+```
+
+## Run (development)
+
+Terminal 1 — backend:
+
+```bash
+source .venv/bin/activate
+cd backend
+mkdir -p data
+uvicorn app.main:app --reload --port 8000
+```
+
+Terminal 2 — frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open http://localhost:5173
+
+API docs: http://localhost:8000/docs  
+Health: http://localhost:8000/api/health
+
+## Run with Docker
+
+```bash
+docker compose up --build
+```
+
+* Frontend: http://localhost:5173  
+* Backend: http://localhost:8000  
+
+## Tests
+
+```bash
+source .venv/bin/activate
+cd backend
+pytest -q
+```
+
+## Typical workflow
+
+1. Open the app — the example building loads automatically.
+2. Edit rooms / doors / exits / occupants with the left tools.
+3. Save the building.
+4. Click **Run** to compute evacuation and animate occupants.
+5. Use **Pause** / speed slider / **Reset**; inspect stats in the bottom bar.
+
+## Important simulation assumptions
+
+See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
+
+* Rectangle geometry; shortest-path routing; no fire/smoke/panic
+* Capacity queues at doors/corridors/stairs/exits
+* Results are estimates only
+
+## Known limitations
+
+* Single-floor style layout (stairs are capacity nodes, not multi-level physics)
+* Walls do not yet cut navigation; connectivity is door/exit based
+* No live WebSocket streaming (full timeline computed server-side)
+* No authentication or multi-user collaboration
+* Congestion model is intentionally simple
+
+## Recommended next steps
+
+* Smarter route choice (familiar exits, congestion avoidance, replanning)
+* Continuous-space / social-force movement models
+* Multi-floor buildings and stair bidirectional flow
+* Hazard layers (smoke) affecting speed and visibility
+* Import from DXF / simple BIM subsets
+* Scenario comparison and report export
+
+## License
+
+Use and modify for planning and research. Do not present outputs as code
+compliance without appropriate professional validation.
