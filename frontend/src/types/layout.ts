@@ -70,6 +70,9 @@ export type FloodEmergency = RadialEmergency;
 
 export interface FireEmergency extends RadialEmergency {
   emit_smoke?: boolean;
+  smoke_visibility_m?: number;
+  smoke_stair_spread_delay_s?: number;
+  smoke_stair_intensity_factor?: number;
 }
 
 export interface SmokeEmergency extends RadialEmergency {
@@ -97,6 +100,7 @@ export interface BuildingLayout {
   occupant_groups: OccupantGroup[];
   flood?: FloodEmergency | null;
   fire?: FireEmergency | null;
+  /** @deprecated Smoke is produced by fire.emit_smoke; kept for older saved layouts. */
   smoke?: SmokeEmergency | null;
   obstacle_map?: PixelObstacleMap | null;
 }

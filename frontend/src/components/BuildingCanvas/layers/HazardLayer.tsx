@@ -119,8 +119,20 @@ export function HazardLayer({
   const floodOnFloor = layout.flood?.enabled && onFloor(layout.flood.floor_id);
   const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
   const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
-  const smokeEdit =
-    layout.smoke?.enabled && onFloor(layout.smoke.floor_id) ? layout.smoke : null;
+  // Before/without playback frames, preview smoke as a larger disc around the fire.
+  const smokePreview =
+    smokeOnFloor.length === 0
+    && layout.fire?.enabled
+    && layout.fire.emit_smoke !== false
+    && onFloor(layout.fire.floor_id)
+      ? {
+          x: layout.fire.x,
+          y: layout.fire.y,
+          radius_m: layout.fire.radius_m * 1.4,
+          intensity: Math.max(1, layout.fire.intensity * 0.8),
+          floor_id: layout.fire.floor_id ?? 'floor-0',
+        }
+      : null;
 
   return (
     <>
@@ -212,43 +224,15 @@ export function HazardLayer({
           plume.floor_id,
         ),
       )}
-      {smokeEdit && smokeOnFloor.length === 0 && (
+      {smokePreview && (
         clippedHazard(
-          smokeEdit.x,
-          smokeEdit.y,
-          smokeEdit.radius_m,
-          `rgba(100, 116, 139, ${0.12 + smokeEdit.intensity / 280})`,
+          smokePreview.x,
+          smokePreview.y,
+          smokePreview.radius_m,
+          `rgba(100, 116, 139, ${0.12 + smokePreview.intensity / 280})`,
           '#475569',
-          smokeEdit.floor_id ?? 'floor-0',
+          smokePreview.floor_id,
         )
-      )}
-      {smokeEdit && (
-        <Group
-          x={smokeEdit.x * SCALE}
-          y={smokeEdit.y * SCALE}
-          {...dragProps(null, (x, y) => {
-            if (layout.smoke) onChange({ ...layout, smoke: { ...layout.smoke, x, y } });
-          })}
-        >
-          <Text
-            x={-55}
-            y={-30}
-            width={110}
-            align="center"
-            text={`Smoke ${smokeEdit.intensity}%`}
-            fill="#334155"
-            fontSize={12}
-            listening={false}
-          />
-          <Circle
-            radius={10}
-            fill="#e2e8f0"
-            stroke="#334155"
-            strokeWidth={2}
-            listening={interactive && tool === 'select'}
-          />
-          <Circle radius={3} fill="#334155" listening={false} />
-        </Group>
       )}
     </>
   );

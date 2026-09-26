@@ -56,13 +56,13 @@ export function FloorStrip({
             onClick={() => onActiveFloorChange(floor.id)}
           >
             {floor.name}
-            {layout.smoke?.enabled &&
-              (layout.smoke.floor_id ?? DEFAULT_FLOOR_ID) !== floor.id &&
+            {layout.fire?.enabled && layout.fire.emit_smoke !== false &&
+              (layout.fire.floor_id ?? DEFAULT_FLOOR_ID) !== floor.id &&
               floor.elevation_m >
                 (floors.find(
-                  (f) => f.id === (layout.smoke?.floor_id ?? DEFAULT_FLOOR_ID),
+                  (f) => f.id === (layout.fire?.floor_id ?? DEFAULT_FLOOR_ID),
                 )?.elevation_m ?? 0) && (
-                <span className="floor-smoke-badge" title="Smoke can rise here">
+                <span className="floor-smoke-badge" title="Fire smoke can rise here">
                   ↑
                 </span>
               )}

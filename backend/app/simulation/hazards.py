@@ -125,16 +125,14 @@ def _synthetic_fire_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
         spread_speed_mps=fire.spread_speed_mps,
         intensity=max(1.0, fire.intensity * 0.8),
         floor_id=fire.floor_id,
-        visibility_m=8.0,
-        stair_spread_delay_s=8.0,
-        stair_spread_intensity_factor=0.85,
+        visibility_m=fire.smoke_visibility_m,
+        stair_spread_delay_s=fire.smoke_stair_spread_delay_s,
+        stair_spread_intensity_factor=fire.smoke_stair_intensity_factor,
     )
 
 
 def resolve_origin_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
-    """Prefer explicit smoke; otherwise synthesize from fire.emit_smoke."""
-    if layout.smoke is not None and layout.smoke.enabled and layout.smoke.intensity > 0:
-        return layout.smoke
+    """Smoke is produced by fire (emit_smoke); not a separate disaster."""
     return _synthetic_fire_smoke(layout)
 
 

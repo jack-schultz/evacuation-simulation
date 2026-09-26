@@ -27,16 +27,39 @@ class FloodEmergency(RadialEmergency):
 
 
 class FireEmergency(RadialEmergency):
-    """Illustrative fire scenario; intensity is a relative slowdown, not heat."""
+    """Illustrative fire scenario; intensity is a relative slowdown, not heat.
+
+    Smoke is part of the fire disaster: when emit_smoke is true the engine
+    synthesizes a soft plume from the fire centre that can rise through stairs.
+    """
 
     emit_smoke: bool = Field(
         default=True,
-        description="When true, the engine synthesizes a smoke plume from the fire centre.",
+        description="When true, smoke is produced from the fire (soft slowdown + stair chimney).",
+    )
+    smoke_visibility_m: float = Field(
+        default=8.0,
+        gt=0,
+        allow_inf_nan=False,
+        description="Sight range (m) in smoke at intensity 100.",
+    )
+    smoke_stair_spread_delay_s: float = Field(
+        default=8.0,
+        ge=0,
+        allow_inf_nan=False,
+        description="Seconds for fire smoke to climb one storey through a linked stair.",
+    )
+    smoke_stair_intensity_factor: float = Field(
+        default=0.85,
+        gt=0,
+        le=1.0,
+        allow_inf_nan=False,
+        description="Intensity multiplier for smoke plumes that rise through stairs.",
     )
 
 
 class SmokeEmergency(RadialEmergency):
-    """Soft hazard: slows movement and shortens usable sightlines; does not hard-block."""
+    """Internal soft smoke plume used by the engine (always derived from fire)."""
 
     visibility_m: float = Field(
         default=8.0,

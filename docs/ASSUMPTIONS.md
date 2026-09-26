@@ -145,10 +145,10 @@ not a fire engineering or safety certification model.
 
 ## Smoke scenario
 
-Smoke is a soft circular hazard (or synthesized from fire when
-`emit_smoke` is true). Inside the plume, walking speed is multiplied by
-`max(0.25, 1 - intensity/100)`. Long visibility-graph chords are heavily
-costed so people prefer shorter sightlines. Smoke does **not** hard-block
-exits. When an origin-floor plume reaches a linked stair, after
-`stair_spread_delay_s` a weaker plume starts on the higher partner floor
-(chimney effect). Smoke does not spread downward through stairs.
+Smoke is part of the **fire** disaster (`emit_smoke`, on by default). Inside the
+plume, walking speed is multiplied by `max(0.25, 1 - intensity/100)`. Long
+visibility-graph chords are heavily costed so people prefer shorter sightlines.
+Smoke does **not** hard-block exits. When a fire-floor plume reaches a linked
+stair, after `smoke_stair_spread_delay_s` a weaker plume starts on the higher
+partner floor (chimney effect). Smoke does not spread downward through stairs.
+There is no separate standalone smoke emergency in the editor.

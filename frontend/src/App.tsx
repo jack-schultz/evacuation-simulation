@@ -168,15 +168,6 @@ export default function App() {
                 activeFloorId={activeFloorId}
               />
             ),
-            smoke: (
-              <EmergencyPanel
-                kind="smoke"
-                layout={editor.layout}
-                onChange={editor.updateLayout}
-                disabled={disabled}
-                activeFloorId={activeFloorId}
-              />
-            ),
           }}
         />
 
