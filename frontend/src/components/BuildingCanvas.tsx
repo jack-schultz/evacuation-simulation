@@ -420,7 +420,7 @@ export function BuildingCanvas({
                 key={s.id}
                 x={box.x * SCALE}
                 y={box.y * SCALE}
-                onClick={() => interactive && onSelect({ kind: 'space', id: s.id })}
+                onClick={() => interactive && tool === 'select' && onSelect({ kind: 'space', id: s.id })}
                 {...dragProps(
                   { kind: 'space', id: s.id },
                   (nx, ny) => {
@@ -581,7 +581,7 @@ export function BuildingCanvas({
               fill={congestedIds?.has(d.id) ? '#ef4444' : '#f59e0b'}
               stroke={isSelected('door', d.id) ? '#2563eb' : '#92400e'}
               strokeWidth={isSelected('door', d.id) ? 2 : 1}
-              onClick={() => interactive && onSelect({ kind: 'door', id: d.id })}
+              onClick={() => interactive && tool === 'select' && onSelect({ kind: 'door', id: d.id })}
             />
           ))}
 
@@ -590,7 +590,7 @@ export function BuildingCanvas({
               key={ex.id}
               x={ex.x * SCALE}
               y={ex.y * SCALE}
-              onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}
+              onClick={() => interactive && tool === 'select' && onSelect({ kind: 'exit', id: ex.id })}
               {...dragProps({ kind: 'exit', id: ex.id }, (x, y) => {
                 onChange(moveExit(layout, ex.id, x, y));
               })}
@@ -644,7 +644,7 @@ export function BuildingCanvas({
                     });
                   }
                 }}
-                onClick={() => interactive && onSelect({ kind: 'occupants', id: g.id })}
+                onClick={() => interactive && tool === 'select' && onSelect({ kind: 'occupants', id: g.id })}
               >
                 <Circle
                   radius={14}

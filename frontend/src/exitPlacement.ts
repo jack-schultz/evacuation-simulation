@@ -1,5 +1,5 @@
 import type { BuildingLayout } from './types/building';
-import { pointInPolygon } from './utils';
+import { pointInPolygon } from './utils.ts';
 
 function distanceSquaredToSegment(x: number, y: number, ax: number, ay: number, bx: number, by: number) {
   const dx = bx - ax;
@@ -31,10 +31,10 @@ export function exitSpaceAt(
       }
       continue;
     }
-    const box = polygonBBox(space.vertices);
-    const dx = Math.max(box.x - x, 0, x - box.x - box.width);
-    const dy = Math.max(box.y - y, 0, y - box.y - box.height);
-    const distance = dx * dx + dy * dy;
+    const distance = Math.min(...space.vertices.map(([ax, ay], i) => {
+      const [bx, by] = space.vertices[(i + 1) % space.vertices.length];
+      return distanceSquaredToSegment(x, y, ax, ay, bx, by);
+    }));
     if (distance < bestDistance || (distance === bestDistance && space.id === currentSpaceId)) {
       bestId = space.id;
       bestDistance = distance;

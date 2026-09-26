@@ -57,3 +57,19 @@ test('outside drops choose the nearest rectangle rather than its center', () => 
 test('dropping inside a new room takes priority over the previous connection', () => {
   assert.equal(moveExit(layout, 'exit', 12, 5).exits[0].connected_space_id, 'b');
 });
+
+test('placing on an exterior wall chooses the adjacent room', () => {
+  assert.equal(exitSpaceAt(layout, 0, 5), 'a');
+  assert.equal(exitSpaceAt(layout, 20, 5), 'b');
+});
+
+test('nearest polygon edge determines the connection outside concave rooms', () => {
+  const concave = {
+    id: 'concave', name: 'L room', type: 'room',
+    vertices: [[0, 0], [12, 0], [12, 2], [2, 2], [2, 12], [0, 12]],
+  };
+  const nearby = rect('nearby', 'Nearby', 7, 6, 2, 2);
+  const building = { ...layout, spaces: [concave, nearby] };
+  // This point is in the L room's bounding box but outside its polygon.
+  assert.equal(exitSpaceAt(building, 6, 6), 'nearby');
+});
