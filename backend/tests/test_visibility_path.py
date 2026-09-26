@@ -72,7 +72,9 @@ class VisibilityPathTests(unittest.TestCase):
 
     def test_u_room_route_uses_waypoint_not_chord_across_bay(self):
         layout = u_shaped_layout()
-        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        graph = NavigationGraphBuilder().build(
+            layout, {**self._defaults, "occupant_radius_m": 0.25}
+        )
         # Path from left exit to right exit crosses the bay if taken as a chord
         route = DijkstraRouteSelector().select_route(
             graph, "exit:left", preferred_exit_id="right"
@@ -107,9 +109,21 @@ class VisibilityPathTests(unittest.TestCase):
 
     def test_visibility_creates_waypoint_nodes_for_reflex_corners(self):
         layout = u_shaped_layout()
-        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        defaults = {**self._defaults, "occupant_radius_m": 0.25}
+        graph = NavigationGraphBuilder().build(layout, defaults)
         wps = [n for n in graph.nodes.values() if n.kind == NodeKind.WAYPOINT]
         self.assertGreaterEqual(len(wps), 2)
+        reflex_corners = [(10.0, 4.0), (6.0, 4.0)]
+        for wp in wps:
+            clearance = min(
+                ((wp.x - cx) ** 2 + (wp.y - cy) ** 2) ** 0.5
+                for cx, cy in reflex_corners
+            )
+            self.assertGreaterEqual(
+                clearance,
+                0.35,
+                f"waypoint ({wp.x}, {wp.y}) too close to wall corner ({clearance:.3f} m)",
+            )
 
 
 if __name__ == "__main__":

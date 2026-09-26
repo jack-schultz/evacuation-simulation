@@ -74,9 +74,13 @@ def _inward_bisector_nudge(
     vertex: tuple[float, float],
     nxt: tuple[float, float],
     vertices: list[tuple[float, float]],
-    distance: float = 0.15,
+    distance: float = 0.4,
 ) -> tuple[float, float]:
-    """Move a reflex corner slightly into the polygon along the angle bisector."""
+    """Move a reflex corner into the polygon along the angle bisector.
+
+    Tries the full clearance first, then shorter distances so narrow geometry
+    still gets an interior waypoint instead of the raw corner.
+    """
     bx, by = vertex
     v1x, v1y = prev[0] - bx, prev[1] - by
     v2x, v2y = nxt[0] - bx, nxt[1] - by
@@ -91,11 +95,13 @@ def _inward_bisector_nudge(
     if sl < 1e-9:
         return vertex
     sx, sy = sx / sl, sy / sl
-    for sign in (1.0, -1.0):
-        px = bx + sign * sx * distance
-        py = by + sign * sy * distance
-        if point_in_polygon(px, py, vertices):
-            return px, py
+    for scale in (1.0, 0.75, 0.5, 0.25):
+        d = distance * scale
+        for sign in (1.0, -1.0):
+            px = bx + sign * sx * d
+            py = by + sign * sy * d
+            if point_in_polygon(px, py, vertices):
+                return px, py
     return vertex
 
 
@@ -244,6 +250,8 @@ class NavigationGraphBuilder:
         if n >= 3:
             ccw = signed_area(verts) > 0
             wp_i = 0
+            radius = float(defaults.get("occupant_radius_m", 0.25))
+            nudge = max(radius * 1.5, 0.4)
             for i in range(n):
                 ax, ay = verts[(i - 1) % n]
                 bx, by = verts[i]
@@ -253,7 +261,7 @@ class NavigationGraphBuilder:
                 if not is_reflex:
                     continue
                 wx, wy = _inward_bisector_nudge(
-                    (ax, ay), (bx, by), (cx, cy), verts, distance=0.15
+                    (ax, ay), (bx, by), (cx, cy), verts, distance=nudge
                 )
                 wid = f"waypoint:{space.id}:{wp_i}"
                 wp_i += 1

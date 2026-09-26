@@ -67,6 +67,7 @@ class SimulationEngine:
             "stairs_flow_per_s": params.stairs_flow_per_s,
             "exit_flow_per_s": params.exit_flow_per_s,
             "corridor_density_per_m2": params.corridor_density_per_m2,
+            "occupant_radius_m": params.occupant_radius_m,
         }
         graph = self.graph_builder.build(layout, defaults)
         apply_hazards(graph, (layout.flood, layout.fire))
