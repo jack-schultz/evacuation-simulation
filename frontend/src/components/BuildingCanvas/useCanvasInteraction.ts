@@ -31,9 +31,11 @@ export function useCanvasInteraction({
 }) {
   const toWorld = (evt: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = evt.target.getStage();
-    const pos = stage?.getPointerPosition();
-    if (!pos) return null;
-    return { x: snap(pos.x / SCALE), y: snap(pos.y / SCALE) };
+    const pointer = stage?.getPointerPosition();
+    if (!stage || !pointer) return null;
+    const transform = stage.getAbsoluteTransform().copy().invert();
+    const local = transform.point(pointer);
+    return { x: snap(local.x / SCALE), y: snap(local.y / SCALE) };
   };
 
   const onMouseDown = (evt: Konva.KonvaEventObject<MouseEvent>) => {

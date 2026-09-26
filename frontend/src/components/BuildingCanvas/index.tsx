@@ -10,6 +10,7 @@ import type {
 import { SCALE } from '../../utils';
 import { usePolygonDraft } from './usePolygonDraft';
 import { useCanvasInteraction } from './useCanvasInteraction';
+import { useCanvasViewport } from './useCanvasViewport';
 import { SpaceLayer } from './layers/SpaceLayer';
 import { HazardLayer } from './layers/HazardLayer';
 import { OpeningsLayer } from './layers/OpeningsLayer';
@@ -56,6 +57,19 @@ export function BuildingCanvas({
   const widthPx = layout.width * SCALE;
   const heightPx = layout.height * SCALE;
 
+  const {
+    containerRef,
+    size,
+    viewport,
+    onWheel,
+    beginPan,
+    onPanMove,
+    endPan,
+    isPanning,
+    zoomBy,
+    resetView,
+  } = useCanvasViewport(widthPx, heightPx);
+
   useEffect(() => {
     if (!floorPlanUrl) {
       setFloorPlanImage(null);
@@ -97,12 +111,47 @@ export function BuildingCanvas({
     });
 
   return (
-    <div className="canvas-wrap">
+    <div className="canvas-wrap" ref={containerRef}>
+      <div className="canvas-zoom-controls" role="group" aria-label="Canvas zoom">
+        <button type="button" title="Zoom in" aria-label="Zoom in" onClick={() => zoomBy(ZOOM_STEP)}>
+          +
+        </button>
+        <button type="button" title="Zoom out" aria-label="Zoom out" onClick={() => zoomBy(1 / ZOOM_STEP)}>
+          −
+        </button>
+        <button type="button" title="Reset view" aria-label="Reset view" onClick={resetView}>
+          {Math.round(viewport.scale * 100)}%
+        </button>
+      </div>
       <Stage
-        width={widthPx}
-        height={heightPx}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
+        width={size.width}
+        height={size.height}
+        scaleX={viewport.scale}
+        scaleY={viewport.scale}
+        x={viewport.x}
+        y={viewport.y}
+        onWheel={onWheel}
+        onMouseDown={(evt) => {
+          if (beginPan(evt, { allowEmpty: tool === 'select' || !interactive })) return;
+          onMouseDown(evt);
+        }}
+        onMouseMove={(evt) => {
+          if (isPanning()) {
+            onPanMove(evt);
+            return;
+          }
+          onMouseMove(evt);
+        }}
+        onMouseUp={(evt) => {
+          if (!isPanning()) return;
+          const moved = endPan(evt);
+          if (!moved && evt.target === evt.target.getStage() && tool === 'select') {
+            onSelect(null);
+          }
+        }}
+        onMouseLeave={() => {
+          if (isPanning()) endPan();
+        }}
         onContextMenu={onContextMenu}
       >
         <Layer>
@@ -192,3 +241,5 @@ export function BuildingCanvas({
     </div>
   );
 }
+
+const ZOOM_STEP = 1.15;
