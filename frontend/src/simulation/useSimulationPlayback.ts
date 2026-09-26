@@ -13,7 +13,7 @@ export function useSimulationPlayback() {
 
   const clearTimer = () => {
     if (timerRef.current != null) {
-      window.clearInterval(timerRef.current);
+      window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
   };
@@ -36,8 +36,8 @@ export function useSimulationPlayback() {
 
   const play = useCallback(() => {
     if (!frames.length) return;
-    setStatus('playing');
-  }, [frames.length]);
+    setStatus(frameIndex >= frames.length - 1 ? 'finished' : 'playing');
+  }, [frames.length, frameIndex]);
 
   const pause = useCallback(() => {
     setStatus((s) => (s === 'playing' ? 'paused' : s));
@@ -47,19 +47,17 @@ export function useSimulationPlayback() {
     clearTimer();
     if (status !== 'playing' || frames.length === 0) return;
 
-    const intervalMs = Math.max(50, 500 / speed);
-    timerRef.current = window.setInterval(() => {
-      setFrameIndex((i) => {
-        if (i >= frames.length - 1) {
-          setStatus('finished');
-          return i;
-        }
-        return i + 1;
-      });
+    if (frameIndex >= frames.length - 1) return;
+    // Use recorded simulation seconds for both people and the flood, including
+    // non-default frame intervals and shorter final frames.
+    const intervalMs = Math.max(0, (frames[frameIndex + 1].t - frames[frameIndex].t) * 1000 / speed);
+    timerRef.current = window.setTimeout(() => {
+      setFrameIndex(frameIndex + 1);
+      if (frameIndex + 1 >= frames.length - 1) setStatus('finished');
     }, intervalMs);
 
     return clearTimer;
-  }, [status, speed, frames.length]);
+  }, [status, speed, frames, frameIndex]);
 
   const currentFrame = frames[frameIndex] ?? null;
   const simTime = currentFrame?.t ?? 0;

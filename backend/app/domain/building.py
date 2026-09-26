@@ -74,12 +74,13 @@ class OccupantGroup(BaseModel):
 
 
 class FloodEmergency(BaseModel):
-    """Static, illustrative flood area; intensity is a relative scenario control."""
+    """Expanding illustrative flood area; speeds use metres per simulation second."""
 
     enabled: bool = True
     x: float = Field(ge=0, allow_inf_nan=False)
     y: float = Field(ge=0, allow_inf_nan=False)
     radius_m: float = Field(default=3.0, gt=0, allow_inf_nan=False)
+    spread_speed_mps: float = Field(default=0.1, ge=0, allow_inf_nan=False)
     intensity: float = Field(default=50.0, ge=0, le=100, allow_inf_nan=False)
 
 
@@ -175,6 +176,7 @@ class OccupantFrameState(BaseModel):
 
 
 class SimulationFrame(BaseModel):
+    flood_radius_m: float | None = None
     t: float
     occupants: list[OccupantFrameState]
 

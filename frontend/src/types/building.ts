@@ -46,6 +46,7 @@ export interface FloodEmergency {
   x: number;
   y: number;
   radius_m: number;
+  spread_speed_mps?: number;
   intensity: number;
 }
 
@@ -96,6 +97,7 @@ export interface OccupantFrameState {
 }
 
 export interface SimulationFrame {
+  flood_radius_m?: number | null;
   t: number;
   occupants: OccupantFrameState[];
 }

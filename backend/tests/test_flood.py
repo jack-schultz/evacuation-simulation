@@ -120,7 +120,10 @@ class FloodTests(unittest.TestCase):
         baseline = run(layout(two_exits=False)).results
         wet = run(layout(dict(x=5, y=5, radius_m=0.5, intensity=50), two_exits=False)).results
         self.assertGreater(wet.total_evacuation_time_s, baseline.total_evacuation_time_s)
-        self.assertEqual(wet.occupants[0].distance_m, baseline.occupants[0].distance_m)
+        # Waypoints snap within 0.35 m; different speeds reach that threshold
+        # on different steps. Slowdown must not inflate the geometric distance.
+        self.assertAlmostEqual(wet.occupants[0].distance_m, baseline.occupants[0].distance_m, delta=0.35)
+        self.assertLessEqual(wet.occupants[0].distance_m, 2.05)
 
     def test_blocked_routes_are_trapped_in_all_frames(self):
         output = run(layout(flood(), two_exits=False))
@@ -161,7 +164,7 @@ class FloodTests(unittest.TestCase):
         engine.dispose()
 
     def test_invalid_flood_values(self):
-        for patch in [dict(radius_m=0), dict(intensity=-1), dict(intensity=101), dict(x=-1), dict(y=float('nan')), dict(radius_m=float('inf'))]:
+        for patch in [dict(radius_m=0), dict(intensity=-1), dict(intensity=101), dict(x=-1), dict(y=float('nan')), dict(radius_m=float('inf')), dict(spread_speed_mps=-1), dict(spread_speed_mps=float('inf')), dict(spread_speed_mps=float('nan'))]:
             with self.assertRaises(ValidationError):
                 FloodEmergency.model_validate(flood() | patch)
         with self.assertRaises(ValidationError):
@@ -175,6 +178,68 @@ class FloodTests(unittest.TestCase):
         self.assertEqual(result.evacuated_count, 1)
         self.assertEqual(result.remaining_count, 1)
         self.assertIsNone(result.total_evacuation_time_s)
+
+
+class SpreadingFloodTests(unittest.TestCase):
+    def test_radius_uses_elapsed_seconds_and_legacy_default(self):
+        from app.simulation.flood import flood_radius_at
+        config = FloodEmergency(x=5, y=5, radius_m=2)
+        self.assertAlmostEqual(flood_radius_at(config, 60), 8)
+        self.assertEqual(config.spread_speed_mps, 0.1)
+        config.spread_speed_mps = 0
+        self.assertEqual(flood_radius_at(config, 60), 2)
+        for patch in [dict(enabled=False), dict(intensity=0)]:
+            self.assertIsNone(flood_radius_at(config.model_copy(update=patch), 60))
+
+    def test_frame_radius_is_independent_of_timestep_and_recording_interval(self):
+        building = layout(dict(x=7, y=5, radius_m=0.5, intensity=50), two_exits=False)
+        for dt, interval in [(0.1, 0.2), (0.25, 0.5), (0.5, 1)]:
+            output = SimulationEngine().run(building, SimulationParameters(
+                timestep_s=dt, frame_interval_s=interval, max_time_s=5))
+            for frame in output.frames:
+                self.assertAlmostEqual(frame.flood_radius_m, 0.5 + 0.1 * frame.t)
+            self.assertEqual(output.frames[0].flood_radius_m, 0.5)
+        self.assertEqual(building.flood.radius_m, 0.5)
+
+    def test_flood_reaches_initially_dry_exit_during_run(self):
+        config = dict(x=10, y=5, radius_m=0.5, intensity=50, spread_speed_mps=2)
+        for dt in (0.1, 0.25, 0.5):
+            output = SimulationEngine().run(layout(config, two_exits=False),
+                SimulationParameters(timestep_s=dt, max_time_s=5, frame_interval_s=dt))
+            self.assertEqual(output.frames[0].occupants[0].status, 'active')
+            self.assertEqual(output.results.evacuated_count, 0)
+            self.assertEqual(output.frames[-1].occupants[0].status, 'trapped')
+        config['spread_speed_mps'] = 0
+        self.assertEqual(run(layout(config, two_exits=False)).results.evacuated_count, 1)
+
+    def test_spread_competes_with_actual_walking_speed(self):
+        config = dict(x=10, y=5, radius_m=0.5, intensity=50, spread_speed_mps=0.5)
+        fast = layout(config, two_exits=False)
+        slow = fast.model_copy(deep=True)
+        slow.occupant_groups[0].walking_speed_mps = 0.1
+        self.assertEqual(run(fast).results.evacuated_count, 1)
+        self.assertEqual(run(slow).results.evacuated_count, 0)
+
+    def test_spread_behind_occupant_does_not_block_dry_remaining_path(self):
+        config = dict(x=4, y=5, radius_m=0.1, intensity=50, spread_speed_mps=0.8)
+        output = run(layout(config, two_exits=False))
+        self.assertGreater(output.frames[-1].flood_radius_m, 1)
+        self.assertEqual(output.results.evacuated_count, 1)
+
+    def test_outward_escape_recovers_dry_speed(self):
+        from app.simulation.flood import segment_speed_factor
+        config = FloodEmergency(x=4, y=5, radius_m=2, intensity=50)
+        self.assertEqual(segment_speed_factor(config, 2, 5, 5, 8, 5), 0.5)
+        self.assertEqual(segment_speed_factor(config, 2, 6.5, 5, 8, 5), 1)
+        self.assertEqual(segment_speed_factor(config, 2, 6.5, 5, 5, 5), 0)
+
+    def test_disabled_spread_preserves_dry_frames(self):
+        baseline = run(layout())
+        for patch in [dict(enabled=False), dict(intensity=0)]:
+            config = dict(x=5, y=5, radius_m=1, intensity=50, spread_speed_mps=10) | patch
+            output = run(layout(config))
+            self.assertEqual(output.frames, baseline.frames)
+            self.assertEqual(output.results, baseline.results)
 
 
 if __name__ == '__main__':

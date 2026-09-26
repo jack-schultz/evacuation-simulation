@@ -21,6 +21,7 @@ interface Props {
   interactive?: boolean;
   /** Body radius in metres for playback dots (defaults to 0.25). */
   occupantRadiusM?: number;
+  floodRadiusM?: number | null;
 }
 
 const SPACE_COLORS: Record<string, string> = {
@@ -64,6 +65,7 @@ export function BuildingCanvas({
   congestedIds,
   interactive = true,
   occupantRadiusM = 0.25,
+  floodRadiusM,
 }: Props) {
   const [draft, setDraft] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const drawing = useRef(false);
@@ -334,7 +336,7 @@ export function BuildingCanvas({
                 if (layout.flood) onChange({ ...layout, flood: { ...layout.flood, x, y } });
               })}
             >
-              <Circle radius={layout.flood.radius_m * SCALE}
+              <Circle radius={(floodRadiusM ?? layout.flood.radius_m) * SCALE}
                 fill={`rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`}
                 stroke={layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7'}
                 strokeWidth={2} dash={[6, 4]} listening={false} />
