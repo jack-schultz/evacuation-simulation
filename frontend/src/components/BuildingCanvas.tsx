@@ -243,6 +243,38 @@ export function BuildingCanvas({
     }
   };
 
+  // All editable shapes use world coordinates at their drag anchor. Committing
+  // through onChange keeps saving and the existing property controls in sync.
+  const dragProps = (
+    ref: SelectedRef,
+    commit: (x: number, y: number) => void,
+    width = 0,
+    height = 0,
+  ) => ({
+    draggable: interactive && tool === 'select',
+    onMouseEnter: (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (interactive && tool === 'select') {
+        e.target.getStage()!.container().style.cursor = 'grab';
+      }
+    },
+    onMouseLeave: (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.target.getStage()!.container().style.cursor = '';
+    },
+    onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => {
+      e.cancelBubble = true;
+      onSelect(ref);
+      e.target.getStage()!.container().style.cursor = 'grabbing';
+    },
+    onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => {
+      e.cancelBubble = true;
+      e.target.getStage()!.container().style.cursor = '';
+      const x = Math.min(Math.max(0, layout.width - width), Math.max(0, snap(e.target.x() / SCALE)));
+      const y = Math.min(Math.max(0, layout.height - height), Math.max(0, snap(e.target.y() / SCALE)));
+      e.target.position({ x: x * SCALE, y: y * SCALE });
+      commit(x, y);
+    },
+  });
+
   const isSelected = (kind: string, id: string) =>
     selected?.kind === kind && selected.id === id;
 
@@ -256,7 +288,7 @@ export function BuildingCanvas({
         onMouseUp={onMouseUp}
       >
         <Layer>
-          <Rect x={0} y={0} width={widthPx} height={heightPx} fill="#f8fafc" />
+          <Rect x={0} y={0} width={widthPx} height={heightPx} fill="#f8fafc" listening={false} />
           {gridLines.map((pts, i) => (
             <Line key={i} points={pts} stroke="#e2e8f0" strokeWidth={1} listening={false} />
           ))}
@@ -265,20 +297,14 @@ export function BuildingCanvas({
             <Group
               key={s.id}
               onClick={() => interactive && onSelect({ kind: 'space', id: s.id })}
-              draggable={interactive && tool === 'select'}
               x={s.x * SCALE}
               y={s.y * SCALE}
-              onDragEnd={(e) => {
-                const nx = snap(e.target.x() / SCALE);
-                const ny = snap(e.target.y() / SCALE);
-                e.target.position({ x: nx * SCALE, y: ny * SCALE });
+              {...dragProps({ kind: 'space', id: s.id }, (x, y) => {
                 onChange({
                   ...layout,
-                  spaces: layout.spaces.map((sp) =>
-                    sp.id === s.id ? { ...sp, x: nx, y: ny } : sp,
-                  ),
+                  spaces: layout.spaces.map((sp) => sp.id === s.id ? { ...sp, x, y } : sp),
                 });
-              }}
+              }, s.width, s.height)}
             >
               <Rect
                 width={s.width * SCALE}
@@ -308,6 +334,12 @@ export function BuildingCanvas({
           {layout.walls.map((w) => (
             <Rect
               key={w.id}
+              {...dragProps({ kind: 'wall', id: w.id }, (x, y) => {
+                onChange({
+                  ...layout,
+                  walls: layout.walls.map((wall) => wall.id === w.id ? { ...wall, x, y } : wall),
+                });
+              }, w.width, w.height)}
               x={w.x * SCALE}
               y={w.y * SCALE}
               width={w.width * SCALE}
@@ -321,25 +353,41 @@ export function BuildingCanvas({
           ))}
 
           {layout.flood?.enabled && (
-            <Group listening={false}>
-              <Circle x={layout.flood.x * SCALE} y={layout.flood.y * SCALE}
-                radius={layout.flood.radius_m * SCALE}
+            <Group
+              x={layout.flood.x * SCALE}
+              y={layout.flood.y * SCALE}
+              {...dragProps(null, (x, y) => {
+                if (layout.flood) onChange({ ...layout, flood: { ...layout.flood, x, y } });
+              })}
+            >
+              <Circle radius={layout.flood.radius_m * SCALE}
                 fill={`rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`}
                 stroke={layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7'}
-                strokeWidth={2} dash={[6, 4]} />
-              <Text x={layout.flood.x * SCALE - 55} y={layout.flood.y * SCALE - 20}
+                strokeWidth={2} dash={[6, 4]} listening={false} />
+              <Text x={-55} y={-30}
                 width={110} align="center" text={`Flood ${layout.flood.intensity}%`}
-                fill="#075985" fontSize={12} />
-              <Circle x={layout.flood.x * SCALE} y={layout.flood.y * SCALE}
-                radius={3} fill="#075985" />
+                fill="#075985" fontSize={12} listening={false} />
+              {/* Only the centre handle catches input, so the flood area does
+                  not obstruct selecting or dragging the layout beneath it. */}
+              <Circle radius={10} fill="#e0f2fe" stroke="#075985" strokeWidth={2}
+                listening={interactive && tool === 'select'} />
+              <Circle radius={3} fill="#075985" listening={false} />
             </Group>
           )}
 
           {layout.doors.map((d) => (
             <Rect
               key={d.id}
-              x={d.x * SCALE - 6}
-              y={d.y * SCALE - 6}
+              x={d.x * SCALE}
+              y={d.y * SCALE}
+              offsetX={6}
+              offsetY={6}
+              {...dragProps({ kind: 'door', id: d.id }, (x, y) => {
+                onChange({
+                  ...layout,
+                  doors: layout.doors.map((door) => door.id === d.id ? { ...door, x, y } : door),
+                });
+              })}
               width={12}
               height={12}
               fill={congestedIds?.has(d.id) ? '#ef4444' : '#f59e0b'}
@@ -350,10 +398,19 @@ export function BuildingCanvas({
           ))}
 
           {layout.exits.map((ex) => (
-            <Group key={ex.id} onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}>
+            <Group key={ex.id}
+              x={ex.x * SCALE} y={ex.y * SCALE}
+              onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}
+              {...dragProps({ kind: 'exit', id: ex.id }, (x, y) => {
+                onChange({
+                  ...layout,
+                  exits: layout.exits.map((exit) => exit.id === ex.id ? { ...exit, x, y } : exit),
+                });
+              })}
+            >
               <Rect
-                x={ex.x * SCALE - 10}
-                y={ex.y * SCALE - 10}
+                x={-10}
+                y={-10}
                 width={20}
                 height={20}
                 fill={congestedIds?.has(ex.id) ? '#ef4444' : '#22c55e'}
@@ -362,8 +419,8 @@ export function BuildingCanvas({
               />
               <Text
                 text="EXIT"
-                x={ex.x * SCALE - 14}
-                y={ex.y * SCALE + 12}
+                x={-14}
+                y={12}
                 fontSize={10}
                 fill="#166534"
                 listening={false}
@@ -379,19 +436,36 @@ export function BuildingCanvas({
             return (
               <Group
                 key={g.id}
+                x={cx}
+                y={cy}
+                {...dragProps({ kind: 'occupants', id: g.id }, () => {})}
+                onDragEnd={(e) => {
+                  // Groups belong to spaces, rather than arbitrary coordinates.
+                  // Restore the node even for a rejected or same-space drop.
+                  const spaceId = spaceContaining(layout, e.target.x() / SCALE, e.target.y() / SCALE);
+                  e.target.position({ x: cx, y: cy });
+                  e.target.getStage()!.container().style.cursor = '';
+                  e.cancelBubble = true;
+                  if (spaceId && spaceId !== g.space_id) {
+                    onChange({
+                      ...layout,
+                      occupant_groups: layout.occupant_groups.map((group) =>
+                        group.id === g.id ? { ...group, space_id: spaceId } : group,
+                      ),
+                    });
+                  }
+                }}
                 onClick={() => interactive && onSelect({ kind: 'occupants', id: g.id })}
               >
                 <Circle
-                  x={cx}
-                  y={cy}
                   radius={14}
                   fill={isSelected('occupants', g.id) ? '#7c3aed' : '#8b5cf6'}
                   opacity={occupants.length ? 0.25 : 0.9}
                 />
                 <Text
                   text={String(g.count)}
-                  x={cx - 10}
-                  y={cy - 5}
+                  x={-10}
+                  y={-5}
                   width={20}
                   align="center"
                   fontSize={11}

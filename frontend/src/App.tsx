@@ -264,7 +264,7 @@ export default function App() {
             onChange={updateLayout}
             occupants={playback.currentFrame?.occupants ?? []}
             congestedIds={congestedIds}
-            interactive={playback.status !== 'playing'}
+            interactive={!busy && !simulating}
           />
         </main>
       </div>
