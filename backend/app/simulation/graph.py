@@ -14,21 +14,26 @@ class NodeKind(str, Enum):
     EXIT = "exit"
 
 
-class EdgeKind(str, Enum):
+class EdgeKind(str, Enum): #How two nodes are connected
     SPACE = "space"
     DOOR = "door"
     CORRIDOR = "corridor"
     STAIRS = "stairs"
     EXIT = "exit"
+    '''
+    E.g:
+    Room->Door -->EdgeKind=door
+    Space-->Exit-->exit
+    '''
 
 
 @dataclass(frozen=True)
-class GraphNode:
+class GraphNode: #Node node node sahur
     id: str
     kind: NodeKind
     x: float
     y: float
-    ref_id: str  # space / door / exit id
+    ref_id: str  # space / door / exit / and wall?
 
 
 @dataclass
@@ -44,12 +49,12 @@ class GraphEdge:
     area_m2: float | None
     element_id: str
     speed_factor: float = 1.0
-
+ #hi jack
 
 @dataclass
 class NavigationGraph:
-    nodes: dict[str, GraphNode] = field(default_factory=dict)
-    edges: dict[str, GraphEdge] = field(default_factory=dict)
+    nodes: dict[str, GraphNode] = field(default_factory=dict) #store every nodes
+    edges: dict[str, GraphEdge] = field(default_factory=dict) #store every edges
     adjacency: dict[str, list[str]] = field(default_factory=dict)
     exit_node_ids: list[str] = field(default_factory=list)
     space_node_ids: dict[str, str] = field(default_factory=dict)  # space_id -> node_id
@@ -84,7 +89,7 @@ def _dist(ax: float, ay: float, bx: float, by: float) -> float:
     return ((ax - bx) ** 2 + (ay - by) ** 2) ** 0.5
 
 
-def _space_center(space) -> tuple[float, float]:
+def _space_center(space) -> tuple[float, float]: #Middle of the room, fuck this chud
     return space.x + space.width / 2, space.y + space.height / 2
 
 
@@ -119,7 +124,8 @@ class NavigationGraphBuilder:
             )
             graph.add_node(node)
             flow = door.flow_rate_per_s if door.flow_rate_per_s is not None else defaults["door_flow_per_s"]
-            for space_id in door.connects:
+            for space_id in door.connects: #basically calculate every center of every rooms
+                #not good 
                 space = spaces[space_id]
                 space_node_id = graph.space_node_ids[space_id]
                 sn = graph.nodes[space_node_id]

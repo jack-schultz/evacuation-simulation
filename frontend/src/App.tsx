@@ -6,7 +6,6 @@ import { ResultsPanel } from './components/ResultsPanel';
 import { SimulationControls } from './components/SimulationControls';
 import { ToolPalette } from './components/ToolPalette';
 import { api } from './services/api';
-import { detectFloorPlan } from './utils/floorPlanDetection';
 import { useSimulationPlayback } from './simulation/useSimulationPlayback';
 import type {
   BuildingLayout,
@@ -103,20 +102,6 @@ export default function App() {
     setError(null);
   }, [busy, simulating, undoHistory]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      // Text fields retain their native text undo behavior.
-      const target = event.target;
-      if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]')) return;
-      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
-        event.preventDefault();
-        onUndo();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onUndo]);
-
   const onSave = async () => {
     setBusy(true);
     setError(null);
@@ -149,16 +134,17 @@ export default function App() {
     }
     setBusy(true);
     try {
+      const layoutToSave = layout.obstacle_map ? { ...layout, obstacle_map: null } : layout;
       let id = buildingId;
       if (!id) {
-        const building = await api.createBuilding(layout);
+        const building = await api.createBuilding(layoutToSave);
         id = building.id;
         setBuildingId(id);
         setLayout(building.layout);
         setDirty(false);
         await refreshList();
-      } else if (dirty) {
-        const building = await api.updateBuilding(id, layout);
+      } else if (dirty || layout.obstacle_map) {
+        const building = await api.updateBuilding(id, layoutToSave);
         setLayout(building.layout);
         setDirty(false);
       }
@@ -168,7 +154,7 @@ export default function App() {
         if (previous) URL.revokeObjectURL(previous);
         return imageUrl;
       });
-      setFloorPlanStatus(`PNG stored in database: ${result.filename}`);
+      setFloorPlanStatus(`PNG stored in database and shown as a pale overlay: ${result.filename}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -189,30 +175,8 @@ export default function App() {
     setSimId(null);
   };
 
-  const onDetectFloorPlan = async () => {
-    if (!floorPlanUrl) return;
-    try {
-      setError(null);
-      const image = new window.Image();
-      image.src = floorPlanUrl;
-      await image.decode();
-      const detected = detectFloorPlan(image, layout.width, layout.height);
-      if (!detected.spaces.length && !detected.walls.length) {
-        throw new Error('No rooms or obstacles detected. Use enclosed white areas and separate black obstacle shapes.');
-      }
-      const message = `Detected ${detected.spaces.length} room rectangles and ${detected.walls.length} obstacle rectangles. Applying this map replaces current rooms, obstacles, doors, exits, occupant groups, and the previous pixel map. Continue?`;
-      if (!window.confirm(message)) return;
-      setLayout({ ...layout, spaces: detected.spaces, walls: detected.walls, doors: [], exits: [], occupant_groups: [], obstacle_map: detected.obstacle_map });
-      setSelected(null);
-      setDirty(true);
-      setFloorPlanStatus(`Detected ${detected.spaces.length} rooms and ${detected.walls.length} obstacles. Add doors, exits, and occupants, then save.`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
   const onDeleteSelected = () => {
-    if (!selected) return;
+    if (!selected || busy || simulating) return;
     if (selected.kind === 'space') {
       updateLayout({
         ...layout,
@@ -233,6 +197,34 @@ export default function App() {
     }
     setSelected(null);
   };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Text fields retain their native text undo behavior.
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]')) return;
+      if (
+        event.key.toLowerCase() === 'q'
+        && !event.ctrlKey
+        && !event.metaKey
+        && !event.altKey
+        && !event.shiftKey
+        && selected
+        && !busy
+        && !simulating
+      ) {
+        event.preventDefault();
+        onDeleteSelected();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        onUndo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onUndo, selected, busy, simulating, onDeleteSelected]);
 
   const onRun = async () => {
     setBusy(true);
@@ -343,12 +335,6 @@ export default function App() {
       </header>
 
       {floorPlanStatus && <div className="import-status" role="status">{floorPlanStatus}</div>}
-      {floorPlanUrl && (
-        <div className="import-status floor-plan-actions" role="note">
-          <span>Black pixels block movement; white pixels are walkable. Detected rooms and obstacles are editable.</span>
-          <button type="button" onClick={() => void onDetectFloorPlan()} disabled={busy}>Detect map from PNG</button>
-        </div>
-      )}
 
       <div className="disclaimer">
         Estimation tool only — not a safety certification or regulatory compliance calculation.

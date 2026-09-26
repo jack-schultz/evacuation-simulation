@@ -296,7 +296,7 @@ export function BuildingCanvas({
       >
         <Layer>
           <Rect x={0} y={0} width={widthPx} height={heightPx} fill="#f8fafc" listening={false} />
-          {floorPlanImage && <KonvaImage image={floorPlanImage} x={0} y={0} width={widthPx} height={heightPx} opacity={0.38} listening={false} />}
+          {floorPlanImage && <KonvaImage image={floorPlanImage} x={0} y={0} width={widthPx} height={heightPx} opacity={0.2} listening={false} />}
           {gridLines.map((pts, i) => (
             <Line key={i} points={pts} stroke="#e2e8f0" strokeWidth={1} listening={false} />
           ))}
@@ -318,6 +318,7 @@ export function BuildingCanvas({
                 width={s.width * SCALE}
                 height={s.height * SCALE}
                 fill={SPACE_COLORS[s.type]}
+                opacity={floorPlanImage ? 0.3 : 1}
                 stroke={
                   congestedIds?.has(s.id)
                     ? '#dc2626'

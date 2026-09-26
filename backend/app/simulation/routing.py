@@ -12,8 +12,8 @@ class RouteSelector(Protocol):
     def select_route(
         self,
         graph: NavigationGraph,
-        start_node_id: str,
-        preferred_exit_id: str | None = None,
+        start_node_id: str, #Occupants node id, i supposed a cord?
+        preferred_exit_id: str | None = None,  #Closest exit node?
     ) -> list[str]:
         """Return ordered node IDs from start to an exit (inclusive)."""
         ...
@@ -38,13 +38,13 @@ class DijkstraRouteSelector:
                 targets = {preferred_node}
 
         if not targets:
-            raise ValueError("Building has no exits")
+            raise ValueError("Building has no exits") #Output this to the screen
 
         dist: dict[str, float] = {start_node_id: 0.0}
         prev: dict[str, str | None] = {start_node_id: None}
         heap: list[tuple[float, str]] = [(0.0, start_node_id)]
 
-        while heap:
+        while heap: #Use heap for tracking closest exit (smallest distance between node and exits)
             cost, node_id = heapq.heappop(heap)
             if cost > dist.get(node_id, float("inf")):
                 continue
