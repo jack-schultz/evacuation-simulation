@@ -40,9 +40,11 @@ regulatory compliance calculation.
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
   cannot cross space boundaries except through door/exit gaps.
 * Each occupant tracks a **current space** and is clamped inside that space
-  until they transit an admitted door aperture into the next space on their
-  route (then membership updates). This prevents discrete-step “teleports”
-  through thin shared walls.
+  only. Membership flips when the body enters the next space through an
+  admitted door aperture; pathing past that door requires the updated
+  membership. This prevents discrete-step “teleports” through thin shared
+  walls and stops route progress while a person is still stuck in the previous
+  room.
 * Door, stair, and exit openings admit about `floor(width / (2 * radius))`
   people at once (minimum 1). Wider openings allow more concurrent passage;
   excess demand piles up and waits outside the opening throat.

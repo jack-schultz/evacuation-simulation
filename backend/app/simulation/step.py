@@ -21,6 +21,7 @@ from app.simulation.collision import (
     resolve_overlaps,
     resolve_space_containment,
     resolve_wall_collisions,
+    update_space_membership_from_position,
 )
 from app.simulation.hazards import hazard_radius_at, hazards_speed_factor
 from app.simulation.flow import ElementQueueState
@@ -195,7 +196,7 @@ def advance_timestep(
         is_admitted = occ.id in admitted
         # Non-aperture edges always admitted above; doors need admission to enter throat
         target_x, target_y = movement_model.propose_target(
-            occ, graph, radius, admitted=is_admitted
+            occ, graph, radius, admitted=is_admitted, doors=doors
         )
 
         desired = occ.speed_mps * params.timestep_s
@@ -263,9 +264,10 @@ def advance_timestep(
         occ.x, occ.y = clamp_outside_throat(occ.x, occ.y, waypoint.x, waypoint.y, radius)
 
     resolve_wall_collisions(occupants, solids, radius)
-    resolve_space_containment(
-        occupants, spaces, doors, graph, radius, admitted=admitted
+    update_space_membership_from_position(
+        occupants, spaces, doors, graph, admitted=admitted
     )
+    resolve_space_containment(occupants, spaces, radius)
     if obstacle_map is not None:
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):

@@ -4,6 +4,7 @@ import type {
   BuildingLayout,
   EditorTool,
   OccupantFrameState,
+  OccupantResult,
   SelectedRef,
 } from '../../types/building';
 import { SCALE } from '../../utils';
@@ -12,6 +13,7 @@ import { useCanvasInteraction } from './useCanvasInteraction';
 import { SpaceLayer } from './layers/SpaceLayer';
 import { HazardLayer } from './layers/HazardLayer';
 import { OpeningsLayer } from './layers/OpeningsLayer';
+import { PathsLayer } from './layers/PathsLayer';
 import { OccupantsLayer } from './layers/OccupantsLayer';
 
 interface Props {
@@ -21,6 +23,8 @@ interface Props {
   onSelect: (ref: SelectedRef) => void;
   onChange: (layout: BuildingLayout) => void;
   occupants?: OccupantFrameState[];
+  routeOccupants?: OccupantResult[];
+  showPaths?: boolean;
   congestedIds?: Set<string>;
   interactive?: boolean;
   /** Body radius in metres for playback dots (defaults to 0.25). */
@@ -37,6 +41,8 @@ export function BuildingCanvas({
   onSelect,
   onChange,
   occupants = [],
+  routeOccupants = [],
+  showPaths = false,
   congestedIds,
   interactive = true,
   occupantRadiusM = 0.25,
@@ -148,6 +154,8 @@ export function BuildingCanvas({
             onChange={onChange}
             dragProps={dragProps}
           />
+
+          {showPaths && <PathsLayer occupants={routeOccupants} />}
 
           <OccupantsLayer
             layout={layout}

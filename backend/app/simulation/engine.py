@@ -124,7 +124,7 @@ class SimulationEngine:
         if not frames or frames[-1].t < t:
             frames.append(self._capture_frame(t, occupants, layout.flood, layout.fire))
 
-        results = build_results(occupants, queues, t)
+        results = build_results(occupants, queues, t, graph=graph)
         return SimulationOutput(results=results, frames=frames)
 
     @staticmethod

@@ -14,6 +14,7 @@ import { useSimulationSession } from './hooks/useSimulationSession';
 export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPaths, setShowPaths] = useState(false);
 
   const session = useSimulationSession({ setBusy, setError });
   const editor = useBuildingEditor({
@@ -82,6 +83,8 @@ export default function App() {
         onReset={session.onReset}
         running={busy}
         results={session.playback.results}
+        showPaths={showPaths}
+        onShowPathsChange={setShowPaths}
         error={error}
       />
 
@@ -134,6 +137,8 @@ export default function App() {
             onSelect={editor.setSelected}
             onChange={editor.updateLayout}
             occupants={session.playback.currentFrame?.occupants ?? []}
+            routeOccupants={session.playback.results?.occupants ?? []}
+            showPaths={showPaths}
             congestedIds={session.congestedIds}
             interactive={!disabled}
             occupantRadiusM={session.occupantRadiusM}

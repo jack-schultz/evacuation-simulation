@@ -103,6 +103,18 @@ body {
   font-size: 0.9rem;
 }
 
+.path-toggle {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.path-toggle input:disabled {
+  cursor: not-allowed;
+}
+
 .main {
   display: grid;
   grid-template-columns: 260px 1fr;

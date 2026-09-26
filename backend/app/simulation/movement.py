@@ -11,6 +11,7 @@ from app.simulation.collision import (
     aperture_slot_point,
     aperture_slots,
     dist,
+    door_other_space,
 )
 from app.simulation.graph import EdgeKind, GraphNode, NavigationGraph, NodeKind
 from app.simulation.routing import edge_between
@@ -56,6 +57,24 @@ def interpolate_position(a: GraphNode, b: GraphNode, progress_m: float, edge_len
     return a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t
 
 
+def _next_waypoint_on_space_side(
+    graph: NavigationGraph,
+    waypoint: GraphNode,
+    space_id: str,
+    other_space_id: str,
+) -> bool:
+    """True if waypoint is closer to space_id's node than to other_space_id's."""
+    cur_nid = graph.space_node_ids.get(space_id)
+    oth_nid = graph.space_node_ids.get(other_space_id)
+    if cur_nid is None or oth_nid is None:
+        return True
+    cur_n = graph.nodes[cur_nid]
+    oth_n = graph.nodes[oth_nid]
+    d_cur = dist(waypoint.x, waypoint.y, cur_n.x, cur_n.y)
+    d_oth = dist(waypoint.x, waypoint.y, oth_n.x, oth_n.y)
+    return d_cur <= d_oth + 1e-9
+
+
 class MovementModel(Protocol):
     """Protocol for spatial (or legacy) movement implementations."""
 
@@ -65,6 +84,7 @@ class MovementModel(Protocol):
         graph: NavigationGraph,
         radius_m: float,
         admitted: bool,
+        doors: dict[str, Door] | None = None,
     ) -> tuple[float, float]:
         """Return the (x, y) steering target for this timestep."""
         ...
@@ -99,12 +119,56 @@ class SpatialMovementModel:
 
     approach_distance_m: float = 2.0
 
+    def _through_door_target(
+        self,
+        occupant: SimulatedOccupant,
+        graph: NavigationGraph,
+        door_node: GraphNode,
+        waypoint: GraphNode,
+        radius_m: float,
+        doors: dict[str, Door],
+    ) -> tuple[float, float] | None:
+        """Aim through the aperture into the destination while still origin-side."""
+        door = doors.get(door_node.ref_id)
+        if door is None or not occupant.current_space_id:
+            return None
+        other = door_other_space(door, occupant.current_space_id)
+        if other is None:
+            return None
+        # Already on the destination side of membership — use normal waypoint aiming.
+        if _next_waypoint_on_space_side(
+            graph, waypoint, occupant.current_space_id, other
+        ):
+            return None
+
+        origin_nid = graph.space_node_ids.get(occupant.current_space_id)
+        dest_nid = graph.space_node_ids.get(other)
+        if origin_nid is None or dest_nid is None:
+            return None
+        origin_n = graph.nodes[origin_nid]
+        dest_n = graph.nodes[dest_nid]
+
+        axis_x, axis_y = aperture_axis(origin_n.x, origin_n.y, door_node.x, door_node.y)
+        slots = aperture_slots(door.width, radius_m)
+        slot = occupant.aperture_slot % slots
+        slot_x, slot_y = aperture_slot_point(
+            door_node.x, door_node.y, axis_x, axis_y, door.width, slot, slots
+        )
+        dx = dest_n.x - door_node.x
+        dy = dest_n.y - door_node.y
+        length = (dx * dx + dy * dy) ** 0.5
+        if length < 1e-9:
+            return slot_x, slot_y
+        offset = max(radius_m * 1.5, 0.4)
+        return slot_x + dx / length * offset, slot_y + dy / length * offset
+
     def propose_target(
         self,
         occupant: SimulatedOccupant,
         graph: NavigationGraph,
         radius_m: float,
         admitted: bool,
+        doors: dict[str, Door] | None = None,
     ) -> tuple[float, float]:
         nxt = occupant.next_node_id
         if nxt is None:
@@ -112,6 +176,15 @@ class SpatialMovementModel:
             return node.x, node.y
 
         waypoint = graph.nodes[nxt]
+        cur = graph.nodes[occupant.current_node_id]
+
+        if cur.kind == NodeKind.DOOR and doors is not None:
+            through = self._through_door_target(
+                occupant, graph, cur, waypoint, radius_m, doors
+            )
+            if through is not None:
+                return through
+
         edge = edge_between(graph, occupant.current_node_id, nxt)
         if edge is None:
             return waypoint.x, waypoint.y
@@ -120,7 +193,6 @@ class SpatialMovementModel:
             return waypoint.x, waypoint.y
 
         # Next waypoint is an opening — approach / aperture / hold outside throat
-        cur = graph.nodes[occupant.current_node_id]
         axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
         slots = aperture_slots(edge.width_m, radius_m)
         slot = occupant.aperture_slot % slots
@@ -214,6 +286,17 @@ class SpatialMovementModel:
         ):
             return
 
+        from_node = graph.nodes[occupant.current_node_id]
+        # Leaving a door requires physical membership on the destination side.
+        if from_node.kind == NodeKind.DOOR and doors is not None:
+            door = doors.get(from_node.ref_id)
+            if door is not None and occupant.current_space_id:
+                other = door_other_space(door, occupant.current_space_id)
+                if other is not None and not _next_waypoint_on_space_side(
+                    graph, waypoint, occupant.current_space_id, other
+                ):
+                    return
+
         reach = max(radius_m * 1.2, 0.35)
         d_wp = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
 
@@ -236,20 +319,8 @@ class SpatialMovementModel:
         if not reached:
             return
 
-        from_node = graph.nodes[occupant.current_node_id]
         occupant.route_index += 1
         occupant.progress_on_edge = 0.0
-        # Membership flips when leaving a door into the next space, not on arrival
-        if from_node.kind == NodeKind.DOOR and doors is not None:
-            door = doors.get(from_node.ref_id)
-            if door is not None:
-                a, b = door.connects
-                if occupant.current_space_id == a:
-                    occupant.current_space_id = b
-                elif occupant.current_space_id == b:
-                    occupant.current_space_id = a
-                else:
-                    occupant.current_space_id = a
 
         if waypoint.kind == NodeKind.EXIT or occupant.next_node_id is None:
             occupant.status = OccupantStatus.EVACUATED
