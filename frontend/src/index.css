@@ -124,6 +124,7 @@ body {
 }
 
 .panel-dock {
+  position: relative;
   display: flex;
   min-height: 0;
   border-right: 1px solid var(--border);
@@ -160,6 +161,7 @@ body {
 }
 
 .inspector-sidebar {
+  position: relative;
   width: 260px;
   overflow: auto;
   background: var(--panel);
@@ -178,6 +180,43 @@ body {
   padding: 0.85rem;
   background: var(--panel);
   border-left: 1px solid var(--border);
+}
+
+.column-resizer {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.column-resizer-left {
+  left: -5px;
+}
+
+.column-resizer-right {
+  right: -5px;
+}
+
+.column-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+}
+
+.column-resizer:hover::after,
+.column-resizer:focus-visible::after {
+  background: #3b82f6;
+}
+
+.column-resizer:focus-visible {
+  outline: none;
 }
 
 .floor-plan-library h2 {
@@ -517,4 +556,3 @@ button.danger {
 .context-menu-item.danger:hover:not(:disabled) {
   background: #fef2f2;
 }
-

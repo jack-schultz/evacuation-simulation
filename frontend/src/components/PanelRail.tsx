@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ColumnResizer } from './ColumnResizer';
 
 export type PanelId = 'tools' | 'flood' | 'fire';
 
@@ -12,9 +13,11 @@ interface Props {
   openPanels: Set<PanelId>;
   onToggle: (id: PanelId) => void;
   panels: Partial<Record<PanelId, ReactNode>>;
+  panelWidth: number;
+  onResize: (delta: number) => void;
 }
 
-export function PanelRail({ openPanels, onToggle, panels }: Props) {
+export function PanelRail({ openPanels, onToggle, panels, panelWidth, onResize }: Props) {
   const visible = PANEL_META.filter((p) => openPanels.has(p.id) && panels[p.id] != null);
 
   return (
@@ -37,7 +40,7 @@ export function PanelRail({ openPanels, onToggle, panels }: Props) {
         })}
       </nav>
       {visible.length > 0 && (
-        <aside className="panel-stack" aria-label="Editor panels">
+        <aside className="panel-stack" aria-label="Editor panels" style={{ width: panelWidth }}>
           {visible.map((meta) => (
             <div key={meta.id} className="panel-stack-item">
               <button
@@ -53,6 +56,14 @@ export function PanelRail({ openPanels, onToggle, panels }: Props) {
             </div>
           ))}
         </aside>
+      )}
+      {visible.length > 0 && (
+        <ColumnResizer
+          label="Resize tools and hazard panels"
+          side="right"
+          direction={1}
+          onResize={onResize}
+        />
       )}
     </div>
   );
