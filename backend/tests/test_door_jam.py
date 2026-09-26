@@ -2,35 +2,101 @@
 
 import unittest
 
-from app.domain.building import BuildingLayout, SimulationParameters
-from app.simulation.collision import aperture_slots, dist, resolve_overlaps
+from app.domain.building import BuildingLayout, SimulationParameters, Wall
+from app.simulation.collision import (
+    Aabb,
+    aperture_slots,
+    build_collision_solids,
+    dist,
+    resolve_overlaps,
+    resolve_wall_collisions,
+    solid_wall_rects,
+    space_boundary_rects,
+)
 from app.simulation.engine import SimulationEngine
 from app.simulation.movement import SimulatedOccupant
 
 
-def packed_room(door_width: float, count: int = 12) -> BuildingLayout:
+def packed_room(door_width: float, count: int = 12, walls: list | None = None) -> BuildingLayout:
+    data = {
+        "width": 20,
+        "height": 20,
+        "spaces": [
+            {
+                "id": "room",
+                "name": "Room",
+                "type": "room",
+                "x": 0,
+                "y": 0,
+                "width": 10,
+                "height": 10,
+            }
+        ],
+        "exits": [
+            {
+                "id": "out",
+                "x": 10,
+                "y": 5,
+                "width": door_width,
+                "connected_space_id": "room",
+            }
+        ],
+        "occupant_groups": [
+            {
+                "id": "g",
+                "name": "Crowd",
+                "count": count,
+                "space_id": "room",
+                "walking_speed_mps": 1.4,
+            }
+        ],
+        "walls": walls or [],
+    }
+    return BuildingLayout.model_validate(data)
+
+
+def two_room_layout(count: int = 10) -> BuildingLayout:
+    """Office above corridor, door on shared edge — mirrors typical seed adjacency."""
     return BuildingLayout.model_validate(
         {
-            "width": 20,
-            "height": 20,
+            "width": 30,
+            "height": 30,
             "spaces": [
                 {
-                    "id": "room",
-                    "name": "Room",
+                    "id": "office",
+                    "name": "Office",
                     "type": "room",
-                    "x": 0,
-                    "y": 0,
-                    "width": 10,
+                    "x": 5,
+                    "y": 5,
+                    "width": 20,
                     "height": 10,
+                },
+                {
+                    "id": "corridor",
+                    "name": "Corridor",
+                    "type": "corridor",
+                    "x": 9,
+                    "y": 15,
+                    "width": 6,
+                    "height": 7,
+                },
+            ],
+            "doors": [
+                {
+                    "id": "d1",
+                    "x": 13,
+                    "y": 15,
+                    "width": 0.9,
+                    "connects": ["office", "corridor"],
                 }
             ],
             "exits": [
                 {
                     "id": "out",
-                    "x": 10,
-                    "y": 5,
-                    "width": door_width,
-                    "connected_space_id": "room",
+                    "x": 12,
+                    "y": 22,
+                    "width": 1.2,
+                    "connected_space_id": "corridor",
                 }
             ],
             "occupant_groups": [
@@ -38,7 +104,7 @@ def packed_room(door_width: float, count: int = 12) -> BuildingLayout:
                     "id": "g",
                     "name": "Crowd",
                     "count": count,
-                    "space_id": "room",
+                    "space_id": "office",
                     "walking_speed_mps": 1.4,
                 }
             ],
@@ -63,6 +129,54 @@ class ApertureHelpersTests(unittest.TestCase):
         self.assertGreaterEqual(dist(a.x, a.y, b.x, b.y), 0.5 - 1e-6)
 
 
+class WallCollisionHelpersTests(unittest.TestCase):
+    def test_resolve_wall_collisions_pushes_body_outside(self):
+        wall = Aabb(x=0.0, y=0.0, width=2.0, height=1.0)
+        occ = SimulatedOccupant(
+            id="a", group_id="g", speed_mps=1.0, route=["n"], x=1.0, y=0.5
+        )
+        resolve_wall_collisions([occ], [wall], radius_m=0.25)
+        self.assertFalse(wall.contains_point(occ.x, occ.y))
+        if wall.x <= occ.x <= wall.right:
+            self.assertTrue(
+                occ.y <= wall.y - 0.25 + 1e-9 or occ.y >= wall.bottom + 0.25 - 1e-9
+            )
+        if wall.y <= occ.y <= wall.bottom:
+            self.assertTrue(
+                occ.x <= wall.x - 0.25 + 1e-9 or occ.x >= wall.right + 0.25 - 1e-9
+            )
+
+    def test_solid_wall_rects_carves_exit_gap(self):
+        walls = [Wall(id="w", x=9.7, y=0.0, width=0.6, height=10.0)]
+        layout = packed_room(door_width=0.9, count=1, walls=[w.model_dump() for w in walls])
+        solids = solid_wall_rects(layout.walls, layout.doors, layout.exits)
+        for s in solids:
+            self.assertFalse(
+                s.contains_point(10.0, 5.0),
+                f"exit center still blocked by {s}",
+            )
+        self.assertGreaterEqual(len(solids), 2)
+
+    def test_space_boundaries_block_except_at_openings(self):
+        layout = packed_room(door_width=0.9, count=1)
+        solids = space_boundary_rects(layout.spaces, layout.doors, layout.exits)
+        self.assertGreater(len(solids), 0)
+        # Exit center on the right edge must be clear
+        for s in solids:
+            self.assertFalse(s.contains_point(10.0, 5.0), f"blocked by {s}")
+        # Midpoint of bottom edge (no opening) must remain solid
+        bottom_edge_y = 10.0
+        hit = any(s.contains_point(5.0, bottom_edge_y) for s in solids)
+        self.assertTrue(hit, "bottom edge without door should be solid")
+
+    def test_build_collision_solids_includes_boundaries_without_walls(self):
+        layout = packed_room(door_width=0.9, count=1)
+        solids = build_collision_solids(
+            layout.walls, layout.spaces, layout.doors, layout.exits
+        )
+        self.assertGreater(len(solids), 0)
+
+
 class DoorJamTests(unittest.TestCase):
     def test_narrow_exit_serializes_passage_with_waiting(self):
         radius = 0.25
@@ -78,7 +192,6 @@ class DoorJamTests(unittest.TestCase):
         self.assertEqual(output.results.evacuated_count, 10)
         self.assertGreater(output.results.average_wait_time_s or 0, 0)
 
-        # At most one body should sit deep in the exit throat at once
         exit_x, exit_y = 10.0, 5.0
         throat = max(radius * 2.5, 0.6)
         max_in_throat = 0
@@ -113,7 +226,7 @@ class DoorJamTests(unittest.TestCase):
             packed_room(door_width=0.9, count=8),
             SimulationParameters(max_time_s=60, occupant_radius_m=radius),
         )
-        min_sep = 2 * radius - 0.05  # allow tiny numerical overlap after rounding
+        min_sep = 2 * radius - 0.05
         for frame in output.frames:
             active = [o for o in frame.occupants if o.status != "evacuated"]
             for i in range(len(active)):
@@ -124,6 +237,70 @@ class DoorJamTests(unittest.TestCase):
                         min_sep,
                         f"overlap at t={frame.t}: {active[i].id} and {active[j].id}",
                     )
+
+    def test_wall_across_exit_still_evacuates(self):
+        walls = [
+            {
+                "id": "barrier",
+                "name": "Barrier",
+                "x": 9.7,
+                "y": 0.0,
+                "width": 0.6,
+                "height": 10.0,
+            }
+        ]
+        output = SimulationEngine().run(
+            packed_room(door_width=0.9, count=6, walls=walls),
+            SimulationParameters(max_time_s=120, occupant_radius_m=0.25),
+        )
+        self.assertEqual(output.results.evacuated_count, 6)
+
+    def test_space_edge_keeps_queue_on_office_side_of_door(self):
+        """Shared space edge forces approach from the office; sealed edge stays blocked."""
+        layout = two_room_layout(count=12)
+        solids = build_collision_solids(
+            layout.walls, layout.spaces, layout.doors, layout.exits
+        )
+        # Sealed point on shared edge (west of door) must be solid
+        self.assertTrue(
+            any(s.contains_point(10.0, 15.0) for s in solids),
+            "shared edge away from door should be solid",
+        )
+        # Door center must not be covered
+        self.assertFalse(any(s.contains_point(13.0, 15.0) for s in solids))
+
+        radius = 0.25
+        output = SimulationEngine().run(
+            layout,
+            SimulationParameters(
+                max_time_s=180,
+                occupant_radius_m=radius,
+                frame_interval_s=0.25,
+            ),
+        )
+        self.assertEqual(output.results.evacuated_count, 12)
+
+        door_x, door_y = 13.0, 15.0
+        # While jammed near the door, waiting bodies should sit on the office side
+        # (y <= door), not wrapped into a ring on the corridor side of the sealed edge.
+        saw_jam = False
+        for frame in output.frames:
+            near = [
+                o
+                for o in frame.occupants
+                if o.status != "evacuated"
+                and dist(o.x, o.y, door_x, door_y) < 2.0
+            ]
+            if len(near) < 4:
+                continue
+            saw_jam = True
+            office_side = sum(1 for o in near if o.y <= door_y + 0.05)
+            self.assertGreaterEqual(
+                office_side,
+                len(near) // 2,
+                f"expected queue mostly on office side at t={frame.t}",
+            )
+        self.assertTrue(saw_jam, "expected a multi-person jam near the door")
 
 
 if __name__ == "__main__":

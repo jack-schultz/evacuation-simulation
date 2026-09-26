@@ -14,11 +14,14 @@ from app.domain.building import (
     SimulationResults,
 )
 from app.simulation.collision import (
+    Aabb,
     aperture_slots,
+    build_collision_solids,
     clamp_outside_throat,
     dist,
     in_throat,
     resolve_overlaps,
+    resolve_wall_collisions,
 )
 from app.simulation.flood import FloodRouteSelector, apply_flood
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
@@ -38,7 +41,7 @@ class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
     Occupants steer continuously toward fixed Dijkstra waypoints, collide via
-    body radius, and pass doors/exits through width-limited apertures.
+    body radius and walls, and pass doors/exits through width-limited apertures.
     """
 
     def __init__(
@@ -73,7 +76,12 @@ class SimulationEngine:
         graph = self.graph_builder.build(layout, defaults)
         apply_flood(graph, layout.flood)
 
-        occupants = self._spawn_occupants(layout, graph, params.occupant_radius_m)
+        wall_solids = build_collision_solids(
+            layout.walls, layout.spaces, layout.doors, layout.exits
+        )
+        occupants = self._spawn_occupants(
+            layout, graph, params.occupant_radius_m, wall_solids
+        )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
         t = 0.0
@@ -87,7 +95,7 @@ class SimulationEngine:
                 break
 
             t += params.timestep_s
-            self._step(occupants, graph, queues, params, t)
+            self._step(occupants, graph, queues, params, t, wall_solids)
 
             if t + 1e-9 >= next_frame_t:
                 frames.append(self._capture_frame(t, occupants))
@@ -104,11 +112,13 @@ class SimulationEngine:
         layout: BuildingLayout,
         graph,
         radius_m: float,
+        wall_solids: list[Aabb] | None = None,
     ) -> list[SimulatedOccupant]:
         occupants: list[SimulatedOccupant] = []
         spaces = {s.id: s for s in layout.spaces}
         spacing = max(2.0 * radius_m + 0.05, 0.45)
         margin = radius_m + 0.1
+        solids = wall_solids or []
 
         for group in layout.occupant_groups:
             start_node = graph.space_node_ids[group.space_id]
@@ -148,6 +158,7 @@ class SimulationEngine:
                     )
                 )
         resolve_overlaps(occupants, radius_m, iterations=6)
+        resolve_wall_collisions(occupants, solids, radius_m)
         return occupants
 
     def _step(
@@ -157,8 +168,10 @@ class SimulationEngine:
         queues: dict[str, ElementQueueState],
         params: SimulationParameters,
         t: float,
+        wall_solids: list[Aabb] | None = None,
     ) -> None:
         radius = params.occupant_radius_m
+        solids = wall_solids or []
         flood_active = any(e.speed_factor != 1.0 for e in graph.edges.values())
 
         contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
@@ -303,6 +316,7 @@ class SimulationEngine:
                             aperture_slots(edge.width_m, radius), 1  # type: ignore[union-attr]
                         )
 
+        resolve_wall_collisions(occupants, solids, radius)
         resolve_overlaps(occupants, radius)
 
         # Re-clamp non-admitted after overlap resolution so pushes don't sneak them in
@@ -320,6 +334,8 @@ class SimulationEngine:
             if waypoint.kind not in (NodeKind.DOOR, NodeKind.EXIT):
                 continue
             occ.x, occ.y = clamp_outside_throat(occ.x, occ.y, waypoint.x, waypoint.y, radius)
+
+        resolve_wall_collisions(occupants, solids, radius)
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):

@@ -44,7 +44,7 @@ API routers → services → domain / simulation engine
 | Nav graph | `backend/app/simulation/graph.py` |
 | Route choice (Dijkstra) | `backend/app/simulation/routing.py` |
 | Capacity / queues | `backend/app/simulation/flow.py` |
-| Spatial collision / apertures | `backend/app/simulation/collision.py` |
+| Spatial collision / apertures / space edges | `backend/app/simulation/collision.py` |
 | Occupant spatial movement | `backend/app/simulation/movement.py` |
 | Stats / hotspots | `backend/app/simulation/results.py` |
 | TS domain mirrors | `frontend/src/types/building.ts` |
@@ -56,9 +56,9 @@ API routers → services → domain / simulation engine
 ## Domain invariants
 
 - Layout pieces: **spaces** (`room` \| `corridor` \| `stairs`), **doors**, **exits**, **occupant_groups**, optional **walls**.
-- Connectivity is **doors + exits only**. Walls are editor/visual geometry; they do **not** cut the navigation graph.
+- Connectivity is **doors + exits only** on the nav graph. Space rectangle edges act as solid barriers for movement (door/exit widths are the only gaps); optional explicit **walls** are extra obstacles. Neither cuts the navigation graph.
 - Occupant groups expand to individuals; each gets a **fixed route at spawn** (no replanning).
-- Occupants steer in continuous `(x, y)` toward waypoints with body radius collisions; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
+- Occupants steer in continuous `(x, y)` toward waypoints with body radius collisions against people and space/wall solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
 - Soft validation on **save** (incomplete layouts OK). Hard validation on **run** (need spaces, exits, occupant groups).
 - Creating a simulation **snapshots** the building layout; later edits do not change that sim (UI creates a new sim on Run).
 

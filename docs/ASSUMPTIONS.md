@@ -10,8 +10,10 @@ regulatory compliance calculation.
   stairs, walls).
 * Coordinates use a top-left origin; one grid unit defaults to one metre
   (`meters_per_cell`).
-* Walls are visual/blocked regions in the editor but do not currently carve
-  holes in the navigation graph (spaces/doors/exits define connectivity).
+* Space rectangle edges are solid for spatial movement; door and exit clear
+  widths are the only gaps on those edges. Optional explicit walls are additional
+  obstacles (also punched at openings). Neither space edges nor walls alter the
+  navigation graph (spaces/doors/exits define connectivity).
 
 ## Occupant knowledge and behaviour
 
@@ -29,7 +31,8 @@ regulatory compliance calculation.
 * Occupants steer continuously in 2D toward fixed route waypoints (space
   centroids, doors, exits) rather than sliding on a single shared edge line.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
-  cannot overlap; pairwise separation is resolved each timestep.
+  cannot overlap; pairwise separation is resolved each timestep. Bodies also
+  cannot cross space boundaries or solid walls except through door/exit gaps.
 * Door, stair, and exit openings admit about `floor(width / (2 * radius))`
   people at once (minimum 1). Wider openings allow more concurrent passage;
   excess demand piles up and waits outside the opening throat.

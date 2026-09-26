@@ -33,9 +33,11 @@ flowchart LR
 - **Exits** — Attached to a space; people leave the building here (also
   width-limited).
 - **Occupant groups** — A count of people in a space, with walking speed and optional preferred exit.
-- **Walls** — Drawn in the editor for clarity. They do **not** currently block paths; connectivity comes from spaces, doors, and exits only.
+- **Walls** — Optional extra obstacles. Space edges already block movement;
+  door/exit widths are the only passable gaps on those edges. Connectivity still
+  comes from spaces, doors, and exits on the nav graph.
 
-Under the hood, the simulator builds a **navigation graph**: space centroids, doors, and exits as nodes, linked by distance. Occupants steer in continuous space toward those waypoints, collide with each other, and squeeze through openings.
+Under the hood, the simulator builds a **navigation graph**: space centroids, doors, and exits as nodes, linked by distance. Occupants steer in continuous space toward those waypoints, collide with each other and with space boundaries (and optional walls), and squeeze through openings.
 
 ## What happens when you click Run
 
@@ -46,7 +48,7 @@ Under the hood, the simulator builds a **navigation graph**: space centroids, do
    - Expand each occupant group into individuals.
    - Assign each person a **shortest path** to an exit (preferred exit if set, otherwise nearest by path length). Routes stay fixed for the run.
    - Step through time (default 0.25 s). At each step, everyone tries to move
-     toward their next waypoint at once; body collisions and door/exit widths
+     toward their next waypoint at once; body collisions, walls, and door/exit widths
      create jams — excess demand means waiting outside the opening.
    - Record animation frames on an interval, then aggregate statistics (evac times, waits, hotspots).
 4. **Playback** — The browser loads the returned frames and results, then animates locally (play / pause / speed / reset). Nothing streams live over the network.
@@ -64,7 +66,7 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 - Single-floor style layout; stairs are capacity nodes, not multi-level physics.
 - No fire, smoke, panic, or disability-specific movement.
-- Walls do not carve the navigation graph.
+- Space edges block movement except at door/exit widths; they do not carve the navigation graph.
 - Occupants do not replan or follow crowds mid-run.
 
 See [ASSUMPTIONS.md](ASSUMPTIONS.md) for the complete list.
