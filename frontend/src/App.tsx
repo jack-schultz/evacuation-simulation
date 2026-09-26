@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FloodPanel } from './components/FloodPanel';
 import { EmergencyPanel } from './components/EmergencyPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
+import { FloorPlanLibrary } from './components/FloorPlanLibrary';
 import { AppHeader } from './components/AppHeader';
 import { PanelRail, type PanelId } from './components/PanelRail';
 import { PropertiesPanel } from './components/PropertiesPanel';
@@ -126,6 +127,7 @@ export default function App() {
           <BuildingCanvas
             layout={editor.layout}
             floorPlanUrl={persistence.floorPlanUrl}
+            floorPlanOpacity={persistence.floorPlanOpacity}
             tool={editor.tool}
             selected={editor.selected}
             onSelect={editor.setSelected}
@@ -160,6 +162,15 @@ export default function App() {
             />
           </aside>
         )}
+
+        <FloorPlanLibrary
+          images={persistence.floorPlans}
+          selectedId={persistence.selectedFloorPlanId}
+          opacity={persistence.floorPlanOpacity}
+          onSelect={persistence.setSelectedFloorPlanId}
+          onOpacityChange={persistence.setFloorPlanOpacity}
+        />
+
       </div>
 
       <ResultsPanel results={session.playback.results} />

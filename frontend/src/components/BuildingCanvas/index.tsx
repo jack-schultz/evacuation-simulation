@@ -46,6 +46,7 @@ interface Props {
   floodRadiusM?: number | null;
   fireRadiusM?: number | null;
   floorPlanUrl?: string | null;
+  floorPlanOpacity?: number;
 }
 
 export function BuildingCanvas({
@@ -70,6 +71,7 @@ export function BuildingCanvas({
   floodRadiusM,
   fireRadiusM,
   floorPlanUrl = null,
+  floorPlanOpacity = 0.2,
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
   const [hoveredObject, setHoveredObject] = useState<ObjectRef | null>(null);
@@ -223,7 +225,7 @@ export function BuildingCanvas({
               y={0}
               width={widthPx}
               height={heightPx}
-              opacity={0.2}
+              opacity={floorPlanOpacity}
               listening={false}
             />
           )}

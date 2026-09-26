@@ -2,6 +2,7 @@ import type {
   BuildingLayout,
   BuildingResponse,
   BuildingSummary,
+  FloorPlanImageSummary,
   SimulationParameters,
   SimulationRunResponse,
 } from '../types/building';
@@ -46,8 +47,8 @@ export const api = {
       body: JSON.stringify({ layout }),
     }),
   uploadFloorPlan: async (buildingId: string, file: File) => {
-    const res = await fetch(`${API_BASE}/api/buildings/${buildingId}/floor-plan`, {
-      method: 'PUT',
+    const res = await fetch(`${API_BASE}/api/buildings/${buildingId}/floor-plans`, {
+      method: 'POST',
       headers: { 'Content-Type': 'image/png', 'X-Filename': encodeURIComponent(file.name) },
       body: file,
     });
@@ -59,10 +60,12 @@ export const api = {
       } catch { /* ignore */ }
       throw new Error(detail);
     }
-    return res.json() as Promise<{ stored: boolean; filename: string }>;
+    return res.json() as Promise<{ stored: boolean; id: string; filename: string }>;
   },
-  getFloorPlan: async (buildingId: string) => {
-    const res = await fetch(`${API_BASE}/api/buildings/${buildingId}/floor-plan`);
+  listFloorPlans: (buildingId: string) =>
+    request<FloorPlanImageSummary[]>(`/api/buildings/${buildingId}/floor-plans`),
+  getFloorPlan: async (buildingId: string, imageId: string) => {
+    const res = await fetch(`${API_BASE}/api/buildings/${buildingId}/floor-plans/${imageId}`);
     if (!res.ok) {
       if (res.status === 404) return null;
       throw new Error(res.statusText || 'Could not load floor plan');
