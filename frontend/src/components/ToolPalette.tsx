@@ -34,10 +34,11 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
         ))}
       </div>
       <p className="hint">
-        Select a tool, then click or drag on the canvas to add elements. Use Select to drag
-        spaces, doors, exits or the flood centre handle. Drag occupant groups into
-        another space to change their location. Positions snap to the 0.5 m grid;
-        door and exit connections can be changed in Properties.
+        Room, corridor and stairs: click corners to draw a polygon, then click the
+        starting point to close it (Esc or right-click cancels). Door, exit and
+        occupants place with a click. Use Select to drag spaces, doors, exits or the
+        flood centre handle. Drag occupant groups into another space to move them.
+        Positions snap to the 0.5 m grid.
       </p>
     </div>
   );

@@ -37,6 +37,7 @@ API routers → services → domain / simulation engine
 | Concern | Path |
 |---------|------|
 | Domain types (layout, params, frames, results) | `backend/app/domain/building.py` |
+| Polygon geometry helpers | `backend/app/domain/geometry.py` |
 | API request/response schemas | `backend/app/schemas/api.py` |
 | Building / simulation HTTP routes | `backend/app/api/buildings.py`, `simulations.py` |
 | Persistence + seed | `backend/app/services/`, `backend/app/services/seed.py` |
@@ -55,12 +56,17 @@ API routers → services → domain / simulation engine
 
 ## Domain invariants
 
-- Layout pieces: **spaces** (`room` \| `corridor` \| `stairs`), **doors**, **exits**, **occupant_groups**.
-- Connectivity is **doors + exits only** on the nav graph. Space rectangle edges act as solid barriers for movement (door/exit widths are the only gaps). Space edges do not cut the navigation graph.
+- Layout pieces: **spaces** (`room` \| `corridor` \| `stairs` as closed polygons), **doors**, **exits**, **occupant_groups**.
+- Connectivity is **doors + exits only** for people pathing. Space nodes sit at an
+  **interior point** and define which openings share a room; within a space, routes
+  follow a visibility graph (openings + reflex-corner waypoints) so paths stay inside
+  non-convex rooms. Space edges act as solid barriers for movement (door/exit widths
+  are the only gaps).
 - Occupant groups expand to individuals; each gets a **fixed route at spawn** (no replanning).
-- Occupants steer in continuous `(x, y)` toward waypoints with body radius collisions against people and space-edge solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
+- Occupants steer in continuous `(x, y)` toward door/exit waypoints with body radius collisions against people and space-edge solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
 - Soft validation on **save** (incomplete layouts OK). Hard validation on **run** (need spaces, exits, occupant groups).
 - Creating a simulation **snapshots** the building layout; later edits do not change that sim (UI creates a new sim on Run).
+- Editor: room/corridor/stairs tools click corners to draw a polygon; click the first point to close.
 
 ## Sync and extension rules
 
@@ -75,8 +81,9 @@ API routers → services → domain / simulation engine
 - Seed (`ensure_seed`) runs once on empty DB; deleting buildings does not re-seed until the DB is reset.
 - Editor scale: `SCALE = 20` px/m in `frontend/src/utils.ts`; snap 0.5 m.
 - Frontend hardcodes some run parameters; there is no full params UI yet.
-- No auth, multi-user, WebSockets, or test suite (pytest is listed but unused).
+- No auth, multi-user, or WebSockets. Backend tests live under `backend/tests/`.
 - Occupant IDs are `{group_id}:{i}`.
+- Legacy layouts with space `x/y/width/height` are accepted and converted to four-corner polygons on load.
 
 ## Further reading
 
