@@ -11,9 +11,10 @@ regulatory compliance calculation.
   clicking corners and closing on the start point.
 * Coordinates use a top-left origin; one grid unit defaults to one metre
   (`meters_per_cell`).
-* Each space has a centroid node used for spawn start and to decide which
+* Each space has a centroid/interior node used for spawn start and to decide which
   openings share that room. People path **opening-to-opening** within a space
-  (door↔door, door↔exit); they do not walk to room centroids as waypoints.
+  along a **visibility graph** (doors, exits, and reflex-corner waypoints); raw
+  Euclidean chords that leave the polygon are not used.
 * Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
   navigation graph beyond defining which openings may connect.

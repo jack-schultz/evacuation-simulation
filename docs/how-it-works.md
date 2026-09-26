@@ -36,7 +36,11 @@ flowchart LR
   width-limited).
 - **Occupant groups** — A count of people in a space, with walking speed and optional preferred exit.
 
-Under the hood, the simulator builds a **navigation graph**: space centroids (connectivity / spawn), doors, and exits. Openings that share a space are linked directly. Occupants steer opening-to-opening, collide with each other and with space-edge segments, and squeeze through openings.
+Under the hood, the simulator builds a **navigation graph**: space interior points
+(connectivity / spawn), doors, exits, and reflex-corner waypoints. Openings that
+share a space are linked only when the segment stays inside the polygon; otherwise
+routes detour via waypoints. Occupants steer along those nodes, collide with each
+other and with space-edge segments, and squeeze through openings.
 
 ## What happens when you click Run
 
