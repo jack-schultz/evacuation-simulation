@@ -102,7 +102,7 @@ export function EmergencyPanel({ kind, layout, onChange, disabled, activeFloorId
                     />
                   </label>
                   <label>
-                    Stair climb delay (s)
+                    Stair transfer delay — smoke (s)
                     <input
                       type="number"
                       min="0"
@@ -116,8 +116,10 @@ export function EmergencyPanel({ kind, layout, onChange, disabled, activeFloorId
                     />
                   </label>
                   <p className="hint">
-                    Smoke is part of the fire: it slows people, shortens usable sightlines, and rises
-                    through linked stairs to floors above. It does not hard-block exits.
+                    Smoke expands faster than the fire on each floor. Both climb linked stairs;
+                    once they reach the top floor they cascade downward. Fire follows the same
+                    path with a longer stair delay. Smoke slows people and shortens sightlines
+                    but does not hard-block exits.
                   </p>
                 </>
               )}

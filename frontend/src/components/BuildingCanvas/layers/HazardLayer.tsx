@@ -12,6 +12,7 @@ interface Props {
   showAllFloors?: boolean;
   floodRadiusM?: number | null;
   fireRadiusM?: number | null;
+  fireFloors?: SmokeFloorState[];
   smokeFloors?: SmokeFloorState[];
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
@@ -25,6 +26,7 @@ export function HazardLayer({
   showAllFloors = false,
   floodRadiusM,
   fireRadiusM,
+  fireFloors = [],
   smokeFloors = [],
   onChange,
   dragProps,
@@ -118,6 +120,7 @@ export function HazardLayer({
 
   const floodOnFloor = layout.flood?.enabled && onFloor(layout.flood.floor_id);
   const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
+  const fireOnActive = fireFloors.filter((p) => onFloor(p.floor_id));
   const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
   // Before/without playback frames, preview smoke as a larger disc around the fire.
   const smokePreview =
@@ -130,6 +133,16 @@ export function HazardLayer({
           y: layout.fire.y,
           radius_m: layout.fire.radius_m * 1.4,
           intensity: Math.max(1, layout.fire.intensity * 0.8),
+          floor_id: layout.fire.floor_id ?? 'floor-0',
+        }
+      : null;
+  const firePreview =
+    fireOnActive.length === 0 && fireOnFloor && layout.fire
+      ? {
+          x: layout.fire.x,
+          y: layout.fire.y,
+          radius_m: fireRadiusM ?? layout.fire.radius_m,
+          intensity: layout.fire.intensity,
           floor_id: layout.fire.floor_id ?? 'floor-0',
         }
       : null;
@@ -175,14 +188,24 @@ export function HazardLayer({
         </Group>
       )}
 
-      {fireOnFloor && layout.fire && (
+      {fireOnActive.map((plume) =>
         clippedHazard(
-          layout.fire.x,
-          layout.fire.y,
-          fireRadiusM ?? layout.fire.radius_m,
-          `rgba(249, 115, 22, ${0.1 + layout.fire.intensity / 250})`,
-          layout.fire.intensity >= 80 ? '#b91c1c' : '#ea580c',
-          layout.fire.floor_id ?? 'floor-0',
+          plume.x,
+          plume.y,
+          plume.radius_m,
+          `rgba(249, 115, 22, ${0.1 + plume.intensity / 250})`,
+          plume.intensity >= 80 ? '#b91c1c' : '#ea580c',
+          plume.floor_id,
+        ),
+      )}
+      {firePreview && (
+        clippedHazard(
+          firePreview.x,
+          firePreview.y,
+          firePreview.radius_m,
+          `rgba(249, 115, 22, ${0.1 + firePreview.intensity / 250})`,
+          firePreview.intensity >= 80 ? '#b91c1c' : '#ea580c',
+          firePreview.floor_id,
         )
       )}
       {fireOnFloor && layout.fire && (

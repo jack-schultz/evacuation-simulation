@@ -56,16 +56,28 @@ export function FloorStrip({
             onClick={() => onActiveFloorChange(floor.id)}
           >
             {floor.name}
-            {layout.fire?.enabled && layout.fire.emit_smoke !== false &&
-              (layout.fire.floor_id ?? DEFAULT_FLOOR_ID) !== floor.id &&
-              floor.elevation_m >
-                (floors.find(
-                  (f) => f.id === (layout.fire?.floor_id ?? DEFAULT_FLOOR_ID),
-                )?.elevation_m ?? 0) && (
-                <span className="floor-smoke-badge" title="Fire smoke can rise here">
-                  ↑
-                </span>
-              )}
+            {layout.fire?.enabled && (() => {
+              const fireFloorId = layout.fire.floor_id ?? DEFAULT_FLOOR_ID;
+              const fireElev =
+                floors.find((f) => f.id === fireFloorId)?.elevation_m ?? 0;
+              const topElev = Math.max(...floors.map((f) => f.elevation_m));
+              const fireOnTop = fireElev >= topElev - 1e-9;
+              if (floor.elevation_m > fireElev + 1e-9) {
+                return (
+                  <span className="floor-smoke-badge" title="Fire/smoke can rise here">
+                    ↑
+                  </span>
+                );
+              }
+              if (fireOnTop && floor.elevation_m < fireElev - 1e-9) {
+                return (
+                  <span className="floor-smoke-badge" title="Fire/smoke can descend here">
+                    ↓
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </button>
         ))}
         <button

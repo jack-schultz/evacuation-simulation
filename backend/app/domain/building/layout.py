@@ -32,7 +32,7 @@ class Floor(BaseModel):
     name: str = "Ground"
     elevation_m: float = Field(
         default=0.0,
-        description="Metres above datum; used for stair rise and smoke chimney direction.",
+        description="Metres above datum; used for stair rise and hazard stair-spread direction.",
     )
     order: int = Field(default=0, description="Tab / display order (low = bottom).")
 

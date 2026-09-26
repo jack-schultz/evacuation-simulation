@@ -53,6 +53,7 @@ export interface SmokeFloorState {
 export interface SimulationFrame {
   flood_radius_m?: number | null;
   fire_radius_m?: number | null;
+  fire_floors?: SmokeFloorState[];
   smoke_floors?: SmokeFloorState[];
   t: number;
   occupants: OccupantFrameState[];

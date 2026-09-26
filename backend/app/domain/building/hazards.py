@@ -30,12 +30,14 @@ class FireEmergency(RadialEmergency):
     """Illustrative fire scenario; intensity is a relative slowdown, not heat.
 
     Smoke is part of the fire disaster: when emit_smoke is true the engine
-    synthesizes a soft plume from the fire centre that can rise through stairs.
+    synthesizes a soft plume that expands faster than the fire. Both climb
+    linked stairs; once the top floor is reached they cascade downward.
+    Fire uses the same stair path with a longer transfer delay.
     """
 
     emit_smoke: bool = Field(
         default=True,
-        description="When true, smoke is produced from the fire (soft slowdown + stair chimney).",
+        description="When true, smoke is produced from the fire (soft slowdown + stair spread).",
     )
     smoke_visibility_m: float = Field(
         default=8.0,
@@ -47,14 +49,14 @@ class FireEmergency(RadialEmergency):
         default=8.0,
         ge=0,
         allow_inf_nan=False,
-        description="Seconds for fire smoke to climb one storey through a linked stair.",
+        description="Seconds for smoke to transfer one storey through a linked stair.",
     )
     smoke_stair_intensity_factor: float = Field(
         default=0.85,
         gt=0,
         le=1.0,
         allow_inf_nan=False,
-        description="Intensity multiplier for smoke plumes that rise through stairs.",
+        description="Intensity multiplier for smoke/fire plumes after a stair transfer.",
     )
 
 
@@ -71,14 +73,14 @@ class SmokeEmergency(RadialEmergency):
         default=8.0,
         ge=0,
         allow_inf_nan=False,
-        description="Seconds for smoke to climb one storey through a linked stair.",
+        description="Seconds for smoke to transfer one storey through a linked stair.",
     )
     stair_spread_intensity_factor: float = Field(
         default=0.85,
         gt=0,
         le=1.0,
         allow_inf_nan=False,
-        description="Intensity multiplier for plumes that rise through stairs.",
+        description="Intensity multiplier for plumes after a stair transfer.",
     )
 
 

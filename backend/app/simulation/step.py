@@ -26,7 +26,7 @@ from app.simulation.collision import (
     update_space_membership_from_position,
 )
 from app.simulation.hazards import (
-    active_smoke_plumes,
+    hard_plume_factor,
     hazard_radius_at,
     hazards_speed_factor,
     smoke_factor_at,
@@ -122,13 +122,14 @@ def advance_timestep(
     spaces: dict | None = None,
     doors: dict | None = None,
     flood: FloodEmergency | None = None,
-    fire: FireEmergency | None = None,
+    fire: FireEmergency | None = None,  # kept for call-site compat; plumes drive effects
     smoke: SmokeEmergency | None = None,
     obstacle_map: PixelObstacleMap | None = None,
     world_width: float = 0.0,
     world_height: float = 0.0,
     floors: dict[str, Floor] | None = None,
     smoke_plumes=None,
+    fire_plumes=None,
 ) -> None:
     radius = params.occupant_radius_m
     solids = boundary_solids or []
@@ -136,8 +137,10 @@ def advance_timestep(
     doors = doors or {}
     floors = floors or {}
     smoke_plumes = smoke_plumes or []
-    hazards = (flood, fire)
-    has_hazard = any(hazard_radius_at(h, t) is not None for h in hazards)
+    fire_plumes = fire_plumes or []
+    flood_active = hazard_radius_at(flood, t) is not None
+    fire_active = bool(fire_plumes)
+    has_hazard = flood_active or fire_active
     speed_factors: dict[str, float] = {}
 
     _advance_climbers(occupants, spaces, floors, graph, params, t, smoke_plumes)
@@ -180,10 +183,32 @@ def advance_timestep(
         target_x, target_y = flood_target or (waypoint.x, waypoint.y)
         factor = 1.0
         if has_hazard:
-            factor = hazards_speed_factor(
-                hazards, t, occ.x, occ.y, target_x, target_y,
-                is_exit=waypoint.kind == NodeKind.EXIT,
-            )
+            if flood_active:
+                factor = min(
+                    factor,
+                    hazards_speed_factor(
+                        (flood,),
+                        t,
+                        occ.x,
+                        occ.y,
+                        target_x,
+                        target_y,
+                        is_exit=waypoint.kind == NodeKind.EXIT,
+                    ),
+                )
+            if fire_active:
+                factor = min(
+                    factor,
+                    hard_plume_factor(
+                        fire_plumes,
+                        occ.floor_id,
+                        occ.x,
+                        occ.y,
+                        target_x,
+                        target_y,
+                        is_exit=waypoint.kind == NodeKind.EXIT,
+                    ),
+                )
         if edge is not None:
             factor *= edge.base_speed_factor
         factor *= smoke_factor_at(smoke_plumes, occ.floor_id, occ.x, occ.y)
@@ -361,10 +386,18 @@ def advance_timestep(
         desired = occ.speed_mps * params.timestep_s
         desired *= speed_factors[occ.id]
         # Aperture slots can deviate from the centreline checked above.
-        if has_hazard and hazards_speed_factor(
-            hazards, t, occ.x, occ.y, target_x, target_y
-        ) == 0:
-            desired = 0.0
+        if has_hazard:
+            blocked = False
+            if flood_active and hazards_speed_factor(
+                (flood,), t, occ.x, occ.y, target_x, target_y
+            ) == 0:
+                blocked = True
+            if fire_active and hard_plume_factor(
+                fire_plumes, occ.floor_id, occ.x, occ.y, target_x, target_y
+            ) == 0:
+                blocked = True
+            if blocked:
+                desired = 0.0
 
         if edge is not None and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):  # type: ignore[union-attr]
             next_node = graph.nodes[occ.next_node_id]

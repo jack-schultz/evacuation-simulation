@@ -47,6 +47,7 @@ interface Props {
   occupantRadiusM?: number;
   floodRadiusM?: number | null;
   fireRadiusM?: number | null;
+  fireFloors?: SmokeFloorState[];
   smokeFloors?: SmokeFloorState[];
   floorPlanUrl?: string | null;
   floorPlanOpacity?: number;
@@ -76,6 +77,7 @@ export function BuildingCanvas({
   occupantRadiusM = 0.25,
   floodRadiusM,
   fireRadiusM,
+  fireFloors = [],
   smokeFloors = [],
   floorPlanUrl = null,
   floorPlanOpacity = 0.2,
@@ -290,6 +292,7 @@ export function BuildingCanvas({
             showAllFloors={showAllFloors}
             floodRadiusM={floodRadiusM}
             fireRadiusM={fireRadiusM}
+            fireFloors={fireFloors}
             smokeFloors={smokeFloors}
             onChange={onChange}
             dragProps={dragProps}

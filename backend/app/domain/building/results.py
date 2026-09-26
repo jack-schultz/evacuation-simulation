@@ -40,6 +40,7 @@ class SmokeFloorState(BaseModel):
 class SimulationFrame(BaseModel):
     flood_radius_m: float | None = None
     fire_radius_m: float | None = None
+    fire_floors: list[SmokeFloorState] = Field(default_factory=list)
     smoke_floors: list[SmokeFloorState] = Field(default_factory=list)
     t: float
     occupants: list[OccupantFrameState]

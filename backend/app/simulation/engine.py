@@ -16,8 +16,10 @@ from app.domain.building import (
 )
 from app.simulation.collision import build_collision_solids
 from app.simulation.hazards import (
+    active_fire_plumes,
     active_smoke_plumes,
     apply_hazards,
+    fire_emergencies_from_plumes,
     hazard_radius_at,
     resolve_origin_smoke,
     smoke_emergencies_from_plumes,
@@ -80,9 +82,14 @@ class SimulationEngine:
         graph = self.graph_builder.build(layout, defaults)
         origin_smoke = resolve_origin_smoke(layout)
         plumes0 = active_smoke_plumes(layout, 0.0)
+        fire_plumes0 = active_fire_plumes(layout, 0.0)
         apply_hazards(
             graph,
-            (layout.flood, layout.fire, *smoke_emergencies_from_plumes(plumes0)),
+            (
+                layout.flood,
+                *fire_emergencies_from_plumes(fire_plumes0),
+                *smoke_emergencies_from_plumes(plumes0),
+            ),
         )
 
         boundary_solids = build_collision_solids(
@@ -118,6 +125,7 @@ class SimulationEngine:
 
             t += params.timestep_s
             plumes = active_smoke_plumes(layout, t)
+            fire_plumes = active_fire_plumes(layout, t)
             advance_timestep(
                 self.flow_model,
                 self.movement_model,
@@ -137,6 +145,7 @@ class SimulationEngine:
                 layout.height,
                 floors,
                 plumes,
+                fire_plumes,
             )
 
             if t + 1e-9 >= next_frame_t:
@@ -159,6 +168,7 @@ class SimulationEngine:
             t=round(t, 3),
             flood_radius_m=hazard_radius_at(layout.flood, t),
             fire_radius_m=hazard_radius_at(layout.fire, t),
+            fire_floors=active_fire_plumes(layout, t),
             smoke_floors=active_smoke_plumes(layout, t),
             occupants=[
                 OccupantFrameState(

@@ -72,8 +72,9 @@ regulatory compliance calculation.
 * Combustion, fuel, heat, toxicity, CFD smoke, and structural collapse are not
   simulated. Circular fire/flood/smoke are illustrative scenario overlays only.
 * Disability-specific movement and panic are not simulated.
-* Smoke reduces speed and usable sightline length and can rise through linked
-  stairs; it does not model optical density physics or incapacitation.
+* Smoke reduces speed and usable sightline length, expands faster than fire, and
+  spreads through linked stairs (up, then down once the top floor is reached);
+  it does not model optical density physics or incapacitation.
 
 ## Results interpretation
 
@@ -136,8 +137,10 @@ People avoid entering active fire and cannot use exits within it. People already
 inside can escape outward along available routes at a speed multiplier of
 max(0.1, 1 - intensity/100). Intensity is a relative scenario control, not a
 physical temperature or heat-release rate. Routes are chosen at spawn; spreading
-fire can trap people on their fixed route. With both fire and flood enabled,
-the strongest restriction applies, including blocking by either hazard.
+fire can trap people on their fixed route. Fire also spreads through linked
+stairs using the same up-then-down-from-top rules as smoke, with a longer stair
+delay. With both fire and flood enabled, the strongest restriction applies,
+including blocking by either hazard.
 
 This illustrative model does not simulate combustion, fuel, heat,
 ventilation, injury, or wall-dependent spread. It is an evacuation estimate,
@@ -145,10 +148,15 @@ not a fire engineering or safety certification model.
 
 ## Smoke scenario
 
-Smoke is part of the **fire** disaster (`emit_smoke`, on by default). Inside the
-plume, walking speed is multiplied by `max(0.25, 1 - intensity/100)`. Long
-visibility-graph chords are heavily costed so people prefer shorter sightlines.
-Smoke does **not** hard-block exits. When a fire-floor plume reaches a linked
-stair, after `smoke_stair_spread_delay_s` a weaker plume starts on the higher
-partner floor (chimney effect). Smoke does not spread downward through stairs.
-There is no separate standalone smoke emergency in the editor.
+Smoke is part of the **fire** disaster (`emit_smoke`, on by default). It expands
+horizontally **faster** than the fire (about 2.5× the fire spread speed) and
+starts from a larger initial radius. Inside the plume, walking speed is
+multiplied by `max(0.25, 1 - intensity/100)`. Long visibility-graph chords are
+heavily costed so people prefer shorter sightlines. Smoke does **not** hard-block
+exits.
+
+Both smoke and fire climb linked stairs. After `smoke_stair_spread_delay_s`
+(smoke) or that delay × 2.5 (fire), a weaker plume starts on the partner floor.
+Once the **top** floor of the building is reached, spread continues **downward**
+through stairs. Fire uses the same path and rules, only slower. There is no
+separate standalone smoke emergency in the editor.

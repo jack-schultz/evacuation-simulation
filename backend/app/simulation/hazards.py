@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from app.domain.building import (
     BuildingLayout,
+    FireEmergency,
     RadialEmergency,
     SmokeEmergency,
     SmokeFloorState,
@@ -12,6 +13,12 @@ from app.domain.building import (
 from app.simulation.graph import NavigationGraph, NodeKind
 from app.simulation.routing import DijkstraRouteSelector
 from app.simulation.stair_geometry import floor_elevation
+
+# Smoke expands faster on the floor than the parent fire.
+SMOKE_SPREAD_MULTIPLIER = 2.5
+SMOKE_RADIUS_MULTIPLIER = 1.4
+# Fire takes longer to transfer through a stair than smoke.
+FIRE_STAIR_DELAY_MULTIPLIER = 2.5
 
 
 def hazard_radius_at(hazard: RadialEmergency | None, t: float) -> float | None:
@@ -121,8 +128,8 @@ def _synthetic_fire_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
         enabled=True,
         x=fire.x,
         y=fire.y,
-        radius_m=fire.radius_m * 1.4,
-        spread_speed_mps=fire.spread_speed_mps,
+        radius_m=fire.radius_m * SMOKE_RADIUS_MULTIPLIER,
+        spread_speed_mps=fire.spread_speed_mps * SMOKE_SPREAD_MULTIPLIER,
         intensity=max(1.0, fire.intensity * 0.8),
         floor_id=fire.floor_id,
         visibility_m=fire.smoke_visibility_m,
@@ -136,11 +143,28 @@ def resolve_origin_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
     return _synthetic_fire_smoke(layout)
 
 
-def active_smoke_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorState]:
-    """Origin smoke plus chimney plumes that have risen through linked stairs."""
-    origin = resolve_origin_smoke(layout)
-    if origin is None:
-        return []
+def resolve_origin_fire(layout: BuildingLayout) -> FireEmergency | None:
+    fire = layout.fire
+    if fire is None or not fire.enabled or fire.intensity <= 0:
+        return None
+    return fire
+
+
+def _top_floor_id(floors: dict) -> str | None:
+    if not floors:
+        return None
+    return max(floors.values(), key=lambda f: (f.elevation_m, f.order)).id
+
+
+def _active_stair_plumes(
+    origin: RadialEmergency,
+    layout: BuildingLayout,
+    t: float,
+    *,
+    stair_delay_s: float,
+    intensity_factor: float,
+) -> list[SmokeFloorState]:
+    """Expand on the origin floor, climb stairs, then cascade down once the top is reached."""
     origin_radius = hazard_radius_at(origin, t)
     if origin_radius is None:
         return []
@@ -150,25 +174,19 @@ def active_smoke_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorStat
     stairs = [
         s for s in layout.spaces if s.type == SpaceType.STAIRS and s.linked_stair_id
     ]
+    top_id = _top_floor_id(floors)
 
-    plumes: list[SmokeFloorState] = [
-        SmokeFloorState(
-            floor_id=origin.floor_id,
-            radius_m=origin_radius,
-            x=origin.x,
-            y=origin.y,
-            intensity=origin.intensity,
-        )
-    ]
-
-    # Queue of (floor_id, centre, intensity, time when this plume started)
-    queue: list[tuple[str, float, float, float, float]] = [
-        (origin.floor_id, origin.x, origin.y, origin.intensity, 0.0)
-    ]
+    # Meta: floor_id -> (x, y, intensity, t_start) for re-queue when top is reached
+    plume_meta: dict[str, tuple[float, float, float, float]] = {
+        origin.floor_id: (origin.x, origin.y, origin.intensity, 0.0)
+    }
+    queue: list[str] = [origin.floor_id]
     ignited = {origin.floor_id}
+    top_reached = top_id is None or origin.floor_id == top_id
 
     while queue:
-        floor_id, cx, cy, intensity, t_start = queue.pop(0)
+        floor_id = queue.pop(0)
+        cx, cy, intensity, t_start = plume_meta[floor_id]
         age = max(t - t_start, 0.0)
         radius_here = origin.radius_m + origin.spread_speed_mps * age
         for stair in stairs:
@@ -179,43 +197,92 @@ def active_smoke_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorStat
                 continue
             elev = floor_elevation(floors, stair.floor_id)
             partner_elev = floor_elevation(floors, partner.floor_id)
-            if partner_elev <= elev + 1e-9:
-                continue
-            if partner.floor_id in ignited:
+            going_up = partner_elev > elev + 1e-9
+            going_down = partner_elev < elev - 1e-9
+            if going_up:
+                allowed = True
+            elif going_down:
+                allowed = top_reached
+            else:
+                allowed = False
+            if not allowed or partner.floor_id in ignited:
                 continue
             sx, sy = stair.centroid
             dist = ((sx - cx) ** 2 + (sy - cy) ** 2) ** 0.5
             if origin.spread_speed_mps > 1e-9:
-                t_hit = t_start + max(0.0, (dist - origin.radius_m) / origin.spread_speed_mps)
+                t_hit = t_start + max(
+                    0.0, (dist - origin.radius_m) / origin.spread_speed_mps
+                )
             elif dist <= origin.radius_m + 1e-9:
                 t_hit = t_start
             else:
                 continue
             if radius_here + 1e-6 < dist and t < t_hit:
                 continue
-            t_ignite = t_hit + origin.stair_spread_delay_s
+            t_ignite = t_hit + stair_delay_s
             if t + 1e-9 < t_ignite:
                 continue
-            upper_intensity = intensity * origin.stair_spread_intensity_factor
+            next_intensity = intensity * intensity_factor
             px, py = partner.centroid
-            upper_radius = max(
-                0.5,
-                origin.radius_m * 0.5
-                + origin.spread_speed_mps * max(t - t_ignite, 0.0),
-            )
             ignited.add(partner.floor_id)
-            plumes.append(
-                SmokeFloorState(
-                    floor_id=partner.floor_id,
-                    radius_m=upper_radius,
-                    x=px,
-                    y=py,
-                    intensity=upper_intensity,
-                )
-            )
-            queue.append((partner.floor_id, px, py, upper_intensity, t_ignite))
+            plume_meta[partner.floor_id] = (px, py, next_intensity, t_ignite)
+            queue.append(partner.floor_id)
+            # Once smoke/fire reaches the top storey, reopen ignited floors so
+            # they can cascade downward through stairs.
+            if top_id is not None and partner.floor_id == top_id and not top_reached:
+                top_reached = True
+                for fid in list(ignited):
+                    if fid not in queue:
+                        queue.append(fid)
 
+    plumes: list[SmokeFloorState] = []
+    for floor_id, (cx, cy, intensity, t_start) in plume_meta.items():
+        age = max(t - t_start, 0.0)
+        if floor_id == origin.floor_id:
+            radius = origin.radius_m + origin.spread_speed_mps * age
+        else:
+            radius = max(
+                0.5,
+                origin.radius_m * 0.5 + origin.spread_speed_mps * age,
+            )
+        plumes.append(
+            SmokeFloorState(
+                floor_id=floor_id,
+                radius_m=radius,
+                x=cx,
+                y=cy,
+                intensity=intensity,
+            )
+        )
     return plumes
+
+
+def active_smoke_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorState]:
+    """Origin smoke plus plumes that spread through linked stairs (up, then down from top)."""
+    origin = resolve_origin_smoke(layout)
+    if origin is None:
+        return []
+    return _active_stair_plumes(
+        origin,
+        layout,
+        t,
+        stair_delay_s=origin.stair_spread_delay_s,
+        intensity_factor=origin.stair_spread_intensity_factor,
+    )
+
+
+def active_fire_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorState]:
+    """Fire expands on-floor and follows the same stair path as smoke, but more slowly."""
+    origin = resolve_origin_fire(layout)
+    if origin is None:
+        return []
+    return _active_stair_plumes(
+        origin,
+        layout,
+        t,
+        stair_delay_s=origin.smoke_stair_spread_delay_s * FIRE_STAIR_DELAY_MULTIPLIER,
+        intensity_factor=origin.smoke_stair_intensity_factor,
+    )
 
 
 def smoke_factor_at(
@@ -234,6 +301,45 @@ def smoke_factor_at(
     return factor
 
 
+def hard_plume_factor(
+    plumes: list[SmokeFloorState],
+    floor_id: str,
+    x: float,
+    y: float,
+    target_x: float,
+    target_y: float,
+    *,
+    is_exit: bool = False,
+) -> float:
+    """Hard fire/flood-style restriction from floor-scoped plumes (already expanded)."""
+    factor = 1.0
+    for plume in plumes:
+        if plume.floor_id != floor_id:
+            continue
+        hazard = RadialEmergency(
+            enabled=True,
+            x=plume.x,
+            y=plume.y,
+            radius_m=plume.radius_m,
+            spread_speed_mps=0.0,
+            intensity=plume.intensity,
+            floor_id=plume.floor_id,
+        )
+        factor = min(
+            factor,
+            segment_speed_factor(
+                hazard,
+                plume.radius_m,
+                x,
+                y,
+                target_x,
+                target_y,
+                is_exit=is_exit,
+            ),
+        )
+    return factor
+
+
 def smoke_emergencies_from_plumes(plumes: list[SmokeFloorState]) -> list[SmokeEmergency]:
     """Adapt plume snapshots into RadialEmergency-like objects for apply_hazards."""
     return [
@@ -245,6 +351,22 @@ def smoke_emergencies_from_plumes(plumes: list[SmokeFloorState]) -> list[SmokeEm
             spread_speed_mps=0.0,
             intensity=p.intensity,
             floor_id=p.floor_id,
+        )
+        for p in plumes
+    ]
+
+
+def fire_emergencies_from_plumes(plumes: list[SmokeFloorState]) -> list[FireEmergency]:
+    return [
+        FireEmergency(
+            enabled=True,
+            x=p.x,
+            y=p.y,
+            radius_m=p.radius_m,
+            spread_speed_mps=0.0,
+            intensity=p.intensity,
+            floor_id=p.floor_id,
+            emit_smoke=False,
         )
         for p in plumes
     ]

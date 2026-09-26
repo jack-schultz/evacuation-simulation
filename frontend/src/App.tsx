@@ -202,6 +202,7 @@ export default function App() {
             occupantRadiusM={session.occupantRadiusM}
             floodRadiusM={session.playback.currentFrame?.flood_radius_m}
             fireRadiusM={session.playback.currentFrame?.fire_radius_m}
+            fireFloors={session.playback.currentFrame?.fire_floors ?? []}
             smokeFloors={session.playback.currentFrame?.smoke_floors ?? []}
             activeFloorId={activeFloorId}
           />
