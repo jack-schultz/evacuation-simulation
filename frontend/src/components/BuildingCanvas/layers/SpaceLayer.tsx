@@ -2,6 +2,7 @@ import { Group, Line, Rect, Text } from 'react-konva';
 import type {
   BuildingLayout,
   EditorTool,
+  ObjectRef,
   Selection,
 } from '../../../types/building';
 import { isRefSelected } from '../../../types/editor';
@@ -22,6 +23,7 @@ interface Props {
   congestedIds?: Set<string>;
   floorPlanImage: HTMLImageElement | null;
   onObjectClick: HandleObjectClickFn;
+  onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
   resizeSpace: ResizeSpaceFn;
@@ -36,6 +38,7 @@ export function SpaceLayer({
   congestedIds,
   floorPlanImage,
   onObjectClick,
+  onHover,
   onChange,
   dragProps,
   resizeSpace,
@@ -50,17 +53,16 @@ export function SpaceLayer({
         const box = polygonBBox(s.vertices);
         const [cx, cy] = spaceCentroid(s.vertices);
         const active = selectedSpace(s.id);
+        const ref: ObjectRef = { kind: 'space', id: s.id };
         return (
           <Group
             key={s.id}
             x={box.x * SCALE}
             y={box.y * SCALE}
-            onClick={(e) => onObjectClick({ kind: 'space', id: s.id }, e)}
-            onContextMenu={(e) =>
-              onObjectContextMenu({ kind: 'space', id: s.id }, e)
-            }
+            onClick={(e) => onObjectClick(ref, e)}
+            onContextMenu={(e) => onObjectContextMenu(ref, e)}
             {...dragProps(
-              { kind: 'space', id: s.id },
+              ref,
               (nx, ny) => {
                 const dx = nx - box.x;
                 const dy = ny - box.y;
@@ -83,6 +85,16 @@ export function SpaceLayer({
               box.height,
               { x: box.x, y: box.y },
             )}
+            onMouseEnter={(event) => {
+              onHover(ref);
+              if (interactive && tool === 'select') {
+                event.target.getStage()!.container().style.cursor = 'grab';
+              }
+            }}
+            onMouseLeave={(event) => {
+              onHover(null);
+              event.target.getStage()!.container().style.cursor = '';
+            }}
           >
             <Line
               points={s.vertices.flatMap(([vx, vy]) => [

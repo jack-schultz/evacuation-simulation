@@ -1,6 +1,7 @@
 import { Circle, Group, Text } from 'react-konva';
 import type {
   BuildingLayout,
+  ObjectRef,
   OccupantFrameState,
   Selection,
 } from '../../../types/building';
@@ -16,9 +17,11 @@ import type {
 interface Props {
   layout: BuildingLayout;
   selected: Selection;
+  interactive: boolean;
   occupants: OccupantFrameState[];
   occupantRadiusPx: number;
   onObjectClick: HandleObjectClickFn;
+  onHover: (ref: ObjectRef | null) => void;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
   onObjectContextMenu: OpenObjectContextMenuFn;
@@ -27,9 +30,11 @@ interface Props {
 export function OccupantsLayer({
   layout,
   selected,
+  interactive,
   occupants,
   occupantRadiusPx,
   onObjectClick,
+  onHover,
   onChange,
   dragProps,
   onObjectContextMenu,
@@ -43,13 +48,14 @@ export function OccupantsLayer({
         const sx = g.spawn_x ?? centerX;
         const sy = g.spawn_y ?? centerY;
         const active = isRefSelected(selected, { kind: 'occupants', id: g.id });
+        const ref: ObjectRef = { kind: 'occupants', id: g.id };
         return (
           <Group
             key={g.id}
             x={sx * SCALE}
             y={sy * SCALE}
             {...dragProps(
-              { kind: 'occupants', id: g.id },
+              ref,
               (x, y) => {
                 const spaceId = spaceContaining(layout, x, y);
                 if (!spaceId) return;
@@ -69,10 +75,16 @@ export function OccupantsLayer({
                 validate: (x, y) => spaceContaining(layout, x, y) != null,
               },
             )}
-            onClick={(e) => onObjectClick({ kind: 'occupants', id: g.id }, e)}
-            onContextMenu={(e) =>
-              onObjectContextMenu({ kind: 'occupants', id: g.id }, e)
-            }
+            onClick={(e) => onObjectClick(ref, e)}
+            onContextMenu={(e) => onObjectContextMenu(ref, e)}
+            onMouseEnter={(event) => {
+              onHover(ref);
+              if (interactive) event.target.getStage()!.container().style.cursor = 'grab';
+            }}
+            onMouseLeave={(event) => {
+              onHover(null);
+              event.target.getStage()!.container().style.cursor = '';
+            }}
           >
             <Circle
               radius={14}

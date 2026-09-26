@@ -72,6 +72,7 @@ export function BuildingCanvas({
   floorPlanUrl = null,
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
+  const [hoveredObject, setHoveredObject] = useState<ObjectRef | null>(null);
   const [previewSize, setPreviewSize] = useState<{ width: number; height: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const occupantRadiusPx = Math.max(occupantRadiusM * SCALE, 3);
@@ -109,6 +110,22 @@ export function BuildingCanvas({
   useEffect(() => {
     setPreviewSize(null);
   }, [layout.width, layout.height]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() !== 'e'
+        || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+        || !interactive || !hoveredObject
+      ) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, button, [contenteditable]')) return;
+      event.preventDefault();
+      onSelect([hoveredObject]);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [hoveredObject, interactive, onSelect]);
 
   const gridLines = useMemo(() => {
     const lines: number[][] = [];
@@ -193,6 +210,7 @@ export function BuildingCanvas({
         }}
         onMouseLeave={() => {
           if (isPanning()) endPan();
+          setHoveredObject(null);
         }}
         onContextMenu={onContextMenu}
       >
@@ -221,6 +239,7 @@ export function BuildingCanvas({
             congestedIds={congestedIds}
             floorPlanImage={floorPlanImage}
             onObjectClick={handleObjectClick}
+            onHover={setHoveredObject}
             onChange={onChange}
             dragProps={dragProps}
             resizeSpace={resizeSpace}
@@ -240,8 +259,10 @@ export function BuildingCanvas({
           <OpeningsLayer
             layout={layout}
             selected={selected}
+            interactive={interactive}
             congestedIds={congestedIds}
             onObjectClick={handleObjectClick}
+            onHover={setHoveredObject}
             onChange={onChange}
             dragProps={dragProps}
             onObjectContextMenu={openObjectContextMenu}
@@ -252,9 +273,11 @@ export function BuildingCanvas({
           <OccupantsLayer
             layout={layout}
             selected={selected}
+            interactive={interactive}
             occupants={occupants}
             occupantRadiusPx={occupantRadiusPx}
             onObjectClick={handleObjectClick}
+            onHover={setHoveredObject}
             onChange={onChange}
             dragProps={dragProps}
             onObjectContextMenu={openObjectContextMenu}

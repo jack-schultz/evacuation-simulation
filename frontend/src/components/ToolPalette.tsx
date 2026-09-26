@@ -37,8 +37,9 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
         starting point to close it (Esc or right-click cancels). Door, exit and
         occupants place with a click. Use Select to drag spaces, doors, exits,
         occupants or hazard centres. Shift or Cmd/Ctrl+click to multi-select.
-        Right-click for copy, paste, duplicate, and delete. Drag occupants to
-        move their spawn point. Positions snap to the 0.5 m grid.
+        Right-click for copy, paste, duplicate, and delete. Hover an object and
+        press E to select it. Drag occupants to move their spawn point.
+        Positions snap to the 0.5 m grid.
       </p>
     </div>
   );
