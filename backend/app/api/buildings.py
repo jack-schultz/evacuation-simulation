@@ -1,6 +1,8 @@
 from urllib.parse import unquote
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+#Refactored!
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -16,19 +18,27 @@ from app.models.building import FloorPlanImageRecord
 router = APIRouter(prefix="/api/buildings", tags=["buildings"])
 MAX_FLOOR_PLAN_BYTES = 15 * 1024 * 1024
 
+router = APIRouter(
+    prefix="/api/buildings",
+    tags=["buildings"],
+)
 
-@router.get("", response_model=list[BuildingSummary])
+
 def list_buildings(db: Session = Depends(get_db)) -> list[BuildingSummary]:
     return BuildingService(db).list_buildings()
 
 
-@router.post("", response_model=BuildingResponse, status_code=201)
-def create_building(payload: BuildingCreate, db: Session = Depends(get_db)) -> BuildingResponse:
+def create_building(
+    payload: BuildingCreate,
+    db: Session = Depends(get_db),
+) -> BuildingResponse:
     return BuildingService(db).create_building(payload.layout)
 
 
-@router.get("/{building_id}", response_model=BuildingResponse)
-def get_building(building_id: str, db: Session = Depends(get_db)) -> BuildingResponse:
+def get_building(
+    building_id: str,
+    db: Session = Depends(get_db),
+) -> BuildingResponse:
     return BuildingService(db).get_building(building_id)
 
 
@@ -60,11 +70,56 @@ async def upload_floor_plan(
 
 @router.put("/{building_id}", response_model=BuildingResponse)
 def update_building(
-    building_id: str, payload: BuildingUpdate, db: Session = Depends(get_db)
+    building_id: str,
+    payload: BuildingUpdate,
+    db: Session = Depends(get_db),
 ) -> BuildingResponse:
-    return BuildingService(db).update_building(building_id, payload.layout)
+    return BuildingService(db).update_building(
+        building_id,
+        payload.layout,
+    )
 
 
-@router.delete("/{building_id}", status_code=204)
-def delete_building(building_id: str, db: Session = Depends(get_db)) -> None:
+def delete_building(
+    building_id: str,
+    db: Session = Depends(get_db),
+) -> None:
     BuildingService(db).delete_building(building_id)
+
+
+# Register routes manually
+router.add_api_route(
+    "",
+    list_buildings,
+    methods=["GET"],
+    response_model=list[BuildingSummary],
+)
+
+router.add_api_route(
+    "",
+    create_building,
+    methods=["POST"],
+    response_model=BuildingResponse,
+    status_code=201,
+)
+
+router.add_api_route(
+    "/{building_id}",
+    get_building,
+    methods=["GET"],
+    response_model=BuildingResponse,
+)
+
+router.add_api_route(
+    "/{building_id}",
+    update_building,
+    methods=["PUT"],
+    response_model=BuildingResponse,
+)
+
+router.add_api_route(
+    "/{building_id}",
+    delete_building,
+    methods=["DELETE"],
+    status_code=204,
+)
