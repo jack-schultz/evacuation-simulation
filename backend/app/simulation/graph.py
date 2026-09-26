@@ -31,7 +31,7 @@ class GraphNode:
     ref_id: str  # space / door / exit id
 
 
-@dataclass
+@dataclass()
 class GraphEdge:
     id: str
     from_id: str
