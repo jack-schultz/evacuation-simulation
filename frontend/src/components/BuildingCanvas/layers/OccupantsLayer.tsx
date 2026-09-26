@@ -11,6 +11,7 @@ interface Props {
   occupants: OccupantFrameState[];
   occupantRadiusPx: number;
   onSelect: (ref: SelectedRef) => void;
+  onHover: (ref: SelectedRef) => void;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
 }
@@ -22,6 +23,7 @@ export function OccupantsLayer({
   occupants,
   occupantRadiusPx,
   onSelect,
+  onHover,
   onChange,
   dragProps,
 }: Props) {
@@ -63,6 +65,14 @@ export function OccupantsLayer({
               }
             }}
             onClick={() => interactive && onSelect({ kind: 'occupants', id: g.id })}
+            onMouseEnter={(event) => {
+              onHover({ kind: 'occupants', id: g.id });
+              if (interactive) event.target.getStage()!.container().style.cursor = 'grab';
+            }}
+            onMouseLeave={(event) => {
+              onHover(null);
+              event.target.getStage()!.container().style.cursor = '';
+            }}
           >
             <Circle
               radius={14}

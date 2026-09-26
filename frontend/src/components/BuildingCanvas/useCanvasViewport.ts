@@ -94,20 +94,6 @@ export function useCanvasViewport(contentWidth: number, contentHeight: number) {
     setViewport(fitViewport(contentWidth, contentHeight, size.width, size.height));
   }, [contentWidth, contentHeight, size.height, size.width]);
 
-  const zoomAt = useCallback((clientPoint: { x: number; y: number }, nextScale: number) => {
-    setViewport((current) => {
-      const scale = clampScale(nextScale);
-      if (scale === current.scale) return current;
-      const worldX = (clientPoint.x - current.x) / current.scale;
-      const worldY = (clientPoint.y - current.y) / current.scale;
-      return {
-        scale,
-        x: clientPoint.x - worldX * scale,
-        y: clientPoint.y - worldY * scale,
-      };
-    });
-  }, []);
-
   const onWheel = useCallback((evt: KonvaEventObject<WheelEvent>) => {
     evt.evt.preventDefault();
     const stage = evt.target.getStage();

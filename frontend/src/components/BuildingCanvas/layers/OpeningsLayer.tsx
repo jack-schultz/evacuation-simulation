@@ -10,6 +10,7 @@ interface Props {
   interactive: boolean;
   congestedIds?: Set<string>;
   onSelect: (ref: SelectedRef) => void;
+  onHover: (ref: SelectedRef) => void;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
 }
@@ -20,6 +21,7 @@ export function OpeningsLayer({
   interactive,
   congestedIds,
   onSelect,
+  onHover,
   onChange,
   dragProps,
 }: Props) {
@@ -49,6 +51,14 @@ export function OpeningsLayer({
           stroke={isSelected('door', d.id) ? '#2563eb' : '#92400e'}
           strokeWidth={isSelected('door', d.id) ? 2 : 1}
           onClick={() => interactive && onSelect({ kind: 'door', id: d.id })}
+          onMouseEnter={(event) => {
+            onHover({ kind: 'door', id: d.id });
+            if (interactive) event.target.getStage()!.container().style.cursor = 'grab';
+          }}
+          onMouseLeave={(event) => {
+            onHover(null);
+            event.target.getStage()!.container().style.cursor = '';
+          }}
         />
       ))}
 
@@ -57,10 +67,18 @@ export function OpeningsLayer({
           key={ex.id}
           x={ex.x * SCALE}
           y={ex.y * SCALE}
-          onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}
           {...dragProps({ kind: 'exit', id: ex.id }, (x, y) => {
             onChange(moveExit(layout, ex.id, x, y));
           })}
+          onClick={() => interactive && onSelect({ kind: 'exit', id: ex.id })}
+          onMouseEnter={(event) => {
+            onHover({ kind: 'exit', id: ex.id });
+            if (interactive) event.target.getStage()!.container().style.cursor = 'grab';
+          }}
+          onMouseLeave={(event) => {
+            onHover(null);
+            event.target.getStage()!.container().style.cursor = '';
+          }}
         >
           <Rect
             x={-10}

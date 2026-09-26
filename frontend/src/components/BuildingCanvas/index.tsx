@@ -53,6 +53,7 @@ export function BuildingCanvas({
   floorPlanUrl = null,
 }: Props) {
   const [floorPlanImage, setFloorPlanImage] = useState<HTMLImageElement | null>(null);
+  const [hoveredObject, setHoveredObject] = useState<SelectedRef>(null);
   const [previewSize, setPreviewSize] = useState<{ width: number; height: number } | null>(null);
   const occupantRadiusPx = Math.max(occupantRadiusM * SCALE, 3);
 
@@ -89,6 +90,22 @@ export function BuildingCanvas({
   useEffect(() => {
     setPreviewSize(null);
   }, [layout.width, layout.height]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() !== 'e'
+        || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey
+        || !interactive || !hoveredObject
+      ) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, button, [contenteditable]')) return;
+      event.preventDefault();
+      onSelect(hoveredObject);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [hoveredObject, interactive, onSelect]);
 
   const gridLines = useMemo(() => {
     const lines: number[][] = [];
@@ -188,6 +205,7 @@ export function BuildingCanvas({
             congestedIds={congestedIds}
             floorPlanImage={floorPlanImage}
             onSelect={onSelect}
+            onHover={setHoveredObject}
             onChange={onChange}
             dragProps={dragProps}
             resizeSpace={resizeSpace}
@@ -209,6 +227,7 @@ export function BuildingCanvas({
             interactive={interactive}
             congestedIds={congestedIds}
             onSelect={onSelect}
+            onHover={setHoveredObject}
             onChange={onChange}
             dragProps={dragProps}
           />
@@ -222,6 +241,7 @@ export function BuildingCanvas({
             occupants={occupants}
             occupantRadiusPx={occupantRadiusPx}
             onSelect={onSelect}
+            onHover={setHoveredObject}
             onChange={onChange}
             dragProps={dragProps}
           />

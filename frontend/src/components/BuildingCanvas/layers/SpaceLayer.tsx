@@ -12,6 +12,7 @@ interface Props {
   congestedIds?: Set<string>;
   floorPlanImage: HTMLImageElement | null;
   onSelect: (ref: SelectedRef) => void;
+  onHover: (ref: SelectedRef) => void;
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
   resizeSpace: ResizeSpaceFn;
@@ -25,6 +26,7 @@ export function SpaceLayer({
   congestedIds,
   floorPlanImage,
   onSelect,
+  onHover,
   onChange,
   dragProps,
   resizeSpace,
@@ -66,6 +68,14 @@ export function SpaceLayer({
               box.width,
               box.height,
             )}
+            onMouseEnter={(event) => {
+              onHover({ kind: 'space', id: s.id });
+              if (interactive && tool === 'select') event.target.getStage()!.container().style.cursor = 'grab';
+            }}
+            onMouseLeave={(event) => {
+              onHover(null);
+              event.target.getStage()!.container().style.cursor = '';
+            }}
           >
             <Line
               points={s.vertices.flatMap(([vx, vy]) => [
