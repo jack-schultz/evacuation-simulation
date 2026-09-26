@@ -30,6 +30,10 @@ class Space(BaseModel):
         default=None,
         description="Max occupants per m²; None uses simulation defaults for corridors/stairs.",
     )
+    linked_stair_id: str | None = Field(
+        default=None,
+        description="Paired stairs space id for teleport pathing; only used when type is stairs.",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -154,6 +158,7 @@ class BuildingLayout(BaseModel):
         if self.fire and (self.fire.x > self.width or self.fire.y > self.height):
             raise ValueError("Fire centre must be inside the building bounds")
         space_ids = {s.id for s in self.spaces}
+        spaces_by_id = {s.id: s for s in self.spaces}
         exit_ids = {e.id for e in self.exits}
 
         for door in self.doors:
@@ -165,6 +170,25 @@ class BuildingLayout(BaseModel):
             if exit_.connected_space_id not in space_ids:
                 raise ValueError(
                     f"Exit '{exit_.id}' references unknown space '{exit_.connected_space_id}'"
+                )
+
+        for space in self.spaces:
+            if space.linked_stair_id is None:
+                continue
+            if space.type != SpaceType.STAIRS:
+                raise ValueError(
+                    f"Space '{space.id}' has linked_stair_id but is not stairs"
+                )
+            if space.linked_stair_id == space.id:
+                raise ValueError(f"Stairs '{space.id}' cannot link to itself")
+            other = spaces_by_id.get(space.linked_stair_id)
+            if other is None:
+                raise ValueError(
+                    f"Stairs '{space.id}' links to unknown space '{space.linked_stair_id}'"
+                )
+            if other.type != SpaceType.STAIRS:
+                raise ValueError(
+                    f"Stairs '{space.id}' links to non-stairs space '{space.linked_stair_id}'"
                 )
 
         for group in self.occupant_groups:

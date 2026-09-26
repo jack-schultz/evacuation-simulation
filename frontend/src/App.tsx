@@ -124,6 +124,7 @@ export default function App() {
             layout={editor.layout}
             selected={editor.selected}
             onChange={editor.updateLayout}
+            onSelect={editor.setSelected}
             onDeleteSelected={editor.onDeleteSelected}
             disabled={disabled}
           />

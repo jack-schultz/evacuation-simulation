@@ -51,6 +51,8 @@ class NavigationGraph:
     adjacency: dict[str, list[str]] = field(default_factory=dict)
     exit_node_ids: list[str] = field(default_factory=list)
     space_node_ids: dict[str, str] = field(default_factory=dict)  # space_id -> node_id
+    # Space nodes retained on movement routes (linked stair teleport waypoints)
+    stair_space_node_ids: set[str] = field(default_factory=set)
 
     def add_node(self, node: GraphNode) -> None:
         self.nodes[node.id] = node

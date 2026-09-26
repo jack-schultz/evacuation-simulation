@@ -18,6 +18,11 @@ regulatory compliance calculation.
 * Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
   navigation graph beyond defining which openings may connect.
+* Stairs spaces may set `linked_stair_id` to another stairs space. The pair
+  adds a navigation edge between the two stair centroids; when an occupant
+  reaches the center of one stair they teleport to the other. Rooms still need
+  doors into each stair polygon. This is a flat-canvas multi-level shortcut,
+  not continuous vertical geometry.
 
 ## Occupant knowledge and behaviour
 
@@ -34,8 +39,9 @@ regulatory compliance calculation.
 
 * Discrete-time simulation (default timestep 0.25 s).
 * Occupants steer continuously in 2D toward fixed route waypoints (doors and
-  exits; plus the spawn space node only to leave the starting room) rather than
-  sliding on a single shared edge line.
+  exits; plus the spawn space node only to leave the starting room; plus linked
+  stair space nodes for teleport transfers) rather than sliding on a single
+  shared edge line.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
   cannot cross space boundaries except through door/exit gaps.

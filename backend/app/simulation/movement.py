@@ -189,6 +189,14 @@ class SpatialMovementModel:
         if edge is None:
             return waypoint.x, waypoint.y
 
+        # Stair teleport portal: stay at / walk to current stair center
+        if (
+            edge.kind == EdgeKind.STAIRS
+            and cur.kind == NodeKind.SPACE
+            and waypoint.kind == NodeKind.SPACE
+        ):
+            return cur.x, cur.y
+
         if edge.kind not in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
             return waypoint.x, waypoint.y
 
@@ -298,26 +306,39 @@ class SpatialMovementModel:
                     return
 
         reach = max(radius_m * 1.2, 0.35)
-        d_wp = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
+        stair_transfer = (
+            edge is not None
+            and edge.kind == EdgeKind.STAIRS
+            and from_node.kind == NodeKind.SPACE
+            and waypoint.kind == NodeKind.SPACE
+        )
 
-        reached = d_wp <= reach
-        if (
-            not reached
-            and edge is not None
-            and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)
-            and waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT)
-        ):
-            cur = graph.nodes[occupant.current_node_id]
-            axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
-            slots = aperture_slots(edge.width_m, radius_m)
-            slot = occupant.aperture_slot % slots
-            sx, sy = aperture_slot_point(
-                waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
-            )
-            reached = dist(occupant.x, occupant.y, sx, sy) <= reach
+        if stair_transfer:
+            reached = dist(occupant.x, occupant.y, from_node.x, from_node.y) <= reach
+        else:
+            d_wp = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
+            reached = d_wp <= reach
+            if (
+                not reached
+                and edge is not None
+                and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)
+                and waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT)
+            ):
+                cur = graph.nodes[occupant.current_node_id]
+                axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
+                slots = aperture_slots(edge.width_m, radius_m)
+                slot = occupant.aperture_slot % slots
+                sx, sy = aperture_slot_point(
+                    waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
+                )
+                reached = dist(occupant.x, occupant.y, sx, sy) <= reach
 
         if not reached:
             return
+
+        if stair_transfer:
+            occupant.x, occupant.y = waypoint.x, waypoint.y
+            occupant.current_space_id = waypoint.ref_id
 
         occupant.route_index += 1
         occupant.progress_on_edge = 0.0

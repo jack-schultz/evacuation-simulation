@@ -43,7 +43,11 @@ export function useBuildingEditor({
     if (selected.kind === 'space') {
       apply({
         ...layout,
-        spaces: layout.spaces.filter((s) => s.id !== selected.id),
+        spaces: layout.spaces
+          .filter((s) => s.id !== selected.id)
+          .map((s) =>
+            s.linked_stair_id === selected.id ? { ...s, linked_stair_id: null } : s,
+          ),
         doors: layout.doors.filter((d) => !d.connects.includes(selected.id)),
         exits: layout.exits.filter((e) => e.connected_space_id !== selected.id),
         occupant_groups: layout.occupant_groups.filter((g) => g.space_id !== selected.id),

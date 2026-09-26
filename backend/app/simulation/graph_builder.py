@@ -125,6 +125,8 @@ class NavigationGraphBuilder:
             )
             graph.add_node(node)
             graph.space_node_ids[space.id] = node.id
+            if space.type == SpaceType.STAIRS:
+                graph.stair_space_node_ids.add(node.id)
 
         openings_by_space: dict[str, list[str]] = {s.id: [] for s in layout.spaces}
 
@@ -229,7 +231,50 @@ class NavigationGraphBuilder:
                 graph, space, opening_ids, doors, exits, defaults
             )
 
+        self._add_stair_link_edges(graph, spaces, defaults)
+
         return graph
+
+    def _add_stair_link_edges(
+        self,
+        graph: NavigationGraph,
+        spaces: dict[str, Space],
+        defaults: dict[str, float],
+    ) -> None:
+        """Bidirectional teleport portals between linked stair space nodes."""
+        seen_pairs: set[frozenset[str]] = set()
+        for space in spaces.values():
+            if space.type != SpaceType.STAIRS or not space.linked_stair_id:
+                continue
+            other = spaces.get(space.linked_stair_id)
+            if other is None or other.type != SpaceType.STAIRS:
+                continue
+            pair = frozenset({space.id, other.id})
+            if len(pair) < 2 or pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+
+            a_id = graph.space_node_ids[space.id]
+            b_id = graph.space_node_ids[other.id]
+            an = graph.nodes[a_id]
+            bn = graph.nodes[b_id]
+            distance = max(_dist(an.x, an.y, bn.x, bn.y), 0.5)
+            _, _, bw, bh = space.bbox
+            width = min(bw, bh) if bw > 0 and bh > 0 else 1.0
+            graph.add_edge(
+                GraphEdge(
+                    id=f"edge:stair_link:{space.id}:{other.id}",
+                    from_id=a_id,
+                    to_id=b_id,
+                    distance_m=distance,
+                    kind=EdgeKind.STAIRS,
+                    width_m=width,
+                    flow_rate_per_s=defaults.get("stairs_flow_per_s"),
+                    capacity_density_per_m2=None,
+                    area_m2=None,
+                    element_id=space.id,
+                )
+            )
 
     def _add_visibility_edges(
         self,

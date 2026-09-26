@@ -7,6 +7,8 @@ export interface Space {
   /** Closed polygon ring in metres (closing duplicate omitted). */
   vertices: [number, number][];
   capacity_density_per_m2?: number | null;
+  /** Paired stairs space id for teleport pathing; only used when type is stairs. */
+  linked_stair_id?: string | null;
 }
 
 export interface Door {
