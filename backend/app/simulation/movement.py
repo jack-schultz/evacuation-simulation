@@ -1,11 +1,18 @@
-"""Occupant movement along graph edges."""
+"""Occupant movement: continuous steer toward route waypoints with aperture targeting."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Protocol
 
 from app.domain.building import OccupantStatus
-from app.simulation.graph import GraphNode, NavigationGraph
+from app.simulation.collision import (
+    aperture_axis,
+    aperture_slot_point,
+    aperture_slots,
+    dist,
+)
+from app.simulation.graph import EdgeKind, GraphNode, NavigationGraph, NodeKind
 from app.simulation.routing import edge_between
 
 
@@ -15,8 +22,9 @@ class SimulatedOccupant:
     group_id: str
     speed_mps: float
     route: list[str]
+    current_space_id: str = ""
     route_index: int = 0
-    progress_on_edge: float = 0.0  # metres travelled on current edge
+    progress_on_edge: float = 0.0  # metres travelled toward current waypoint (approx)
     x: float = 0.0
     y: float = 0.0
     status: OccupantStatus = OccupantStatus.ACTIVE
@@ -24,6 +32,7 @@ class SimulatedOccupant:
     travel_time_s: float = 0.0
     wait_time_s: float = 0.0
     evacuated_at: float | None = None
+    aperture_slot: int = 0
 
     @property
     def current_node_id(self) -> str:
@@ -37,7 +46,7 @@ class SimulatedOccupant:
 
     @property
     def finished_route(self) -> bool:
-        return self.route_index >= len(self.route) - 1 and self.progress_on_edge <= 1e-9
+        return self.route_index >= len(self.route) - 1
 
 
 def interpolate_position(a: GraphNode, b: GraphNode, progress_m: float, edge_length: float) -> tuple[float, float]:
@@ -47,64 +56,195 @@ def interpolate_position(a: GraphNode, b: GraphNode, progress_m: float, edge_len
     return a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t
 
 
-@dataclass
-class MovementModel:
-    """Advances occupants along their assigned routes subject to allowed distances."""
+class MovementModel(Protocol):
+    """Protocol for spatial (or legacy) movement implementations."""
 
-    def desired_move_distance(self, occupant: SimulatedOccupant, timestep_s: float) -> float:
-        return occupant.speed_mps * timestep_s
-
-    def apply_move(
+    def propose_target(
         self,
         occupant: SimulatedOccupant,
         graph: NavigationGraph,
-        allowed_distance: float,
-        timestep_s: float,
-        waited: bool,
+        radius_m: float,
+        admitted: bool,
+    ) -> tuple[float, float]:
+        """Return the (x, y) steering target for this timestep."""
+        ...
+
+    def step_toward(
+        self,
+        occupant: SimulatedOccupant,
+        target_x: float,
+        target_y: float,
+        max_distance: float,
+    ) -> float:
+        """Move occupant toward target up to max_distance. Returns metres moved."""
+        ...
+
+    def try_advance_route(
+        self,
+        occupant: SimulatedOccupant,
+        graph: NavigationGraph,
+        radius_m: float,
+        t: float,
+        *,
+        admitted: bool = True,
     ) -> None:
-        if occupant.status == OccupantStatus.EVACUATED:
+        """Advance route index / evacuate when close enough to the next waypoint."""
+        ...
+
+
+@dataclass
+class SpatialMovementModel:
+    """Continuous 2D steering toward graph waypoints with door aperture slots."""
+
+    approach_distance_m: float = 2.0
+
+    def propose_target(
+        self,
+        occupant: SimulatedOccupant,
+        graph: NavigationGraph,
+        radius_m: float,
+        admitted: bool,
+    ) -> tuple[float, float]:
+        nxt = occupant.next_node_id
+        if nxt is None:
+            node = graph.nodes[occupant.current_node_id]
+            return node.x, node.y
+
+        waypoint = graph.nodes[nxt]
+        edge = edge_between(graph, occupant.current_node_id, nxt)
+        if edge is None:
+            return waypoint.x, waypoint.y
+
+        if edge.kind not in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
+            return waypoint.x, waypoint.y
+
+        # Leaving an opening into a space: head straight to the space centroid
+        if waypoint.kind == NodeKind.SPACE:
+            return waypoint.x, waypoint.y
+
+        # Approach from current position (or current node) toward the opening
+        cur = graph.nodes[occupant.current_node_id]
+        axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
+        slots = aperture_slots(edge.width_m, radius_m)
+        slot = occupant.aperture_slot % slots
+        slot_x, slot_y = aperture_slot_point(
+            waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
+        )
+
+        d_to_door = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
+        if d_to_door > self.approach_distance_m:
+            # Far: head toward door center so the crowd converges
+            return waypoint.x, waypoint.y
+
+        if admitted:
+            # Near and admitted: aim at assigned aperture slot, then through
+            return slot_x, slot_y
+
+        # Not admitted: hold at the throat boundary in front of the door
+        from app.simulation.collision import throat_radius
+
+        tr = throat_radius(radius_m)
+        dx = occupant.x - waypoint.x
+        dy = occupant.y - waypoint.y
+        d = (dx * dx + dy * dy) ** 0.5
+        if d < 1e-9:
+            # Prefer standing on the approach side of the door
+            adx = cur.x - waypoint.x
+            ady = cur.y - waypoint.y
+            al = (adx * adx + ady * ady) ** 0.5
+            if al < 1e-9:
+                return waypoint.x + tr, waypoint.y
+            return waypoint.x + adx / al * tr, waypoint.y + ady / al * tr
+        # Hold just outside throat, biased toward own slot laterally
+        hold_x = waypoint.x + dx / d * tr
+        hold_y = waypoint.y + dy / d * tr
+        # Blend toward slot laterally for packing in front of the door
+        hold_x = 0.7 * hold_x + 0.3 * slot_x
+        hold_y = 0.7 * hold_y + 0.3 * slot_y
+        return hold_x, hold_y
+
+    def step_toward(
+        self,
+        occupant: SimulatedOccupant,
+        target_x: float,
+        target_y: float,
+        max_distance: float,
+    ) -> float:
+        if max_distance <= 0:
+            return 0.0
+        dx = target_x - occupant.x
+        dy = target_y - occupant.y
+        d = (dx * dx + dy * dy) ** 0.5
+        if d < 1e-9:
+            return 0.0
+        step = min(max_distance, d)
+        occupant.x += dx / d * step
+        occupant.y += dy / d * step
+        occupant.progress_on_edge += step
+        return step
+
+    def try_advance_route(
+        self,
+        occupant: SimulatedOccupant,
+        graph: NavigationGraph,
+        radius_m: float,
+        t: float,
+        *,
+        admitted: bool = True,
+    ) -> None:
+        if occupant.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
             return
 
-        if waited or allowed_distance <= 0:
-            occupant.status = OccupantStatus.WAITING
-            occupant.wait_time_s += timestep_s
+        nxt = occupant.next_node_id
+        if nxt is None:
+            node = graph.nodes[occupant.current_node_id]
+            if node.kind == NodeKind.EXIT:
+                occupant.status = OccupantStatus.EVACUATED
+                if occupant.evacuated_at is None:
+                    occupant.evacuated_at = t
             return
 
-        remaining = allowed_distance
-        moved = 0.0
+        waypoint = graph.nodes[nxt]
+        edge = edge_between(graph, occupant.current_node_id, nxt)
 
-        while remaining > 1e-9 and occupant.next_node_id is not None:
-            edge = edge_between(graph, occupant.current_node_id, occupant.next_node_id)
-            if edge is None:
-                occupant.status = OccupantStatus.TRAPPED
-                return
+        # Cannot claim an opening waypoint without an aperture slot
+        if (
+            not admitted
+            and edge is not None
+            and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)
+            and waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT)
+        ):
+            return
 
-            edge_len = edge.distance_m
-            left_on_edge = edge_len - occupant.progress_on_edge
-            step = min(remaining, left_on_edge)
-            occupant.progress_on_edge += step
-            remaining -= step
-            moved += step
+        reach = max(radius_m * 1.2, 0.35)
+        d_wp = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
 
-            a = graph.nodes[occupant.current_node_id]
-            b = graph.nodes[occupant.next_node_id]
-            occupant.x, occupant.y = interpolate_position(a, b, occupant.progress_on_edge, edge_len)
+        reached = d_wp <= reach
+        if (
+            not reached
+            and edge is not None
+            and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)
+            and waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT)
+        ):
+            cur = graph.nodes[occupant.current_node_id]
+            axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
+            slots = aperture_slots(edge.width_m, radius_m)
+            slot = occupant.aperture_slot % slots
+            sx, sy = aperture_slot_point(
+                waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
+            )
+            reached = dist(occupant.x, occupant.y, sx, sy) <= reach
 
-            if occupant.progress_on_edge >= edge_len - 1e-9:
-                occupant.route_index += 1
-                occupant.progress_on_edge = 0.0
-                node = graph.nodes[occupant.current_node_id]
-                occupant.x, occupant.y = node.x, node.y
-                if occupant.next_node_id is None:
-                    # Reached exit node
-                    occupant.status = OccupantStatus.EVACUATED
-                    break
+        if not reached:
+            return
 
-        if moved > 0:
-            occupant.distance_m += moved
-            occupant.travel_time_s += timestep_s
-            if occupant.status != OccupantStatus.EVACUATED:
-                occupant.status = OccupantStatus.ACTIVE
-        elif occupant.status != OccupantStatus.EVACUATED:
-            occupant.status = OccupantStatus.WAITING
-            occupant.wait_time_s += timestep_s
+        occupant.route_index += 1
+        occupant.progress_on_edge = 0.0
+        if waypoint.kind == NodeKind.SPACE:
+            occupant.current_space_id = waypoint.ref_id
+
+        if waypoint.kind == NodeKind.EXIT or occupant.next_node_id is None:
+            occupant.status = OccupantStatus.EVACUATED
+            if occupant.evacuated_at is None:
+                occupant.evacuated_at = t
+            occupant.x, occupant.y = waypoint.x, waypoint.y

@@ -11,15 +11,6 @@ export interface Space {
   capacity_density_per_m2?: number | null;
 }
 
-export interface Wall {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export interface Door {
   id: string;
   name: string;
@@ -64,7 +55,6 @@ export interface BuildingLayout {
   height: number;
   meters_per_cell: number;
   spaces: Space[];
-  walls: Wall[];
   doors: Door[];
   exits: Exit[];
   occupant_groups: OccupantGroup[];
@@ -93,6 +83,7 @@ export interface SimulationParameters {
   stairs_flow_per_s: number;
   exit_flow_per_s: number;
   corridor_density_per_m2: number;
+  occupant_radius_m: number;
   frame_interval_s: number;
 }
 
@@ -144,14 +135,12 @@ export type EditorTool =
   | 'room'
   | 'corridor'
   | 'stairs'
-  | 'wall'
   | 'door'
   | 'exit'
   | 'occupants';
 
 export type SelectedRef =
   | { kind: 'space'; id: string }
-  | { kind: 'wall'; id: string }
   | { kind: 'door'; id: string }
   | { kind: 'exit'; id: string }
   | { kind: 'occupants'; id: string }

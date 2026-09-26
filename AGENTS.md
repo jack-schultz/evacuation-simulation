@@ -44,7 +44,8 @@ API routers → services → domain / simulation engine
 | Nav graph | `backend/app/simulation/graph.py` |
 | Route choice (Dijkstra) | `backend/app/simulation/routing.py` |
 | Capacity / queues | `backend/app/simulation/flow.py` |
-| Occupant edge progress | `backend/app/simulation/movement.py` |
+| Spatial collision / apertures / space edges | `backend/app/simulation/collision.py` |
+| Occupant spatial movement | `backend/app/simulation/movement.py` |
 | Stats / hotspots | `backend/app/simulation/results.py` |
 | TS domain mirrors | `frontend/src/types/building.ts` |
 | REST client | `frontend/src/services/api.ts` |
@@ -54,16 +55,17 @@ API routers → services → domain / simulation engine
 
 ## Domain invariants
 
-- Layout pieces: **spaces** (`room` \| `corridor` \| `stairs`), **doors**, **exits**, **occupant_groups**, optional **walls**.
-- Connectivity is **doors + exits only**. Walls are editor/visual geometry; they do **not** cut the navigation graph.
+- Layout pieces: **spaces** (`room` \| `corridor` \| `stairs`), **doors**, **exits**, **occupant_groups**.
+- Connectivity is **doors + exits only** on the nav graph. Space rectangle edges act as solid barriers for movement (door/exit widths are the only gaps). Space edges do not cut the navigation graph.
 - Occupant groups expand to individuals; each gets a **fixed route at spawn** (no replanning).
+- Occupants steer in continuous `(x, y)` toward waypoints with body radius collisions against people and space-edge solids; door/exit **width** limits concurrent passage (`floor(width / (2 * radius))`).
 - Soft validation on **save** (incomplete layouts OK). Hard validation on **run** (need spaces, exits, occupant groups).
 - Creating a simulation **snapshots** the building layout; later edits do not change that sim (UI creates a new sim on Run).
 
 ## Sync and extension rules
 
 - When changing domain shapes, update **both** `backend/app/domain/building.py` and `frontend/src/types/building.ts` (and API schemas if exposed).
-- Prefer swapping behaviour via protocols already used by the engine: `RouteSelector`, `FlowModel`, `MovementModel` — do not hard-wire a new model into the loop unless necessary.
+- Prefer swapping behaviour via protocols already used by the engine: `RouteSelector`, `FlowModel`, `SpatialMovementModel` — do not hard-wire a new model into the loop unless necessary.
 - Keep layering: do not put simulation logic in API routers or ORM models.
 
 ## Gotchas

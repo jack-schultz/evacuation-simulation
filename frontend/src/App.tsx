@@ -20,7 +20,6 @@ const emptyLayout = (): BuildingLayout => ({
   height: 40,
   meters_per_cell: 1,
   spaces: [],
-  walls: [],
   doors: [],
   exits: [],
   occupant_groups: [],
@@ -30,12 +29,15 @@ export default function App() {
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [buildings, setBuildings] = useState<BuildingSummary[]>([]);
   const [layout, setLayout] = useState<BuildingLayout>(emptyLayout());
+  const [undoHistory, setUndoHistory] = useState<BuildingLayout[]>([]);
   const [tool, setTool] = useState<EditorTool>('select');
   const [selected, setSelected] = useState<SelectedRef>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [simId, setSimId] = useState<string | null>(null);
+  const [floorPlanStatus, setFloorPlanStatus] = useState<string | null>(null);
+  const [occupantRadiusM, setOccupantRadiusM] = useState(0.25);
 
   const playback = useSimulationPlayback();
   const simulating = playback.status === 'playing' || playback.status === 'paused' || playback.status === 'finished';
@@ -56,8 +58,10 @@ export default function App() {
     const b = await api.getBuilding(id);
     setBuildingId(b.id);
     setLayout(b.layout);
+    setUndoHistory([]);
     setSelected(null);
     setDirty(false);
+    setFloorPlanStatus(null);
     playback.reset();
     setSimId(null);
   }, [playback]);
@@ -77,9 +81,34 @@ export default function App() {
   }, []);
 
   const updateLayout = (next: BuildingLayout) => {
+    if (busy || simulating || JSON.stringify(next) === JSON.stringify(layout)) return;
+    setUndoHistory((history) => [...history, layout]);
     setLayout(next);
     setDirty(true);
   };
+
+  const onUndo = useCallback(() => {
+    if (busy || simulating || undoHistory.length === 0) return;
+    setLayout(undoHistory[undoHistory.length - 1]);
+    setUndoHistory((history) => history.slice(0, -1));
+    setSelected(null);
+    setDirty(true);
+    setError(null);
+  }, [busy, simulating, undoHistory]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Text fields retain their native text undo behavior.
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]')) return;
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        onUndo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onUndo]);
 
   const onSave = async () => {
     setBusy(true);
@@ -103,10 +132,44 @@ export default function App() {
     }
   };
 
+  const onImportFloorPlan = async (file?: File) => {
+    if (!file) return;
+    setError(null);
+    setFloorPlanStatus(null);
+    if (!file.name.toLowerCase().endsWith('.png') || (file.type && file.type !== 'image/png')) {
+      setError('Choose a PNG file.');
+      return;
+    }
+    setBusy(true);
+    try {
+      let id = buildingId;
+      if (!id) {
+        const building = await api.createBuilding(layout);
+        id = building.id;
+        setBuildingId(id);
+        setLayout(building.layout);
+        setDirty(false);
+        await refreshList();
+      } else if (dirty) {
+        const building = await api.updateBuilding(id, layout);
+        setLayout(building.layout);
+        setDirty(false);
+      }
+      const result = await api.uploadFloorPlan(id, file);
+      setFloorPlanStatus(`PNG stored in database: ${result.filename}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onNew = () => {
     setBuildingId(null);
     setLayout(emptyLayout());
+    setUndoHistory([]);
     setSelected(null);
+    setFloorPlanStatus(null);
     setDirty(true);
     playback.reset();
     setSimId(null);
@@ -122,8 +185,6 @@ export default function App() {
         exits: layout.exits.filter((e) => e.connected_space_id !== selected.id),
         occupant_groups: layout.occupant_groups.filter((g) => g.space_id !== selected.id),
       });
-    } else if (selected.kind === 'wall') {
-      updateLayout({ ...layout, walls: layout.walls.filter((w) => w.id !== selected.id) });
     } else if (selected.kind === 'door') {
       updateLayout({ ...layout, doors: layout.doors.filter((d) => d.id !== selected.id) });
     } else if (selected.kind === 'exit') {
@@ -161,9 +222,11 @@ export default function App() {
         timestep_s: 0.25,
         max_time_s: 600,
         frame_interval_s: 0.5,
+        occupant_radius_m: 0.25,
       });
       setSimId(created.id);
       const run = await api.runSimulation(created.id);
+      setOccupantRadiusM(run.parameters?.occupant_radius_m ?? 0.25);
       playback.load(run.frames, run.results);
       playback.play();
     } catch (e) {
@@ -175,6 +238,7 @@ export default function App() {
 
   const onReset = async () => {
     playback.reset();
+    setOccupantRadiusM(0.25);
     if (simId) {
       try {
         await api.resetSimulation(simId);
@@ -195,12 +259,13 @@ export default function App() {
             className="building-name"
             value={layout.name}
             onChange={(e) => updateLayout({ ...layout, name: e.target.value })}
-            disabled={simulating && playback.status === 'playing'}
+            disabled={busy || simulating}
           />
         </div>
         <div className="top-actions">
           <select
             value={buildingId ?? ''}
+            disabled={busy}
             onChange={(e) => e.target.value && loadBuilding(e.target.value)}
           >
             <option value="" disabled>
@@ -212,14 +277,36 @@ export default function App() {
               </option>
             ))}
           </select>
-          <button type="button" onClick={onNew}>
+          <button type="button" onClick={onNew} disabled={busy}>
             New
+          </button>
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={busy || simulating || undoHistory.length === 0}
+            title="Undo last building edit (Ctrl+Z / Cmd+Z)"
+          >
+            Undo
           </button>
           <button type="button" onClick={onSave} disabled={busy}>
             Save{dirty ? ' *' : ''}
           </button>
+          <label className="file-import">
+            Import PNG
+            <input
+              type="file"
+              accept="image/png,.png"
+              disabled={busy}
+              onChange={(e) => {
+                void onImportFloorPlan(e.currentTarget.files?.[0]);
+                e.currentTarget.value = '';
+              }}
+            />
+          </label>
         </div>
       </header>
+
+      {floorPlanStatus && <div className="import-status" role="status">{floorPlanStatus}</div>}
 
       <div className="disclaimer">
         Estimation tool only — not a safety certification or regulatory compliance calculation.
@@ -244,7 +331,7 @@ export default function App() {
           <ToolPalette
             tool={tool}
             onToolChange={setTool}
-            disabled={playback.status === 'playing'}
+            disabled={busy || simulating}
           />
           <FloodPanel layout={layout} onChange={updateLayout} disabled={busy || simulating} />
           <PropertiesPanel
@@ -252,7 +339,7 @@ export default function App() {
             selected={selected}
             onChange={updateLayout}
             onDeleteSelected={onDeleteSelected}
-            disabled={playback.status === 'playing'}
+            disabled={busy || simulating}
           />
         </aside>
         <main className="canvas-area">
@@ -264,7 +351,8 @@ export default function App() {
             onChange={updateLayout}
             occupants={playback.currentFrame?.occupants ?? []}
             congestedIds={congestedIds}
-            interactive={playback.status !== 'playing'}
+            interactive={!busy && !simulating}
+            occupantRadiusM={occupantRadiusM}
           />
         </main>
       </div>

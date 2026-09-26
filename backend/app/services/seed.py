@@ -51,7 +51,6 @@ def create_seed_layout() -> BuildingLayout:
                 height=10.0,
             ),
         ],
-        walls=[],
         doors=[
             Door(
                 id="door_a",
