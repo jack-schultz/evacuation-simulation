@@ -15,8 +15,13 @@ from app.domain.building import (
     SimulationParameters,
     SimulationResults,
 )
+from app.domain.geometry import (
+    clamp_into_polygon,
+    distance_to_boundary,
+    point_in_polygon,
+)
 from app.simulation.collision import (
-    Aabb,
+    WallSegment,
     aperture_slots,
     build_collision_solids,
     clamp_outside_throat,
@@ -43,7 +48,7 @@ class SimulationOutput:
 class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
-    Occupants steer continuously toward fixed Dijkstra waypoints, collide via
+    Occupants steer continuously toward fixed Dijkstra opening waypoints, collide via
     body radius and space boundaries, and pass doors/exits through width-limited
     apertures.
     """
@@ -120,7 +125,7 @@ class SimulationEngine:
         layout: BuildingLayout,
         graph,
         radius_m: float,
-        boundary_solids: list[Aabb] | None = None,
+        boundary_solids: list[WallSegment] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
     ) -> list[SimulatedOccupant]:
@@ -143,17 +148,26 @@ class SimulationEngine:
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )
             space = spaces[group.space_id]
-            usable_w = max(space.width - 2 * margin, spacing)
+            min_x, min_y, width, height = space.bbox
+            usable_w = max(width - 2 * margin, spacing)
             cols = max(1, int(usable_w / spacing) + 1)
             node = graph.nodes[start_node]
+
             for i in range(group.count):
                 if group.count == 1:
                     ox, oy = node.x, node.y
                 else:
-                    ox = space.x + margin + (i % cols) * spacing
-                    oy = space.y + margin + (i // cols) * spacing
-                    ox = min(ox, space.x + space.width - margin)
-                    oy = min(oy, space.y + space.height - margin)
+                    ox = min_x + margin + (i % cols) * spacing
+                    oy = min_y + margin + (i // cols) * spacing
+                    ox = min(ox, min_x + width - margin)
+                    oy = min(oy, min_y + height - margin)
+                    if not (
+                        point_in_polygon(ox, oy, space.vertices)
+                        and distance_to_boundary(ox, oy, space.vertices) >= margin - 1e-6
+                    ):
+                        ox, oy = clamp_into_polygon(
+                            ox, oy, space.vertices, inset_m=margin
+                        )
                 occupants.append(
                     SimulatedOccupant(
                         id=f"{group.id}:{i}",
@@ -179,7 +193,7 @@ class SimulationEngine:
         queues: dict[str, ElementQueueState],
         params: SimulationParameters,
         t: float,
-        boundary_solids: list[Aabb] | None = None,
+        boundary_solids: list[WallSegment] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
         flood: FloodEmergency | None = None,
@@ -202,7 +216,7 @@ class SimulationEngine:
                 continue
             nxt = occ.next_node_id
             if nxt is None:
-                self.movement_model.try_advance_route(occ, graph, radius, t)
+                self.movement_model.try_advance_route(occ, graph, radius, t, doors=doors)
                 continue
             edge = edge_between(graph, occ.current_node_id, nxt)
             waypoint = graph.nodes[nxt]
@@ -222,9 +236,8 @@ class SimulationEngine:
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
-            node = graph.nodes[occ.current_node_id]
-            if node.kind.value == "space":
-                occupants_on[node.ref_id] += 1
+            if occ.current_space_id:
+                occupants_on[occ.current_space_id] += 1
 
         admitted: set[str] = set()
 
@@ -402,7 +415,12 @@ class SimulationEngine:
             can_advance = not blocked
             if can_advance:
                 self.movement_model.try_advance_route(
-                    occ, graph, radius, t, admitted=occ.id in admitted or not approaching_opening
+                    occ,
+                    graph,
+                    radius,
+                    t,
+                    admitted=occ.id in admitted or not approaching_opening,
+                    doors=doors,
                 )
             if occ.status == OccupantStatus.EVACUATED and occ.evacuated_at is None:
                 occ.evacuated_at = t

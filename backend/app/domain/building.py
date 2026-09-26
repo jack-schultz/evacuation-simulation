@@ -10,6 +10,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.domain.geometry import area as polygon_area
+from app.domain.geometry import bbox as polygon_bbox
+from app.domain.geometry import centroid as polygon_centroid
+from app.domain.geometry import rect_vertices
+
 
 class SpaceType(str, Enum):
     ROOM = "room"
@@ -21,14 +26,71 @@ class Space(BaseModel):
     id: str
     name: str
     type: SpaceType
-    x: float
-    y: float
-    width: float = Field(gt=0)
-    height: float = Field(gt=0)
+    vertices: list[tuple[float, float]] = Field(
+        min_length=3,
+        description="Closed polygon ring in metres (closing duplicate omitted).",
+    )
     capacity_density_per_m2: float | None = Field(
         default=None,
         description="Max occupants per m²; None uses simulation defaults for corridors/stairs.",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def legacy_aabb_to_vertices(cls, data: object) -> object:
+        """Accept legacy x/y/width/height spaces and expand to four corners."""
+        if not isinstance(data, dict):
+            return data
+        if data.get("vertices"):
+            return data
+        if all(k in data for k in ("x", "y", "width", "height")):
+            converted = dict(data)
+            converted["vertices"] = rect_vertices(
+                float(data["x"]),
+                float(data["y"]),
+                float(data["width"]),
+                float(data["height"]),
+            )
+            for key in ("x", "y", "width", "height"):
+                converted.pop(key, None)
+            return converted
+        return data
+
+    @field_validator("vertices")
+    @classmethod
+    def validate_vertices(
+        cls, v: list[tuple[float, float]]
+    ) -> list[tuple[float, float]]:
+        pts = [(float(x), float(y)) for x, y in v]
+        if len(pts) >= 2 and pts[0] == pts[-1]:
+            pts = pts[:-1]
+        if len(pts) < 3:
+            raise ValueError("Space must have at least 3 vertices")
+        cleaned: list[tuple[float, float]] = []
+        for p in pts:
+            if cleaned and cleaned[-1] == p:
+                continue
+            cleaned.append(p)
+        if len(cleaned) >= 2 and cleaned[0] == cleaned[-1]:
+            cleaned = cleaned[:-1]
+        if len(cleaned) < 3:
+            raise ValueError("Space must have at least 3 distinct vertices")
+        if polygon_area(cleaned) < 1e-6:
+            raise ValueError("Space polygon must have positive area")
+        return cleaned
+
+    @property
+    def centroid(self) -> tuple[float, float]:
+        return polygon_centroid(self.vertices)
+
+    @property
+    def area_m2(self) -> float:
+        return polygon_area(self.vertices)
+
+    @property
+    def bbox(self) -> tuple[float, float, float, float]:
+        """(min_x, min_y, width, height)."""
+        return polygon_bbox(self.vertices)
 
 
 class Door(BaseModel):

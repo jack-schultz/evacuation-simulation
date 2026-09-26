@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.domain.building import OccupantStatus
+from app.domain.building import Door, OccupantStatus
 from app.simulation.collision import (
     aperture_axis,
     aperture_slot_point,
@@ -87,6 +87,7 @@ class MovementModel(Protocol):
         t: float,
         *,
         admitted: bool = True,
+        doors: dict[str, Door] | None = None,
     ) -> None:
         """Advance route index / evacuate when close enough to the next waypoint."""
         ...
@@ -118,11 +119,7 @@ class SpatialMovementModel:
         if edge.kind not in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
             return waypoint.x, waypoint.y
 
-        # Leaving an opening into a space: head straight to the space centroid
-        if waypoint.kind == NodeKind.SPACE:
-            return waypoint.x, waypoint.y
-
-        # Approach from current position (or current node) toward the opening
+        # Next waypoint is an opening — approach / aperture / hold outside throat
         cur = graph.nodes[occupant.current_node_id]
         axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
         slots = aperture_slots(edge.width_m, radius_m)
@@ -191,6 +188,7 @@ class SpatialMovementModel:
         t: float,
         *,
         admitted: bool = True,
+        doors: dict[str, Door] | None = None,
     ) -> None:
         if occupant.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
             return
@@ -238,10 +236,20 @@ class SpatialMovementModel:
         if not reached:
             return
 
+        from_node = graph.nodes[occupant.current_node_id]
         occupant.route_index += 1
         occupant.progress_on_edge = 0.0
-        if waypoint.kind == NodeKind.SPACE:
-            occupant.current_space_id = waypoint.ref_id
+        # Membership flips when leaving a door into the next space, not on arrival
+        if from_node.kind == NodeKind.DOOR and doors is not None:
+            door = doors.get(from_node.ref_id)
+            if door is not None:
+                a, b = door.connects
+                if occupant.current_space_id == a:
+                    occupant.current_space_id = b
+                elif occupant.current_space_id == b:
+                    occupant.current_space_id = a
+                else:
+                    occupant.current_space_id = a
 
         if waypoint.kind == NodeKind.EXIT or occupant.next_node_id is None:
             occupant.status = OccupantStatus.EVACUATED

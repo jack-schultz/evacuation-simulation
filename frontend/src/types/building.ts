@@ -4,10 +4,8 @@ export interface Space {
   id: string;
   name: string;
   type: SpaceType;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  /** Closed polygon ring in metres (closing duplicate omitted). */
+  vertices: [number, number][];
   capacity_density_per_m2?: number | null;
 }
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import heapq
 from typing import Protocol
 
-from app.simulation.graph import NavigationGraph
+from app.simulation.graph import NavigationGraph, NodeKind
 
 
 class RouteSelector(Protocol):
@@ -49,7 +49,9 @@ class DijkstraRouteSelector:
             if cost > dist.get(node_id, float("inf")):
                 continue
             if node_id in targets:
-                return self._reconstruct(prev, node_id)
+                return self._strip_intermediate_spaces(
+                    graph, self._reconstruct(prev, node_id)
+                )
 
             for edge_id in graph.adjacency.get(node_id, []):
                 edge = graph.edges[edge_id]
@@ -78,6 +80,19 @@ class DijkstraRouteSelector:
             cur = prev.get(cur)
         path.reverse()
         return path
+
+    @staticmethod
+    def _strip_intermediate_spaces(graph: NavigationGraph, path: list[str]) -> list[str]:
+        """Keep the start space node; drop any later space centroids from the route."""
+        if len(path) <= 1:
+            return path
+        result = [path[0]]
+        for node_id in path[1:]:
+            node = graph.nodes.get(node_id)
+            if node is not None and node.kind == NodeKind.SPACE:
+                continue
+            result.append(node_id)
+        return result
 
 
 def edge_between(graph: NavigationGraph, a: str, b: str):
