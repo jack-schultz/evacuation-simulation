@@ -8,11 +8,19 @@ interface Props {
   layout: BuildingLayout;
   selected: SelectedRef;
   onChange: (layout: BuildingLayout) => void;
+  onSelect: (ref: SelectedRef) => void;
   onDeleteSelected: () => void;
   disabled?: boolean;
 }
 
-export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, disabled }: Props) {
+export function PropertiesPanel({
+  layout,
+  selected,
+  onChange,
+  onSelect,
+  onDeleteSelected,
+  disabled,
+}: Props) {
   if (!selected) {
     return (
       <div className="panel properties">
@@ -30,6 +38,7 @@ export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, 
         layout={layout}
         space={space}
         onChange={onChange}
+        onSelect={onSelect}
         onDeleteSelected={onDeleteSelected}
         disabled={disabled}
       />

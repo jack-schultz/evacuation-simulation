@@ -12,6 +12,8 @@ interface Props {
   onReset: () => void;
   running: boolean;
   results: SimulationResults | null;
+  showPaths: boolean;
+  onShowPathsChange: (show: boolean) => void;
   error?: string | null;
 }
 
@@ -26,6 +28,8 @@ export function SimulationControls({
   onReset,
   running,
   results,
+  showPaths,
+  onShowPathsChange,
   error,
 }: Props) {
   return (
@@ -57,6 +61,15 @@ export function SimulationControls({
             onChange={(e) => onSpeedChange(Number(e.target.value))}
           />
           <span>{speed.toFixed(2)}x</span>
+        </label>
+        <label className="path-toggle">
+          <input
+            type="checkbox"
+            checked={showPaths}
+            disabled={!results}
+            onChange={(e) => onShowPathsChange(e.target.checked)}
+          />
+          Show paths
         </label>
       </div>
       <div className="controls-right">

@@ -67,7 +67,8 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 ## Known simplifications
 
-- Single-floor style layout; stairs are capacity nodes, not multi-level physics.
+- Single-floor style canvas; paired stairs (`linked_stair_id`) teleport between
+  stair centers for multi-level pathing (not continuous vertical physics).
 - No fire, smoke, panic, or disability-specific movement.
 - Space edges block movement except at door/exit widths; they do not carve the navigation graph.
 - Occupants do not replan or follow crowds mid-run.

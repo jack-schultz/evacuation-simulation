@@ -13,6 +13,7 @@ from app.simulation.collision import (
     resolve_space_containment,
     resolve_wall_collisions,
     space_boundary_rects,
+    update_space_membership_from_position,
 )
 from app.simulation.engine import SimulationEngine
 from app.simulation.graph import NavigationGraphBuilder
@@ -280,9 +281,8 @@ class SpaceContainmentTests(unittest.TestCase):
         layout = two_room_layout(count=1)
         graph = NavigationGraphBuilder().build(layout, self._defaults)
         spaces = {s.id: s for s in layout.spaces}
-        doors = {d.id: d for d in layout.doors}
         radius = 0.25
-        # Place body center deep in the corridor without door admission
+        # Place body center deep in the corridor without door membership flip
         occ = SimulatedOccupant(
             id="g:0",
             group_id="g",
@@ -292,7 +292,7 @@ class SpaceContainmentTests(unittest.TestCase):
             x=12.0,
             y=18.0,
         )
-        resolve_space_containment([occ], spaces, doors, graph, radius, admitted=set())
+        resolve_space_containment([occ], spaces, radius)
         office_inset = inset_aabb(spaces["office"], radius)
         self.assertTrue(
             office_inset.contains_point(occ.x, occ.y),
@@ -300,13 +300,16 @@ class SpaceContainmentTests(unittest.TestCase):
         )
         self.assertEqual(occ.current_space_id, "office")
 
-    def test_admitted_door_transit_allows_destination(self):
+    def test_membership_flip_then_single_space_clamp(self):
         layout = two_room_layout(count=1)
         graph = NavigationGraphBuilder().build(layout, self._defaults)
         spaces = {s.id: s for s in layout.spaces}
         doors = {d.id: d for d in layout.doors}
         radius = 0.25
+        office_inset = inset_aabb(spaces["office"], radius)
         corridor_inset = inset_aabb(spaces["corridor"], radius)
+
+        # Admission alone does not allow free-roaming in the destination.
         occ = SimulatedOccupant(
             id="g:0",
             group_id="g",
@@ -316,33 +319,25 @@ class SpaceContainmentTests(unittest.TestCase):
             x=corridor_inset.x + corridor_inset.width / 2,
             y=corridor_inset.y + corridor_inset.height / 2,
         )
-        resolve_space_containment(
-            [occ], spaces, doors, graph, radius, admitted={"g:0"}
-        )
+        resolve_space_containment([occ], spaces, radius)
         self.assertTrue(
-            corridor_inset.contains_point(occ.x, occ.y),
-            "admitted toward door should allow destination inset",
+            office_inset.contains_point(occ.x, occ.y),
+            "origin member must clamp to origin without membership flip",
         )
-
-        # Claiming the door keeps origin membership; leaving the door toward
-        # the exit flips current_space_id as the route advances off the door.
-        occ.route_index = 0
-        occ.x, occ.y = 13.0, 15.0
-        SpatialMovementModel().try_advance_route(
-            occ, graph, radius, t=1.0, admitted=True, doors=doors
-        )
-        self.assertEqual(occ.current_node_id, "door:d1")
         self.assertEqual(occ.current_space_id, "office")
 
-        # Reach the exit to leave the door node
-        occ.x, occ.y = 12.0, 22.0
-        SpatialMovementModel().try_advance_route(
-            occ, graph, radius, t=1.0, admitted=True, doors=doors
+        # Body in destination while admitted/on door flips membership, then stays.
+        occ.route_index = 1
+        occ.x = corridor_inset.x + corridor_inset.width / 2
+        occ.y = corridor_inset.y + corridor_inset.height / 2
+        update_space_membership_from_position(
+            [occ], spaces, doors, graph, admitted={"g:0"}
         )
         self.assertEqual(occ.current_space_id, "corridor")
-        self.assertEqual(occ.status.value, "evacuated")
+        resolve_space_containment([occ], spaces, radius)
+        self.assertTrue(corridor_inset.contains_point(occ.x, occ.y))
 
-        # Corridor member without door transit is clamped out of the office
+        # Corridor member without transit is clamped out of the office
         occ2 = SimulatedOccupant(
             id="g:1",
             group_id="g",
@@ -353,14 +348,58 @@ class SpaceContainmentTests(unittest.TestCase):
             x=10.0,
             y=8.0,
         )
-        resolve_space_containment([occ2], spaces, doors, graph, radius, admitted=set())
+        resolve_space_containment([occ2], spaces, radius)
         self.assertTrue(corridor_inset.contains_point(occ2.x, occ2.y))
 
-    def test_large_step_toward_solid_edge_stays_inside(self):
-        layout = packed_room(door_width=0.9, count=1)
+    def test_cannot_advance_past_door_until_in_destination(self):
+        layout = two_room_layout(count=1)
         graph = NavigationGraphBuilder().build(layout, self._defaults)
         spaces = {s.id: s for s in layout.spaces}
         doors = {d.id: d for d in layout.doors}
+        radius = 0.25
+        movement = SpatialMovementModel()
+
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:office", "door:d1", "exit:out"],
+            current_space_id="office",
+            x=13.0,
+            y=14.75,
+        )
+        # Claim the door while still origin-side
+        movement.try_advance_route(
+            occ, graph, radius, t=1.0, admitted=True, doors=doors
+        )
+        self.assertEqual(occ.current_node_id, "door:d1")
+        self.assertEqual(occ.current_space_id, "office")
+
+        # Still in office near door — must not advance toward the exit
+        occ.x, occ.y = 13.0, 14.8
+        movement.try_advance_route(
+            occ, graph, radius, t=1.0, admitted=True, doors=doors
+        )
+        self.assertEqual(occ.current_node_id, "door:d1")
+        self.assertEqual(occ.current_space_id, "office")
+        self.assertNotEqual(occ.status.value, "evacuated")
+
+        # Enter corridor physically → membership flips → can leave the door
+        occ.x, occ.y = 12.0, 18.0
+        update_space_membership_from_position(
+            [occ], spaces, doors, graph, admitted={"g:0"}
+        )
+        self.assertEqual(occ.current_space_id, "corridor")
+        # Near the exit on the destination side
+        occ.x, occ.y = 12.0, 21.7
+        movement.try_advance_route(
+            occ, graph, radius, t=1.0, admitted=True, doors=doors
+        )
+        self.assertEqual(occ.status.value, "evacuated")
+
+    def test_large_step_toward_solid_edge_stays_inside(self):
+        layout = packed_room(door_width=0.9, count=1)
+        spaces = {s.id: s for s in layout.spaces}
         radius = 0.25
         occ = SimulatedOccupant(
             id="g:0",
@@ -373,7 +412,7 @@ class SpaceContainmentTests(unittest.TestCase):
         )
         # Simulate a huge discrete step through the bottom edge
         occ.y = 12.0
-        resolve_space_containment([occ], spaces, doors, graph, radius)
+        resolve_space_containment([occ], spaces, radius)
         inset = inset_aabb(spaces["room"], radius)
         self.assertTrue(inset.contains_point(occ.x, occ.y))
         self.assertLessEqual(occ.y, inset.bottom + 1e-9)

@@ -10,6 +10,7 @@ from app.simulation.collision_aabb import Aabb, push_out_of_aabb
 from app.simulation.graph import NodeKind
 from app.simulation.walls import WallSegment
 
+
 def _clamp_to_nearest_space(
     x: float,
     y: float,
@@ -41,7 +42,7 @@ def _clamp_to_nearest_space(
     return best_x, best_y
 
 
-def _door_other_space(door: Door, space_id: str) -> str | None:
+def door_other_space(door: Door, space_id: str) -> str | None:
     a, b = door.connects
     if a == space_id:
         return b
@@ -66,23 +67,17 @@ class ContainedOccupant(Protocol):
     def next_node_id(self) -> str | None: ...
 
 
-def _transit_destination_space_id(
+def _crossing_door(
     occupant: ContainedOccupant,
     graph: object,
     doors: dict[str, Door],
     admitted: set[str] | None,
-) -> str | None:
-    """Destination space when mid-door-crossing or admitted toward a connecting door."""
+) -> Door | None:
+    """Door the occupant is on or admitted toward, if any."""
     nodes = graph.nodes  # type: ignore[attr-defined]
-    space_id = occupant.current_space_id
-    if not space_id:
-        return None
-
     cur = nodes.get(occupant.current_node_id)
     if cur is not None and cur.kind == NodeKind.DOOR:
-        door = doors.get(cur.ref_id)
-        if door is not None:
-            return _door_other_space(door, space_id)
+        return doors.get(cur.ref_id)
 
     nxt_id = occupant.next_node_id
     if nxt_id is None:
@@ -92,21 +87,40 @@ def _transit_destination_space_id(
         return None
     if admitted is not None and occupant.id not in admitted:
         return None
-    door = doors.get(nxt.ref_id)
-    if door is None:
-        return None
-    return _door_other_space(door, space_id)
+    return doors.get(nxt.ref_id)
+
+
+def update_space_membership_from_position(
+    occupants: list[ContainedOccupant],
+    spaces: dict[str, Space],
+    doors: dict[str, Door],
+    graph: object,
+    admitted: set[str] | None = None,
+) -> None:
+    """Flip current_space_id when the body enters the far side of an admitted door."""
+    from app.domain.geometry import point_in_polygon
+
+    for o in occupants:
+        if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+            continue
+        if not o.current_space_id:
+            continue
+        door = _crossing_door(o, graph, doors, admitted)
+        if door is None:
+            continue
+        dest_id = door_other_space(door, o.current_space_id)
+        if dest_id is None or dest_id not in spaces:
+            continue
+        if point_in_polygon(o.x, o.y, spaces[dest_id].vertices):
+            o.current_space_id = dest_id
 
 
 def resolve_space_containment(
     occupants: list[ContainedOccupant],
     spaces: dict[str, Space],
-    doors: dict[str, Door],
-    graph: object,
     radius_m: float,
-    admitted: set[str] | None = None,
 ) -> None:
-    """Clamp active occupants into their current space (plus door-transit destination)."""
+    """Clamp active occupants into their current space only."""
     if radius_m < 0:
         return
 
@@ -115,11 +129,9 @@ def resolve_space_containment(
             continue
         if o.current_space_id not in spaces:
             continue
-        allowed = [o.current_space_id]
-        dest_id = _transit_destination_space_id(o, graph, doors, admitted)
-        if dest_id is not None and dest_id in spaces:
-            allowed.append(dest_id)
-        o.x, o.y = _clamp_to_nearest_space(o.x, o.y, allowed, spaces, radius_m)
+        o.x, o.y = _clamp_to_nearest_space(
+            o.x, o.y, [o.current_space_id], spaces, radius_m
+        )
 
 
 def resolve_wall_collisions(

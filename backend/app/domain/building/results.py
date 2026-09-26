@@ -45,6 +45,7 @@ class OccupantResult(BaseModel):
     wait_time_s: float
     total_time_s: float
     route_node_ids: list[str]
+    route_points: list[tuple[float, float]] = []
 
 
 class SimulationResults(BaseModel):

@@ -135,7 +135,7 @@ def spawn_occupants(
             )
     resolve_overlaps(occupants, radius_m, iterations=6)
     resolve_wall_collisions(occupants, solids, radius_m)
-    resolve_space_containment(occupants, spaces, doors, graph, radius_m)
+    resolve_space_containment(occupants, spaces, radius_m)
     return occupants
 
 

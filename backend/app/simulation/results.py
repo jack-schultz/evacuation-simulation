@@ -9,13 +9,28 @@ from app.domain.building import (
     SimulationResults,
 )
 from app.simulation.flow import ElementQueueState
+from app.simulation.graph import NavigationGraph
 from app.simulation.movement import SimulatedOccupant
+
+
+def _route_points(
+    route: list[str], graph: NavigationGraph | None
+) -> list[tuple[float, float]]:
+    if graph is None:
+        return []
+    points: list[tuple[float, float]] = []
+    for node_id in route:
+        node = graph.nodes.get(node_id)
+        if node is not None:
+            points.append((node.x, node.y))
+    return points
 
 
 def build_results(
     occupants: list[SimulatedOccupant],
     queues: dict[str, ElementQueueState],
     simulation_time_s: float,
+    graph: NavigationGraph | None = None,
 ) -> SimulationResults:
     evacuated = [o for o in occupants if o.status == OccupantStatus.EVACUATED]
     remaining = [o for o in occupants if o.status != OccupantStatus.EVACUATED]
@@ -45,6 +60,7 @@ def build_results(
             wait_time_s=round(o.wait_time_s, 3),
             total_time_s=round((o.evacuated_at if o.evacuated_at is not None else simulation_time_s), 3),
             route_node_ids=list(o.route),
+            route_points=_route_points(o.route, graph),
         )
         for o in occupants
     ]

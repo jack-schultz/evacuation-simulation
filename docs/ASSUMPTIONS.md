@@ -18,6 +18,13 @@ regulatory compliance calculation.
 * Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
   navigation graph beyond defining which openings may connect.
+* Stairs spaces may set `linked_stair_id` to another stairs space. The pair
+  adds a navigation edge between the two stair centroids; when an occupant
+  reaches the center of one stair they teleport to the other. A stair whose
+  center lies inside a room/corridor is treated as an opening of that host
+  space (no extra door required) and does not emit its own collision walls.
+  Stairs can also sit as their own polygons entered via doors. This is a
+  flat-canvas multi-level shortcut, not continuous vertical geometry.
 
 ## Occupant knowledge and behaviour
 
@@ -34,15 +41,18 @@ regulatory compliance calculation.
 
 * Discrete-time simulation (default timestep 0.25 s).
 * Occupants steer continuously in 2D toward fixed route waypoints (doors and
-  exits; plus the spawn space node only to leave the starting room) rather than
-  sliding on a single shared edge line.
+  exits; plus the spawn space node only to leave the starting room; plus linked
+  stair space nodes for teleport transfers) rather than sliding on a single
+  shared edge line.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
   cannot cross space boundaries except through door/exit gaps.
 * Each occupant tracks a **current space** and is clamped inside that space
-  until they transit an admitted door aperture into the next space on their
-  route (then membership updates). This prevents discrete-step “teleports”
-  through thin shared walls.
+  only. Membership flips when the body enters the next space through an
+  admitted door aperture; pathing past that door requires the updated
+  membership. This prevents discrete-step “teleports” through thin shared
+  walls and stops route progress while a person is still stuck in the previous
+  room.
 * Door, stair, and exit openings admit about `floor(width / (2 * radius))`
   people at once (minimum 1). Wider openings allow more concurrent passage;
   excess demand piles up and waits outside the opening throat.

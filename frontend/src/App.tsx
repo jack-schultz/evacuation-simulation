@@ -16,6 +16,7 @@ export default function App() {
   const [columnWidths, setColumnWidths] = useState({ tools: 200, properties: 220, hazards: 230 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPaths, setShowPaths] = useState(false);
 
   const session = useSimulationSession({ setBusy, setError });
   const editor = useBuildingEditor({
@@ -95,6 +96,8 @@ export default function App() {
         onReset={session.onReset}
         running={busy}
         results={session.playback.results}
+        showPaths={showPaths}
+        onShowPathsChange={setShowPaths}
         error={error}
       />
 
@@ -136,6 +139,16 @@ export default function App() {
             ))}
             <p className="hint">Create another building with New, set its size and name, then Save.</p>
           </section>
+          <FloodPanel layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
+          <EmergencyPanel kind="fire" layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
+          <PropertiesPanel
+            layout={editor.layout}
+            selected={editor.selected}
+            onChange={editor.updateLayout}
+            onSelect={editor.setSelected}
+            onDeleteSelected={editor.onDeleteSelected}
+            disabled={disabled}
+          />
         </aside>
         <main className="canvas-area">
           <BuildingCanvas
@@ -146,6 +159,8 @@ export default function App() {
             onSelect={editor.setSelected}
             onChange={editor.updateLayout}
             occupants={session.playback.currentFrame?.occupants ?? []}
+            routeOccupants={session.playback.results?.occupants ?? []}
+            showPaths={showPaths}
             congestedIds={session.congestedIds}
             interactive={!disabled}
             occupantRadiusM={session.occupantRadiusM}

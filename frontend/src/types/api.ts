@@ -48,6 +48,18 @@ export interface CongestionHotspot {
   peak_queue: number;
 }
 
+export interface OccupantResult {
+  id: string;
+  group_id: string;
+  evacuated: boolean;
+  distance_m: number;
+  travel_time_s: number;
+  wait_time_s: number;
+  total_time_s: number;
+  route_node_ids: string[];
+  route_points: [number, number][];
+}
+
 export interface SimulationResults {
   total_occupants: number;
   evacuated_count: number;
@@ -58,6 +70,7 @@ export interface SimulationResults {
   average_distance_m: number | null;
   average_wait_time_s: number | null;
   congestion_hotspots: CongestionHotspot[];
+  occupants: OccupantResult[];
   assumptions_note: string;
 }
 

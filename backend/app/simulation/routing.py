@@ -83,13 +83,17 @@ class DijkstraRouteSelector:
 
     @staticmethod
     def _strip_intermediate_spaces(graph: NavigationGraph, path: list[str]) -> list[str]:
-        """Keep the start space node; drop any later space centroids from the route."""
+        """Keep start + stair space nodes; drop other intermediate space centroids."""
         if len(path) <= 1:
             return path
         result = [path[0]]
         for node_id in path[1:]:
             node = graph.nodes.get(node_id)
-            if node is not None and node.kind == NodeKind.SPACE:
+            if (
+                node is not None
+                and node.kind == NodeKind.SPACE
+                and node_id not in graph.stair_space_node_ids
+            ):
                 continue
             result.append(node_id)
         return result

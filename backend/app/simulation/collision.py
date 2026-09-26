@@ -24,8 +24,10 @@ from app.simulation.collision_aabb import (
 )
 from app.simulation.containment import (
     ContainedOccupant,
+    door_other_space,
     resolve_space_containment,
     resolve_wall_collisions,
+    update_space_membership_from_position,
 )
 from app.simulation.walls import (
     WallSegment,
@@ -46,6 +48,7 @@ __all__ = [
     "clamp_outside_throat",
     "clamp_point_to_aabb",
     "dist",
+    "door_other_space",
     "in_throat",
     "inset_aabb",
     "push_out_of_aabb",
@@ -55,4 +58,5 @@ __all__ = [
     "space_boundary_rects",
     "space_boundary_segments",
     "throat_radius",
+    "update_space_membership_from_position",
 ]

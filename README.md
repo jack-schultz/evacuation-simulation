@@ -96,8 +96,8 @@ See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 
 ## Known limitations
 
-* Single-floor style layout (stairs are capacity nodes, not multi-level physics)
-* Space edges block movement except at door/exit gaps; connectivity stays door/exit based
+* Single-floor style canvas (linked stairs teleport between paired stair centers; not continuous multi-level physics)
+* Space edges block movement except at door/exit gaps; connectivity is doors, exits, and linked stairs
 * No live WebSocket streaming (full timeline computed server-side)
 * No authentication or multi-user collaboration
 * Congestion model is intentionally simple
@@ -106,7 +106,7 @@ See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 
 * Smarter route choice (familiar exits, congestion avoidance, replanning)
 * Continuous-space / social-force movement models
-* Multi-floor buildings and stair bidirectional flow
+* True multi-floor geometry and stair bidirectional flow (beyond linked-stair teleport)
 * Hazard layers (smoke) affecting speed and visibility
 * Import from DXF / simple BIM subsets
 * Scenario comparison and report export
