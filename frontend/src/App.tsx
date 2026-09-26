@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FloodPanel } from './components/FloodPanel';
+import { EmergencyPanel } from './components/EmergencyPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { ResultsPanel } from './components/ResultsPanel';
@@ -334,6 +335,7 @@ export default function App() {
             disabled={busy || simulating}
           />
           <FloodPanel layout={layout} onChange={updateLayout} disabled={busy || simulating} />
+          <EmergencyPanel kind="fire" layout={layout} onChange={updateLayout} disabled={busy || simulating} />
           <PropertiesPanel
             layout={layout}
             selected={selected}
@@ -354,6 +356,7 @@ export default function App() {
             interactive={!busy && !simulating}
             occupantRadiusM={occupantRadiusM}
             floodRadiusM={playback.currentFrame?.flood_radius_m}
+            fireRadiusM={playback.currentFrame?.fire_radius_m}
           />
         </main>
       </div>

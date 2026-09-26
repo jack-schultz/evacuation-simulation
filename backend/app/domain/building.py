@@ -73,8 +73,8 @@ class OccupantGroup(BaseModel):
     behaviour: dict[str, float | str | bool] = Field(default_factory=dict)
 
 
-class FloodEmergency(BaseModel):
-    """Expanding illustrative flood area; speeds use metres per simulation second."""
+class RadialEmergency(BaseModel):
+    """Expanding illustrative hazard area; speeds use metres per simulation second."""
 
     enabled: bool = True
     x: float = Field(ge=0, allow_inf_nan=False)
@@ -82,6 +82,14 @@ class FloodEmergency(BaseModel):
     radius_m: float = Field(default=3.0, gt=0, allow_inf_nan=False)
     spread_speed_mps: float = Field(default=0.1, ge=0, allow_inf_nan=False)
     intensity: float = Field(default=50.0, ge=0, le=100, allow_inf_nan=False)
+
+
+class FloodEmergency(RadialEmergency):
+    """Illustrative flood scenario."""
+
+
+class FireEmergency(RadialEmergency):
+    """Illustrative fire scenario; intensity is a relative slowdown, not heat."""
 
 
 class BuildingLayout(BaseModel):
@@ -96,11 +104,14 @@ class BuildingLayout(BaseModel):
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
     flood: FloodEmergency | None = None
+    fire: FireEmergency | None = None
 
     @model_validator(mode="after")
     def validate_references(self) -> BuildingLayout:
         if self.flood and (self.flood.x > self.width or self.flood.y > self.height):
             raise ValueError("Flood centre must be inside the building bounds")
+        if self.fire and (self.fire.x > self.width or self.fire.y > self.height):
+            raise ValueError("Fire centre must be inside the building bounds")
         space_ids = {s.id for s in self.spaces}
         exit_ids = {e.id for e in self.exits}
 
@@ -177,6 +188,7 @@ class OccupantFrameState(BaseModel):
 
 class SimulationFrame(BaseModel):
     flood_radius_m: float | None = None
+    fire_radius_m: float | None = None
     t: float
     occupants: list[OccupantFrameState]
 
