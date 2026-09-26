@@ -231,6 +231,7 @@ export function BuildingCanvas({
             <Line key={i} points={pts} stroke="#e2e8f0" strokeWidth={1} listening={false} />
           ))}
 
+          {/* Draw order: rooms → stairs → doors → exits → hazards → people */}
           <SpaceLayer
             layout={layout}
             tool={tool}
@@ -246,16 +247,6 @@ export function BuildingCanvas({
             onObjectContextMenu={openObjectContextMenu}
           />
 
-          <HazardLayer
-            layout={layout}
-            tool={tool}
-            interactive={interactive}
-            floodRadiusM={floodRadiusM}
-            fireRadiusM={fireRadiusM}
-            onChange={onChange}
-            dragProps={dragProps}
-          />
-
           <OpeningsLayer
             layout={layout}
             selected={selected}
@@ -266,6 +257,16 @@ export function BuildingCanvas({
             onChange={onChange}
             dragProps={dragProps}
             onObjectContextMenu={openObjectContextMenu}
+          />
+
+          <HazardLayer
+            layout={layout}
+            tool={tool}
+            interactive={interactive}
+            floodRadiusM={floodRadiusM}
+            fireRadiusM={fireRadiusM}
+            onChange={onChange}
+            dragProps={dragProps}
           />
 
           {showPaths && <PathsLayer occupants={routeOccupants} />}
