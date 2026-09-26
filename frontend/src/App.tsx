@@ -36,6 +36,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [simId, setSimId] = useState<string | null>(null);
+  const [occupantRadiusM, setOccupantRadiusM] = useState(0.25);
 
   const playback = useSimulationPlayback();
   const simulating = playback.status === 'playing' || playback.status === 'paused' || playback.status === 'finished';
@@ -161,9 +162,11 @@ export default function App() {
         timestep_s: 0.25,
         max_time_s: 600,
         frame_interval_s: 0.5,
+        occupant_radius_m: 0.25,
       });
       setSimId(created.id);
       const run = await api.runSimulation(created.id);
+      setOccupantRadiusM(run.parameters?.occupant_radius_m ?? 0.25);
       playback.load(run.frames, run.results);
       playback.play();
     } catch (e) {
@@ -175,6 +178,7 @@ export default function App() {
 
   const onReset = async () => {
     playback.reset();
+    setOccupantRadiusM(0.25);
     if (simId) {
       try {
         await api.resetSimulation(simId);
@@ -265,6 +269,7 @@ export default function App() {
             occupants={playback.currentFrame?.occupants ?? []}
             congestedIds={congestedIds}
             interactive={playback.status !== 'playing'}
+            occupantRadiusM={occupantRadiusM}
           />
         </main>
       </div>

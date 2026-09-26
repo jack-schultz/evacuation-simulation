@@ -28,12 +28,14 @@ flowchart LR
 ## Building blocks
 
 - **Spaces** — Axis-aligned rectangles: rooms, corridors, or stairs.
-- **Doors** — Connect two spaces. Limited flow rate (people per second).
-- **Exits** — Attached to a space; people leave the building here (also capacity-limited).
+- **Doors** — Connect two spaces. Clear opening width limits how many people
+  fit through at once (body radius vs width).
+- **Exits** — Attached to a space; people leave the building here (also
+  width-limited).
 - **Occupant groups** — A count of people in a space, with walking speed and optional preferred exit.
 - **Walls** — Drawn in the editor for clarity. They do **not** currently block paths; connectivity comes from spaces, doors, and exits only.
 
-Under the hood, the simulator builds a **navigation graph**: space centroids, doors, and exits as nodes, linked by distance.
+Under the hood, the simulator builds a **navigation graph**: space centroids, doors, and exits as nodes, linked by distance. Occupants steer in continuous space toward those waypoints, collide with each other, and squeeze through openings.
 
 ## What happens when you click Run
 
@@ -43,13 +45,16 @@ Under the hood, the simulator builds a **navigation graph**: space centroids, do
    - Build the navigation graph.
    - Expand each occupant group into individuals.
    - Assign each person a **shortest path** to an exit (preferred exit if set, otherwise nearest by path length). Routes stay fixed for the run.
-   - Step through time (default 0.25 s). At each step, people try to advance along their path; doors, stairs, exits, and dense corridors enforce capacity — excess demand means waiting.
+   - Step through time (default 0.25 s). At each step, everyone tries to move
+     toward their next waypoint at once; body collisions and door/exit widths
+     create jams — excess demand means waiting outside the opening.
    - Record animation frames on an interval, then aggregate statistics (evac times, waits, hotspots).
 4. **Playback** — The browser loads the returned frames and results, then animates locally (play / pause / speed / reset). Nothing streams live over the network.
 
 ## How to read results
 
-- **Evacuation times** — Approximate travel time plus time spent waiting in queues under the model’s rules.
+- **Evacuation times** — Approximate travel time plus time spent waiting in
+  crowds under the model’s rules (body collisions and opening width).
 - **Wait / congestion hotspots** — Elements (doors, corridors, stairs, exits) where people queued.
 - Treat numbers as planning estimates under simplified assumptions, not code-compliance evidence.
 

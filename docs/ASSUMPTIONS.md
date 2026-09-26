@@ -26,11 +26,17 @@ regulatory compliance calculation.
 ## Movement and congestion
 
 * Discrete-time simulation (default timestep 0.25 s).
-* Movement is along a navigation graph (space centroids, doors, exits).
-* Doors, stairs, and exits have maximum flow rates (occupants/second).
-* Corridors may enforce approximate density limits.
-* Excess demand produces queueing / wait time; capacity models are isolated
-  behind a `FlowModel` interface for future replacement.
+* Occupants steer continuously in 2D toward fixed route waypoints (space
+  centroids, doors, exits) rather than sliding on a single shared edge line.
+* Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
+  cannot overlap; pairwise separation is resolved each timestep.
+* Door, stair, and exit openings admit about `floor(width / (2 * radius))`
+  people at once (minimum 1). Wider openings allow more concurrent passage;
+  excess demand piles up and waits outside the opening throat.
+* Legacy `door_flow_per_s` / `exit_flow_per_s` / `stairs_flow_per_s` parameters
+  remain on the API but no longer drive primary door throughput.
+* Corridors may still enforce soft density limits via `FlowModel`.
+* Capacity / aperture bookkeeping stays behind a `FlowModel` interface.
 
 ## Hazards not modelled
 

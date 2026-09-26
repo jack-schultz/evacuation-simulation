@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
+from app.simulation.collision import aperture_slots
 from app.simulation.graph import EdgeKind, GraphEdge
 
 
@@ -22,7 +23,7 @@ class ElementQueueState:
 
 class FlowModel(Protocol):
     def calculate_capacity(self, edge: GraphEdge, timestep_s: float, occupants_on_element: int) -> float:
-        """Return max occupants that may traverse the element in this timestep."""
+        """Return max concurrent occupants for the element (aperture or density)."""
         ...
 
     def calculate_delay(
@@ -37,29 +38,27 @@ class FlowModel(Protocol):
 
 
 class CapacityFlowModel:
-    """Simple capacity / flow-rate congestion model.
+    """Aperture / density congestion model for bookkeeping and gating.
 
-    - Doors, stairs, exits: limited by flow_rate_per_s * timestep
-    - Corridors: limited by remaining density capacity relative to area
-    - Rooms (SPACE): treated as unconstrained for flow (capacity check soft)
+    - Doors, stairs, exits: concurrent bodies ≈ width / (2 * radius)
+    - Corridors: remaining density capacity relative to area
+    - Rooms (SPACE): unconstrained
     """
+
+    def __init__(self, occupant_radius_m: float = 0.25) -> None:
+        self.occupant_radius_m = occupant_radius_m
 
     def calculate_capacity(self, edge: GraphEdge, timestep_s: float, occupants_on_element: int) -> float:
         if edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
-            rate = edge.flow_rate_per_s or 0.0
-            if edge.kind == EdgeKind.STAIRS and edge.flow_rate_per_s is None:
-                rate = 0.8
-            return max(rate * timestep_s, 0.0)
+            return float(aperture_slots(edge.width_m, self.occupant_radius_m))
 
         if edge.kind == EdgeKind.CORRIDOR:
             density = edge.capacity_density_per_m2 or 2.0
             area = edge.area_m2 or 1.0
             max_occ = density * area
             remaining = max(max_occ - occupants_on_element, 0.0)
-            # Allow a fraction of remaining capacity per step to model gradual flow
             return max(remaining, 0.0)
 
-        # Unconstrained room interiors
         return float("inf")
 
     def calculate_delay(
@@ -74,7 +73,6 @@ class CapacityFlowModel:
         if demand <= capacity:
             return 0.0
         excess = demand - capacity
-        # Each excess occupant waits approximately one timestep this step
         return excess * timestep_s
 
 

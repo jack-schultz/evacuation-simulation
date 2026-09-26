@@ -13,10 +13,17 @@ from app.domain.building import (
     SimulationParameters,
     SimulationResults,
 )
+from app.simulation.collision import (
+    aperture_slots,
+    clamp_outside_throat,
+    dist,
+    in_throat,
+    resolve_overlaps,
+)
 from app.simulation.flood import FloodRouteSelector, apply_flood
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
-from app.simulation.graph import EdgeKind, NavigationGraphBuilder
-from app.simulation.movement import MovementModel, SimulatedOccupant
+from app.simulation.graph import EdgeKind, NavigationGraphBuilder, NodeKind
+from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
 from app.simulation.results import build_results
 from app.simulation.routing import DijkstraRouteSelector, RouteSelector, edge_between
 
@@ -30,19 +37,20 @@ class SimulationOutput:
 class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
-    The engine expands occupant groups into individuals, assigns routes via a
-    RouteSelector, and advances movement each timestep subject to a FlowModel.
+    Occupants steer continuously toward fixed Dijkstra waypoints, collide via
+    body radius, and pass doors/exits through width-limited apertures.
     """
 
     def __init__(
         self,
         route_selector: RouteSelector | None = None,
         flow_model: FlowModel | None = None,
-        movement_model: MovementModel | None = None,
+        movement_model: SpatialMovementModel | None = None,
     ) -> None:
         self.route_selector = route_selector or DijkstraRouteSelector()
-        self.flow_model = flow_model or CapacityFlowModel()
-        self.movement_model = movement_model or MovementModel()
+        self.flow_model = flow_model  # may be set per-run with radius
+        self._flow_model_override = flow_model
+        self.movement_model = movement_model or SpatialMovementModel()
         self.graph_builder = NavigationGraphBuilder()
 
     def run(self, layout: BuildingLayout, params: SimulationParameters) -> SimulationOutput:
@@ -50,6 +58,11 @@ class SimulationEngine:
             raise ValueError("Building must have at least one exit")
         if not layout.occupant_groups:
             raise ValueError("Building must have at least one occupant group")
+
+        if self._flow_model_override is not None:
+            self.flow_model = self._flow_model_override
+        else:
+            self.flow_model = CapacityFlowModel(occupant_radius_m=params.occupant_radius_m)
 
         defaults = {
             "door_flow_per_s": params.door_flow_per_s,
@@ -60,7 +73,7 @@ class SimulationEngine:
         graph = self.graph_builder.build(layout, defaults)
         apply_flood(graph, layout.flood)
 
-        occupants = self._spawn_occupants(layout, graph)
+        occupants = self._spawn_occupants(layout, graph, params.occupant_radius_m)
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
         t = 0.0
@@ -80,22 +93,30 @@ class SimulationEngine:
                 frames.append(self._capture_frame(t, occupants))
                 next_frame_t += params.frame_interval_s
 
-        # Ensure final frame
         if not frames or frames[-1].t < t:
             frames.append(self._capture_frame(t, occupants))
 
         results = build_results(occupants, queues, t)
         return SimulationOutput(results=results, frames=frames)
 
-    def _spawn_occupants(self, layout: BuildingLayout, graph) -> list[SimulatedOccupant]:
+    def _spawn_occupants(
+        self,
+        layout: BuildingLayout,
+        graph,
+        radius_m: float,
+    ) -> list[SimulatedOccupant]:
         occupants: list[SimulatedOccupant] = []
         spaces = {s.id: s for s in layout.spaces}
+        spacing = max(2.0 * radius_m + 0.05, 0.45)
+        margin = radius_m + 0.1
 
         for group in layout.occupant_groups:
             start_node = graph.space_node_ids[group.space_id]
             selector = (
                 FloodRouteSelector()
-                if layout.flood and layout.flood.enabled and layout.flood.intensity > 0
+                if layout.flood
+                and layout.flood.enabled
+                and layout.flood.intensity > 0
                 and isinstance(self.route_selector, DijkstraRouteSelector)
                 else self.route_selector
             )
@@ -103,14 +124,17 @@ class SimulationEngine:
                 graph, start_node, preferred_exit_id=group.destination_exit_id
             )
             space = spaces[group.space_id]
+            usable_w = max(space.width - 2 * margin, spacing)
+            cols = max(1, int(usable_w / spacing) + 1)
+            node = graph.nodes[start_node]
             for i in range(group.count):
-                # Spread occupants within the room for visualization
-                cols = max(int(space.width), 1)
-                ox = space.x + 0.5 + (i % cols) * 0.4
-                oy = space.y + 0.5 + (i // cols) * 0.4
-                ox = min(ox, space.x + space.width - 0.3)
-                oy = min(oy, space.y + space.height - 0.3)
-                node = graph.nodes[start_node]
+                if group.count == 1:
+                    ox, oy = node.x, node.y
+                else:
+                    ox = space.x + margin + (i % cols) * spacing
+                    oy = space.y + margin + (i // cols) * spacing
+                    ox = min(ox, space.x + space.width - margin)
+                    oy = min(oy, space.y + space.height - margin)
                 occupants.append(
                     SimulatedOccupant(
                         id=f"{group.id}:{i}",
@@ -118,10 +142,12 @@ class SimulationEngine:
                         speed_mps=group.walking_speed_mps,
                         route=list(route),
                         status=OccupantStatus.TRAPPED if len(route) == 1 else OccupantStatus.ACTIVE,
-                        x=ox if group.count > 1 else node.x,
-                        y=oy if group.count > 1 else node.y,
+                        x=ox,
+                        y=oy,
+                        aperture_slot=i,
                     )
                 )
+        resolve_overlaps(occupants, radius_m, iterations=6)
         return occupants
 
     def _step(
@@ -132,18 +158,19 @@ class SimulationEngine:
         params: SimulationParameters,
         t: float,
     ) -> None:
-        # Group active occupants by the element they want to traverse next
+        radius = params.occupant_radius_m
         flood_active = any(e.speed_factor != 1.0 for e in graph.edges.values())
+
         contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
-        element_edge = {}
+        element_edge: dict = {}
+        occ_edge: dict[str, object] = {}
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
             nxt = occ.next_node_id
             if nxt is None:
-                occ.status = OccupantStatus.EVACUATED
-                occ.evacuated_at = t
+                self.movement_model.try_advance_route(occ, graph, radius, t)
                 continue
             edge = edge_between(graph, occ.current_node_id, nxt)
             if edge is None or edge.speed_factor <= 0:
@@ -151,8 +178,8 @@ class SimulationEngine:
                 continue
             contenders[edge.element_id].append(occ)
             element_edge[edge.element_id] = edge
+            occ_edge[occ.id] = edge
 
-        # Count occupants currently associated with corridor elements (density)
         occupants_on: dict[str, int] = defaultdict(int)
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
@@ -161,7 +188,7 @@ class SimulationEngine:
             if node.kind.value == "space":
                 occupants_on[node.ref_id] += 1
 
-        allowed: dict[str, float] = {}  # occupant_id -> allowed distance this step
+        admitted: set[str] = set()
 
         for element_id, group in contenders.items():
             edge = element_edge[element_id]
@@ -176,63 +203,166 @@ class SimulationEngine:
                 q = ElementQueueState(element_id=element_id, element_type=kind)
                 queues[element_id] = q
 
-            q.max_throughput_this_step = capacity
+            q.max_throughput_this_step = capacity if capacity != float("inf") else float(len(group))
             q.queue_length = len(group)
             q.peak_queue = max(q.peak_queue, len(group))
+            q.throughput_this_step = 0.0
 
-            # Priority: those already progressing on the edge, then FIFO by id
-            ordered = sorted(
-                group,
-                key=lambda o: (0 if o.progress_on_edge > 0 else 1, o.id),
-            )
+            if edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
+                # Gate only when approaching an opening node, not when leaving into a space
+                sample_next = graph.nodes[group[0].next_node_id]  # type: ignore[index]
+                approaching_opening = sample_next.kind in (NodeKind.DOOR, NodeKind.EXIT)
 
-            slots = capacity
-            for occ in ordered:
-                desired = self.movement_model.desired_move_distance(occ, params.timestep_s)
-                # Edges sharing a door can have different flood exposure.
-                if flood_active:
-                    next_edge = edge_between(graph, occ.current_node_id, occ.next_node_id)
-                    desired *= next_edge.speed_factor
-                if edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
-                    # Flow-limited: consume one slot to fully proceed this step fractionally
-                    if slots >= 1.0 or (slots > 0 and occ.progress_on_edge > 0):
-                        allowed[occ.id] = desired
-                        slots -= 1.0
-                        q.throughput_this_step += 1.0
-                    elif slots > 0:
-                        # Partial progress proportional to remaining capacity
-                        frac = slots
-                        allowed[occ.id] = desired * frac
-                        slots = 0.0
-                        q.throughput_this_step += frac
-                    else:
-                        allowed[occ.id] = 0.0
-                        q.total_wait_s += params.timestep_s
+                if not approaching_opening:
+                    for o in group:
+                        admitted.add(o.id)
+                    continue
+
+                waypoint = sample_next
+                for o in group:
+                    if o.next_node_id:
+                        waypoint = graph.nodes[o.next_node_id]
+                        break
+
+                slots = (
+                    int(capacity)
+                    if capacity != float("inf")
+                    else aperture_slots(edge.width_m, radius)
+                )
+                in_th = [
+                    o
+                    for o in group
+                    if in_throat(o.x, o.y, waypoint.x, waypoint.y, radius)
+                ]
+                approaching = [o for o in group if o not in in_th]
+                approaching.sort(
+                    key=lambda o: (dist(o.x, o.y, waypoint.x, waypoint.y), o.id)
+                )
+
+                ordered = sorted(in_th, key=lambda o: o.id) + approaching
+                for o in ordered[:slots]:
+                    admitted.add(o.id)
+                for o in ordered[slots:]:
+                    q.total_wait_s += params.timestep_s
+                    q.waiting_occupant_ids.append(o.id)
+            else:
+                # Open space / corridor: all may try to move; density is soft
+                if capacity == float("inf") or capacity > 0:
+                    for o in group:
+                        admitted.add(o.id)
                 else:
-                    # Distance / density limited
-                    if capacity == float("inf"):
-                        allowed[occ.id] = desired
-                    elif slots > 0:
-                        allowed[occ.id] = desired
-                        slots -= 0.5  # soft density consumption
-                    else:
-                        allowed[occ.id] = 0.0
+                    for o in group:
                         q.total_wait_s += params.timestep_s
+
+        moved_by: dict[str, float] = {}
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
                 continue
-            dist = allowed.get(occ.id, 0.0)
-            # Cap after flow allocation to avoid fractional capacity repeatedly
-            # shrinking the final distance to a node without ever reaching it.
-            if flood_active and occ.next_node_id is not None:
-                next_edge = edge_between(graph, occ.current_node_id, occ.next_node_id)
-                if next_edge is not None:
-                    dist = min(dist, next_edge.distance_m - occ.progress_on_edge)
-            waited = dist <= 0
-            self.movement_model.apply_move(occ, graph, dist, params.timestep_s, waited)
+            if occ.next_node_id is None:
+                continue
+
+            edge = occ_edge.get(occ.id)
+            is_admitted = occ.id in admitted
+            # Non-aperture edges always admitted above; doors need admission to enter throat
+            target_x, target_y = self.movement_model.propose_target(
+                occ, graph, radius, admitted=is_admitted
+            )
+
+            desired = occ.speed_mps * params.timestep_s
+            if flood_active and edge is not None:
+                desired *= edge.speed_factor  # type: ignore[union-attr]
+
+            if edge is not None and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):  # type: ignore[union-attr]
+                next_node = graph.nodes[occ.next_node_id]
+                approaching_opening = next_node.kind in (NodeKind.DOOR, NodeKind.EXIT)
+                if approaching_opening and not is_admitted:
+                    # Can shuffle toward hold point but cannot enter throat
+                    waypoint = next_node
+                    old_x, old_y = occ.x, occ.y
+                    moved = self.movement_model.step_toward(occ, target_x, target_y, desired)
+                    occ.x, occ.y = clamp_outside_throat(
+                        occ.x, occ.y, waypoint.x, waypoint.y, radius
+                    )
+                    moved = dist(old_x, old_y, occ.x, occ.y)
+                    moved_by[occ.id] = moved
+                    continue
+
+            moved = self.movement_model.step_toward(occ, target_x, target_y, desired)
+            moved_by[occ.id] = moved
+            if (
+                is_admitted
+                and edge is not None
+                and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)  # type: ignore[union-attr]
+            ):
+                next_node = graph.nodes[occ.next_node_id]
+                if next_node.kind in (NodeKind.DOOR, NodeKind.EXIT):
+                    q = queues.get(edge.element_id)  # type: ignore[union-attr]
+                    if q is not None and moved > 1e-6:
+                        q.throughput_this_step += 1.0 / max(
+                            aperture_slots(edge.width_m, radius), 1  # type: ignore[union-attr]
+                        )
+
+        resolve_overlaps(occupants, radius)
+
+        # Re-clamp non-admitted after overlap resolution so pushes don't sneak them in
+        for occ in occupants:
+            if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+                continue
+            if occ.id in admitted:
+                continue
+            edge = occ_edge.get(occ.id)
+            if edge is None or edge.kind not in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):  # type: ignore[union-attr]
+                continue
+            if occ.next_node_id is None:
+                continue
+            waypoint = graph.nodes[occ.next_node_id]
+            if waypoint.kind not in (NodeKind.DOOR, NodeKind.EXIT):
+                continue
+            occ.x, occ.y = clamp_outside_throat(occ.x, occ.y, waypoint.x, waypoint.y, radius)
+
+        for occ in occupants:
+            if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+                continue
+            moved = moved_by.get(occ.id, 0.0)
+            edge = occ_edge.get(occ.id)
+            approaching_opening = False
+            if (
+                edge is not None
+                and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)  # type: ignore[union-attr]
+                and occ.next_node_id is not None
+            ):
+                approaching_opening = graph.nodes[occ.next_node_id].kind in (
+                    NodeKind.DOOR,
+                    NodeKind.EXIT,
+                )
+
+            blocked = approaching_opening and occ.id not in admitted
+            if blocked:
+                occ.status = OccupantStatus.WAITING
+                occ.wait_time_s += params.timestep_s
+            elif moved > 1e-4:
+                occ.distance_m += moved
+                occ.travel_time_s += params.timestep_s
+                if occ.status != OccupantStatus.EVACUATED:
+                    occ.status = OccupantStatus.ACTIVE
+            else:
+                if occ.status != OccupantStatus.EVACUATED:
+                    occ.status = OccupantStatus.WAITING
+                    occ.wait_time_s += params.timestep_s
+
+            can_advance = not blocked
+            if can_advance:
+                self.movement_model.try_advance_route(
+                    occ, graph, radius, t, admitted=occ.id in admitted or not approaching_opening
+                )
             if occ.status == OccupantStatus.EVACUATED and occ.evacuated_at is None:
                 occ.evacuated_at = t
+
+            # Count travel distance for blocked agents who still shuffled
+            if blocked and moved > 1e-4:
+                occ.distance_m += moved
+                occ.travel_time_s += params.timestep_s
 
     @staticmethod
     def _capture_frame(t: float, occupants: list[SimulatedOccupant]) -> SimulationFrame:

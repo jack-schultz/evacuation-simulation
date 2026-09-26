@@ -93,6 +93,7 @@ export interface SimulationParameters {
   stairs_flow_per_s: number;
   exit_flow_per_s: number;
   corridor_density_per_m2: number;
+  occupant_radius_m: number;
   frame_interval_s: number;
 }
 

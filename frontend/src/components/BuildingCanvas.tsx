@@ -18,6 +18,8 @@ interface Props {
   occupants?: OccupantFrameState[];
   congestedIds?: Set<string>;
   interactive?: boolean;
+  /** Body radius in metres for playback dots (defaults to 0.25). */
+  occupantRadiusM?: number;
 }
 
 const SPACE_COLORS: Record<string, string> = {
@@ -60,10 +62,12 @@ export function BuildingCanvas({
   occupants = [],
   congestedIds,
   interactive = true,
+  occupantRadiusM = 0.25,
 }: Props) {
   const [draft, setDraft] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const drawing = useRef(false);
   const start = useRef<{ x: number; y: number } | null>(null);
+  const occupantRadiusPx = Math.max(occupantRadiusM * SCALE, 3);
 
   const widthPx = layout.width * SCALE;
   const heightPx = layout.height * SCALE;
@@ -409,7 +413,7 @@ export function BuildingCanvas({
                 key={o.id}
                 x={o.x * SCALE}
                 y={o.y * SCALE}
-                radius={4}
+                radius={occupantRadiusPx}
                 fill={o.status === 'trapped' ? '#7c3aed' : o.status === 'waiting' ? '#ef4444' : '#2563eb'}
                 listening={false}
               />
