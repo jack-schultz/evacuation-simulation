@@ -24,6 +24,7 @@ from app.simulation.collision import (
     update_space_membership_from_position,
 )
 from app.simulation.hazards import hazard_radius_at, hazards_speed_factor
+from app.simulation.hazard_avoidance import flood_detour_target
 from app.simulation.flow import ElementQueueState
 from app.simulation.graph import EdgeKind, NodeKind
 from app.simulation.movement import SimulatedOccupant
@@ -68,8 +69,20 @@ def advance_timestep(
             continue
         edge = edge_between(graph, occ.current_node_id, nxt)
         waypoint = graph.nodes[nxt]
+        flood_target = flood_detour_target(
+            (occ.x, occ.y),
+            (waypoint.x, waypoint.y),
+            spaces.get(occ.current_space_id),
+            flood,
+            t,
+            radius,
+        )
+        if flood_target is False:
+            occ.status = OccupantStatus.TRAPPED
+            continue
+        target_x, target_y = flood_target or (waypoint.x, waypoint.y)
         factor = hazards_speed_factor(
-            hazards, t, occ.x, occ.y, waypoint.x, waypoint.y,
+            hazards, t, occ.x, occ.y, target_x, target_y,
             is_exit=waypoint.kind == NodeKind.EXIT,
         ) if has_hazard else (edge.speed_factor if edge else 0.0)
         speed_factors[occ.id] = factor
@@ -198,6 +211,18 @@ def advance_timestep(
         target_x, target_y = movement_model.propose_target(
             occ, graph, radius, admitted=is_admitted, doors=doors
         )
+        flood_target = flood_detour_target(
+            (occ.x, occ.y),
+            (target_x, target_y),
+            spaces.get(occ.current_space_id),
+            flood,
+            t,
+            radius,
+        )
+        if flood_target is False:
+            continue
+        if flood_target is not None:
+            target_x, target_y = flood_target
 
         desired = occ.speed_mps * params.timestep_s
         desired *= speed_factors[occ.id]
