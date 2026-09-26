@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.domain.building import Door, Exit, Space
+from app.domain.building import Door, Exit, Space, SpaceType
 from app.simulation.apertures import dist
 
 def _point_to_segment_dist(
@@ -148,17 +148,38 @@ def _punch_openings_on_edges(
 _SPACE_EDGE_THICKNESS_M = 0.1
 
 
+def _is_overlay_stair(space: Space, spaces: list[Space]) -> bool:
+    """True when a stairs polygon's center lies inside another space (portal overlay)."""
+    if space.type != SpaceType.STAIRS:
+        return False
+    from app.domain.geometry import interior_point, point_in_polygon
+
+    cx, cy = interior_point(space.vertices)
+    for other in spaces:
+        if other.id == space.id or other.type == SpaceType.STAIRS:
+            continue
+        if point_in_polygon(cx, cy, other.vertices):
+            return True
+    return False
+
+
 def space_boundary_segments(
     spaces: list[Space],
     doors: list[Door],
     exits: list[Exit],
     thickness_m: float = _SPACE_EDGE_THICKNESS_M,
 ) -> list[WallSegment]:
-    """Space perimeter edge segments as solids, with door/exit widths punched through."""
+    """Space perimeter edge segments as solids, with door/exit widths punched through.
+
+    Overlay stairs (center inside a host room/corridor) do not emit walls — they are
+    portals, and their edges would otherwise trap anyone who teleports to the center.
+    """
     from app.domain.geometry import edges as polygon_edges
 
     edge_list: list[tuple[tuple[float, float], tuple[float, float]]] = []
     for s in spaces:
+        if _is_overlay_stair(s, spaces):
+            continue
         edge_list.extend(polygon_edges(s.vertices))
     openings = [(d.x, d.y, d.width) for d in doors] + [(e.x, e.y, e.width) for e in exits]
     return _punch_openings_on_edges(edge_list, openings, thickness_m)

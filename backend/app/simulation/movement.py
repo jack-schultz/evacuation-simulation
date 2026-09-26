@@ -191,9 +191,10 @@ class SpatialMovementModel:
 
         # Stair teleport portal: stay at / walk to current stair center
         if (
-            edge.kind == EdgeKind.STAIRS
-            and cur.kind == NodeKind.SPACE
+            cur.kind == NodeKind.SPACE
             and waypoint.kind == NodeKind.SPACE
+            and cur.id in graph.stair_space_node_ids
+            and waypoint.id in graph.stair_space_node_ids
         ):
             return cur.x, cur.y
 
@@ -307,10 +308,11 @@ class SpatialMovementModel:
 
         reach = max(radius_m * 1.2, 0.35)
         stair_transfer = (
-            edge is not None
-            and edge.kind == EdgeKind.STAIRS
-            and from_node.kind == NodeKind.SPACE
+            from_node.kind == NodeKind.SPACE
             and waypoint.kind == NodeKind.SPACE
+            and from_node.id in graph.stair_space_node_ids
+            and waypoint.id in graph.stair_space_node_ids
+            and edge is not None
         )
 
         if stair_transfer:
@@ -338,7 +340,10 @@ class SpatialMovementModel:
 
         if stair_transfer:
             occupant.x, occupant.y = waypoint.x, waypoint.y
-            occupant.current_space_id = waypoint.ref_id
+            # Land in the room/corridor that hosts the destination stair
+            occupant.current_space_id = graph.stair_host_space_ids.get(
+                waypoint.ref_id, waypoint.ref_id
+            )
 
         occupant.route_index += 1
         occupant.progress_on_edge = 0.0

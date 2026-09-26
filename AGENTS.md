@@ -60,7 +60,9 @@ API routers → services → domain / simulation engine
 
 - Layout pieces: **spaces** (`room` \| `corridor` \| `stairs` as closed polygons), **doors**, **exits**, **occupant_groups**.
 - Connectivity is **doors + exits**, plus **linked stairs** (`linked_stair_id`)
-  that form a teleport portal between two stair spaces. Space nodes sit at an
+  that form a teleport portal between two stair spaces. A stair whose center
+  lies inside a room/corridor is pathable as an opening of that host (like a
+  door). Space nodes sit at an
   **interior point** and define which openings share a room; within a space, routes
   follow a visibility graph (openings + reflex-corner waypoints) so paths stay inside
   non-convex rooms. Space edges act as solid barriers for movement (door/exit widths

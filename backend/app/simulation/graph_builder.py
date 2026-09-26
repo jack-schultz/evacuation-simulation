@@ -224,6 +224,10 @@ class NavigationGraphBuilder:
                 graph.add_edge(edge)
             openings_by_space[exit_.connected_space_id].append(node.id)
 
+        # Stairs overlay their host spaces: register as openings so people can
+        # path to the stair center without a separate door.
+        self._register_stair_hosts(graph, spaces, openings_by_space)
+
         # Per-space visibility graph: openings + reflex waypoints + space node
         for space_id, opening_ids in openings_by_space.items():
             space = spaces[space_id]
@@ -234,6 +238,30 @@ class NavigationGraphBuilder:
         self._add_stair_link_edges(graph, spaces, defaults)
 
         return graph
+
+    def _register_stair_hosts(
+        self,
+        graph: NavigationGraph,
+        spaces: dict[str, Space],
+        openings_by_space: dict[str, list[str]],
+    ) -> None:
+        """Treat each stair as an opening inside spaces that contain its center."""
+        for space in spaces.values():
+            if space.type != SpaceType.STAIRS:
+                continue
+            stair_nid = graph.space_node_ids[space.id]
+            sn = graph.nodes[stair_nid]
+            hosts: list[Space] = []
+            for other in spaces.values():
+                if other.id == space.id or other.type == SpaceType.STAIRS:
+                    continue
+                if point_in_polygon(sn.x, sn.y, other.vertices):
+                    hosts.append(other)
+            if not hosts:
+                continue
+            host = min(hosts, key=lambda s: s.area_m2)
+            graph.stair_host_space_ids[space.id] = host.id
+            openings_by_space[host.id].append(stair_nid)
 
     def _add_stair_link_edges(
         self,

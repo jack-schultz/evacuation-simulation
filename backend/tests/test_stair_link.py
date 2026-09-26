@@ -254,5 +254,124 @@ class StairLinkTeleportTests(unittest.TestCase):
         self.assertIn("space:stairs_b", occ.route_node_ids)
 
 
+def overlay_stairs_layout() -> BuildingLayout:
+    """Two rooms with linked stairs drawn inside each (no doors into stairs)."""
+    return BuildingLayout.model_validate(
+        {
+            "width": 40,
+            "height": 20,
+            "spaces": [
+                {
+                    "id": "room_a",
+                    "name": "Room A",
+                    "type": "room",
+                    "vertices": [[0, 0], [10, 0], [10, 10], [0, 10]],
+                },
+                {
+                    "id": "stairs_a",
+                    "name": "Stairs A",
+                    "type": "stairs",
+                    "vertices": [[7, 3], [9, 3], [9, 7], [7, 7]],
+                    "linked_stair_id": "stairs_b",
+                },
+                {
+                    "id": "room_b",
+                    "name": "Room B",
+                    "type": "room",
+                    "vertices": [[20, 0], [30, 0], [30, 10], [20, 10]],
+                },
+                {
+                    "id": "stairs_b",
+                    "name": "Stairs B",
+                    "type": "stairs",
+                    "vertices": [[21, 3], [23, 3], [23, 7], [21, 7]],
+                    "linked_stair_id": "stairs_a",
+                },
+            ],
+            "doors": [],
+            "exits": [
+                {
+                    "id": "out",
+                    "x": 10,
+                    "y": 5,
+                    "width": 1.2,
+                    "connected_space_id": "room_a",
+                }
+            ],
+            "occupant_groups": [
+                {
+                    "id": "g",
+                    "name": "Crowd",
+                    "count": 1,
+                    "space_id": "room_b",
+                    "spawn_x": 27.0,
+                    "spawn_y": 5.0,
+                    "walking_speed_mps": 1.4,
+                }
+            ],
+        }
+    )
+
+
+class OverlayStairTests(unittest.TestCase):
+    def setUp(self):
+        self.defaults = SimulationParameters().model_dump()
+
+    def test_stair_registered_as_host_opening(self):
+        layout = overlay_stairs_layout()
+        graph = NavigationGraphBuilder().build(layout, self.defaults)
+        self.assertEqual(graph.stair_host_space_ids["stairs_a"], "room_a")
+        self.assertEqual(graph.stair_host_space_ids["stairs_b"], "room_b")
+        # Host room can reach its stair node
+        room_a = graph.space_node_ids["room_a"]
+        stair_a = graph.space_node_ids["stairs_a"]
+        self.assertTrue(
+            any(
+                graph.edges[eid].to_id == stair_a
+                for eid in graph.adjacency[room_a]
+            )
+        )
+
+    def test_route_from_far_room_uses_overlay_stairs(self):
+        layout = overlay_stairs_layout()
+        graph = NavigationGraphBuilder().build(layout, self.defaults)
+        route = DijkstraRouteSelector().select_route(
+            graph, graph.space_node_ids["room_b"]
+        )
+        self.assertIn("space:stairs_b", route)
+        self.assertIn("space:stairs_a", route)
+        self.assertEqual(route[-1], "exit:out")
+
+    def test_teleport_lands_in_host_space(self):
+        layout = overlay_stairs_layout()
+        graph = NavigationGraphBuilder().build(layout, self.defaults)
+        a = graph.nodes[graph.space_node_ids["stairs_a"]]
+        b = graph.nodes[graph.space_node_ids["stairs_b"]]
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:stairs_a", "space:stairs_b", "exit:out"],
+            current_space_id="room_a",
+            route_index=0,
+            x=a.x,
+            y=a.y,
+        )
+        SpatialMovementModel().try_advance_route(occ, graph, 0.25, t=1.0)
+        self.assertEqual(occ.current_space_id, "room_b")
+        self.assertAlmostEqual(occ.x, b.x, places=5)
+        self.assertAlmostEqual(occ.y, b.y, places=5)
+
+    def test_evacuate_via_overlay_linked_stairs(self):
+        layout = overlay_stairs_layout()
+        params = SimulationParameters(max_time_s=120, timestep_s=0.25)
+        result = SimulationEngine().run(layout, params)
+        self.assertEqual(result.results.remaining_count, 0)
+        occ = result.results.occupants[0]
+        self.assertTrue(occ.evacuated)
+        self.assertIn("space:stairs_b", occ.route_node_ids)
+        self.assertIn("space:stairs_a", occ.route_node_ids)
+
+
 if __name__ == "__main__":
     unittest.main()

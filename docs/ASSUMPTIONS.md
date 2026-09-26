@@ -20,9 +20,11 @@ regulatory compliance calculation.
   navigation graph beyond defining which openings may connect.
 * Stairs spaces may set `linked_stair_id` to another stairs space. The pair
   adds a navigation edge between the two stair centroids; when an occupant
-  reaches the center of one stair they teleport to the other. Rooms still need
-  doors into each stair polygon. This is a flat-canvas multi-level shortcut,
-  not continuous vertical geometry.
+  reaches the center of one stair they teleport to the other. A stair whose
+  center lies inside a room/corridor is treated as an opening of that host
+  space (no extra door required) and does not emit its own collision walls.
+  Stairs can also sit as their own polygons entered via doors. This is a
+  flat-canvas multi-level shortcut, not continuous vertical geometry.
 
 ## Occupant knowledge and behaviour
 

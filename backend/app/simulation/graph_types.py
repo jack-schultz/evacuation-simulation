@@ -53,6 +53,8 @@ class NavigationGraph:
     space_node_ids: dict[str, str] = field(default_factory=dict)  # space_id -> node_id
     # Space nodes retained on movement routes (linked stair teleport waypoints)
     stair_space_node_ids: set[str] = field(default_factory=set)
+    # stair space id -> host room/corridor that contains the stair center
+    stair_host_space_ids: dict[str, str] = field(default_factory=dict)
 
     def add_node(self, node: GraphNode) -> None:
         self.nodes[node.id] = node
