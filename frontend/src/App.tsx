@@ -30,6 +30,7 @@ export default function App() {
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [buildings, setBuildings] = useState<BuildingSummary[]>([]);
   const [layout, setLayout] = useState<BuildingLayout>(emptyLayout());
+  const [undoHistory, setUndoHistory] = useState<BuildingLayout[]>([]);
   const [tool, setTool] = useState<EditorTool>('select');
   const [selected, setSelected] = useState<SelectedRef>(null);
   const [busy, setBusy] = useState(false);
@@ -58,6 +59,7 @@ export default function App() {
     const b = await api.getBuilding(id);
     setBuildingId(b.id);
     setLayout(b.layout);
+    setUndoHistory([]);
     setSelected(null);
     setDirty(false);
     setFloorPlanStatus(null);
@@ -80,9 +82,34 @@ export default function App() {
   }, []);
 
   const updateLayout = (next: BuildingLayout) => {
+    if (busy || simulating || JSON.stringify(next) === JSON.stringify(layout)) return;
+    setUndoHistory((history) => [...history, layout]);
     setLayout(next);
     setDirty(true);
   };
+
+  const onUndo = useCallback(() => {
+    if (busy || simulating || undoHistory.length === 0) return;
+    setLayout(undoHistory[undoHistory.length - 1]);
+    setUndoHistory((history) => history.slice(0, -1));
+    setSelected(null);
+    setDirty(true);
+    setError(null);
+  }, [busy, simulating, undoHistory]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Text fields retain their native text undo behavior.
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]')) return;
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        onUndo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onUndo]);
 
   const onSave = async () => {
     setBusy(true);
@@ -141,6 +168,7 @@ export default function App() {
   const onNew = () => {
     setBuildingId(null);
     setLayout(emptyLayout());
+    setUndoHistory([]);
     setSelected(null);
     setFloorPlanStatus(null);
     setDirty(true);
@@ -234,12 +262,13 @@ export default function App() {
             className="building-name"
             value={layout.name}
             onChange={(e) => updateLayout({ ...layout, name: e.target.value })}
-            disabled={simulating && playback.status === 'playing'}
+            disabled={busy || simulating}
           />
         </div>
         <div className="top-actions">
           <select
             value={buildingId ?? ''}
+            disabled={busy}
             onChange={(e) => e.target.value && loadBuilding(e.target.value)}
           >
             <option value="" disabled>
@@ -251,8 +280,16 @@ export default function App() {
               </option>
             ))}
           </select>
-          <button type="button" onClick={onNew}>
+          <button type="button" onClick={onNew} disabled={busy}>
             New
+          </button>
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={busy || simulating || undoHistory.length === 0}
+            title="Undo last building edit (Ctrl+Z / Cmd+Z)"
+          >
+            Undo
           </button>
           <button type="button" onClick={onSave} disabled={busy}>
             Save{dirty ? ' *' : ''}
@@ -297,7 +334,7 @@ export default function App() {
           <ToolPalette
             tool={tool}
             onToolChange={setTool}
-            disabled={playback.status === 'playing'}
+            disabled={busy || simulating}
           />
           <FloodPanel layout={layout} onChange={updateLayout} disabled={busy || simulating} />
           <PropertiesPanel
@@ -305,7 +342,7 @@ export default function App() {
             selected={selected}
             onChange={updateLayout}
             onDeleteSelected={onDeleteSelected}
-            disabled={playback.status === 'playing'}
+            disabled={busy || simulating}
           />
         </aside>
         <main className="canvas-area">
