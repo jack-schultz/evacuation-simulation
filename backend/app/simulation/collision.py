@@ -1,11 +1,11 @@
-"""Spatial collision helpers: body radius, door apertures, walls, overlap resolution."""
+"""Spatial collision helpers: body radius, door apertures, space edges, overlap resolution."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.domain.building import Door, Exit, OccupantStatus, Space, Wall
+from app.domain.building import Door, Exit, OccupantStatus, Space
 from app.simulation.graph import NodeKind
 
 
@@ -220,19 +220,6 @@ def _punch_openings(
     return solids
 
 
-def solid_wall_rects(
-    walls: list[Wall],
-    doors: list[Door],
-    exits: list[Exit],
-) -> list[Aabb]:
-    """Explicit wall AABBs with door/exit clear widths punched out."""
-    openings = [(d.x, d.y, d.width) for d in doors] + [(e.x, e.y, e.width) for e in exits]
-    segments = [
-        (Aabb(w.x, w.y, w.width, w.height), w.width >= w.height) for w in walls
-    ]
-    return _punch_openings(segments, openings)
-
-
 # Thin shell along each space edge; only door/exit widths are passable.
 _SPACE_EDGE_THICKNESS_M = 0.1
 
@@ -256,15 +243,12 @@ def space_boundary_rects(
 
 
 def build_collision_solids(
-    walls: list[Wall],
     spaces: list[Space],
     doors: list[Door],
     exits: list[Exit],
 ) -> list[Aabb]:
-    """Space boundaries plus optional explicit walls; openings stay passable."""
-    return space_boundary_rects(spaces, doors, exits) + solid_wall_rects(
-        walls, doors, exits
-    )
+    """Space boundaries as collision solids; openings stay passable."""
+    return space_boundary_rects(spaces, doors, exits)
 
 
 def push_out_of_aabb(x: float, y: float, box: Aabb) -> tuple[float, float]:

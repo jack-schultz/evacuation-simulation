@@ -414,33 +414,5 @@ export function PropertiesPanel({ layout, selected, onChange, onDeleteSelected, 
     );
   }
 
-  if (selected.kind === 'wall') {
-    const wall = layout.walls.find((w) => w.id === selected.id);
-    if (!wall) return null;
-    return (
-      <div className="panel properties">
-        <h2>Wall / obstacle</h2>
-        <label>
-          Name
-          <input
-            disabled={disabled}
-            value={wall.name}
-            onChange={(e) =>
-              onChange({
-                ...layout,
-                walls: layout.walls.map((w) =>
-                  w.id === wall.id ? { ...w, name: e.target.value } : w,
-                ),
-              })
-            }
-          />
-        </label>
-        <button type="button" className="danger" disabled={disabled} onClick={onDeleteSelected}>
-          Delete
-        </button>
-      </div>
-    );
-  }
-
   return null;
 }

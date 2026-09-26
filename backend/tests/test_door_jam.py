@@ -2,7 +2,7 @@
 
 import unittest
 
-from app.domain.building import BuildingLayout, SimulationParameters, Wall
+from app.domain.building import BuildingLayout, SimulationParameters
 from app.simulation.collision import (
     Aabb,
     aperture_slots,
@@ -12,7 +12,6 @@ from app.simulation.collision import (
     resolve_overlaps,
     resolve_space_containment,
     resolve_wall_collisions,
-    solid_wall_rects,
     space_boundary_rects,
 )
 from app.simulation.engine import SimulationEngine
@@ -20,7 +19,7 @@ from app.simulation.graph import NavigationGraphBuilder
 from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
 
 
-def packed_room(door_width: float, count: int = 12, walls: list | None = None) -> BuildingLayout:
+def packed_room(door_width: float, count: int = 12) -> BuildingLayout:
     data = {
         "width": 20,
         "height": 20,
@@ -53,7 +52,6 @@ def packed_room(door_width: float, count: int = 12, walls: list | None = None) -
                 "walking_speed_mps": 1.4,
             }
         ],
-        "walls": walls or [],
     }
     return BuildingLayout.model_validate(data)
 
@@ -149,17 +147,6 @@ class WallCollisionHelpersTests(unittest.TestCase):
                 occ.x <= wall.x - 0.25 + 1e-9 or occ.x >= wall.right + 0.25 - 1e-9
             )
 
-    def test_solid_wall_rects_carves_exit_gap(self):
-        walls = [Wall(id="w", x=9.7, y=0.0, width=0.6, height=10.0)]
-        layout = packed_room(door_width=0.9, count=1, walls=[w.model_dump() for w in walls])
-        solids = solid_wall_rects(layout.walls, layout.doors, layout.exits)
-        for s in solids:
-            self.assertFalse(
-                s.contains_point(10.0, 5.0),
-                f"exit center still blocked by {s}",
-            )
-        self.assertGreaterEqual(len(solids), 2)
-
     def test_space_boundaries_block_except_at_openings(self):
         layout = packed_room(door_width=0.9, count=1)
         solids = space_boundary_rects(layout.spaces, layout.doors, layout.exits)
@@ -172,12 +159,14 @@ class WallCollisionHelpersTests(unittest.TestCase):
         hit = any(s.contains_point(5.0, bottom_edge_y) for s in solids)
         self.assertTrue(hit, "bottom edge without door should be solid")
 
-    def test_build_collision_solids_includes_boundaries_without_walls(self):
+    def test_build_collision_solids_uses_space_boundaries(self):
         layout = packed_room(door_width=0.9, count=1)
-        solids = build_collision_solids(
-            layout.walls, layout.spaces, layout.doors, layout.exits
-        )
+        solids = build_collision_solids(layout.spaces, layout.doors, layout.exits)
         self.assertGreater(len(solids), 0)
+        self.assertEqual(
+            len(solids),
+            len(space_boundary_rects(layout.spaces, layout.doors, layout.exits)),
+        )
 
 
 class DoorJamTests(unittest.TestCase):
@@ -241,29 +230,10 @@ class DoorJamTests(unittest.TestCase):
                         f"overlap at t={frame.t}: {active[i].id} and {active[j].id}",
                     )
 
-    def test_wall_across_exit_still_evacuates(self):
-        walls = [
-            {
-                "id": "barrier",
-                "name": "Barrier",
-                "x": 9.7,
-                "y": 0.0,
-                "width": 0.6,
-                "height": 10.0,
-            }
-        ]
-        output = SimulationEngine().run(
-            packed_room(door_width=0.9, count=6, walls=walls),
-            SimulationParameters(max_time_s=120, occupant_radius_m=0.25),
-        )
-        self.assertEqual(output.results.evacuated_count, 6)
-
     def test_space_edge_keeps_queue_on_office_side_of_door(self):
         """Shared space edge forces approach from the office; sealed edge stays blocked."""
         layout = two_room_layout(count=12)
-        solids = build_collision_solids(
-            layout.walls, layout.spaces, layout.doors, layout.exits
-        )
+        solids = build_collision_solids(layout.spaces, layout.doors, layout.exits)
         # Sealed point on shared edge (west of door) must be solid
         self.assertTrue(
             any(s.contains_point(10.0, 15.0) for s in solids),

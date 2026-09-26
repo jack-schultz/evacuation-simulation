@@ -31,15 +31,6 @@ class Space(BaseModel):
     )
 
 
-class Wall(BaseModel):
-    id: str
-    name: str = "Wall"
-    x: float
-    y: float
-    width: float = Field(gt=0)
-    height: float = Field(gt=0)
-
-
 class Door(BaseModel):
     id: str
     name: str = "Door"
@@ -118,7 +109,6 @@ class BuildingLayout(BaseModel):
     height: float = Field(default=40.0, gt=0)
     meters_per_cell: float = Field(default=1.0, gt=0)
     spaces: list[Space] = Field(default_factory=list)
-    walls: list[Wall] = Field(default_factory=list)
     doors: list[Door] = Field(default_factory=list)
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)

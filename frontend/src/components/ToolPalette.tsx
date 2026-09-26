@@ -5,7 +5,6 @@ const TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'room', label: 'Room' },
   { id: 'corridor', label: 'Corridor' },
   { id: 'stairs', label: 'Stairs' },
-  { id: 'wall', label: 'Wall' },
   { id: 'door', label: 'Door' },
   { id: 'exit', label: 'Exit' },
   { id: 'occupants', label: 'Occupants' },
@@ -37,8 +36,13 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
       </div>
       <p className="hint">
         Select a tool, then click or drag on the canvas to add elements. Use Select to drag
+<<<<<<< HEAD
         spaces, walls, doors, exits, spawn points or the flood centre handle. Use Spawn point
         to add a group at a room location, then drag it to set its spawn position. Positions snap to the 0.5 m grid;
+=======
+        spaces, doors, exits or the flood centre handle. Drag occupant groups into
+        another space to change their location. Positions snap to the 0.5 m grid;
+>>>>>>> origin/main
         door and exit connections can be changed in Properties.
       </p>
     </div>

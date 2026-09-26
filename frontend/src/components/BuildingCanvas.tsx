@@ -228,16 +228,6 @@ export function BuildingCanvas({
     setDraft(null);
     start.current = null;
 
-    if (tool === 'wall') {
-      const id = uid('wall');
-      onChange({
-        ...layout,
-        walls: [...layout.walls, { id, name: 'Wall', x, y, width: w, height: h }],
-      });
-      onSelect({ kind: 'wall', id });
-      return;
-    }
-
     if (tool === 'room' || tool === 'corridor' || tool === 'stairs') {
       const id = uid(tool);
       onChange({
@@ -347,27 +337,6 @@ export function BuildingCanvas({
                 listening={false}
               />
             </Group>
-          ))}
-
-          {layout.walls.map((w) => (
-            <Rect
-              key={w.id}
-              {...dragProps({ kind: 'wall', id: w.id }, (x, y) => {
-                onChange({
-                  ...layout,
-                  walls: layout.walls.map((wall) => wall.id === w.id ? { ...wall, x, y } : wall),
-                });
-              }, w.width, w.height)}
-              x={w.x * SCALE}
-              y={w.y * SCALE}
-              width={w.width * SCALE}
-              height={w.height * SCALE}
-              fill="#334155"
-              opacity={0.85}
-              stroke={isSelected('wall', w.id) ? '#2563eb' : undefined}
-              strokeWidth={2}
-              onClick={() => interactive && onSelect({ kind: 'wall', id: w.id })}
-            />
           ))}
 
           {layout.flood?.enabled && (
