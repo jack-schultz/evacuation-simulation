@@ -1,4 +1,4 @@
-"""Seed example building demonstrating a corridor bottleneck."""
+"""Seed example building demonstrating a hallway bottleneck."""
 
 from app.domain.building import (
     BuildingLayout,
@@ -12,9 +12,9 @@ from app.domain.geometry import rect_vertices
 
 
 def create_seed_layout() -> BuildingLayout:
-    """Office A --door--> Corridor --door--> Office B with exits at both ends.
+    """Office A --door--> Hallway --door--> Office B with exits at both ends.
 
-    The narrow corridor and doors create a measurable congestion bottleneck when
+    The narrow hallway and doors create a measurable congestion bottleneck when
     ~80 occupants evacuate simultaneously.
     """
     return BuildingLayout(
@@ -30,11 +30,10 @@ def create_seed_layout() -> BuildingLayout:
                 vertices=rect_vertices(5.0, 4.0, 20.0, 10.0),
             ),
             Space(
-                id="corridor",
-                name="Corridor",
-                type=SpaceType.CORRIDOR,
+                id="hallway",
+                name="Hallway",
+                type=SpaceType.ROOM,
                 vertices=rect_vertices(12.0, 14.5, 6.0, 7.0),
-                capacity_density_per_m2=1.5,
             ),
             Space(
                 id="office_b",
@@ -50,7 +49,7 @@ def create_seed_layout() -> BuildingLayout:
                 x=15.0,
                 y=14.0,
                 width=0.9,
-                connects=("office_a", "corridor"),
+                connects=("office_a", "hallway"),
                 flow_rate_per_s=0.8,
             ),
             Door(
@@ -59,7 +58,7 @@ def create_seed_layout() -> BuildingLayout:
                 x=15.0,
                 y=21.5,
                 width=0.9,
-                connects=("corridor", "office_b"),
+                connects=("hallway", "office_b"),
                 flow_rate_per_s=0.8,
             ),
         ],

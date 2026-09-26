@@ -6,7 +6,7 @@ regulatory compliance calculation.
 
 ## Geometry
 
-* Building spaces are closed polygons (rooms, corridors, stairs). Rectangles are
+* Building spaces are closed polygons (rooms, stairs). Rectangles are
   the special case of four corners; the editor draws arbitrary polygons by
   clicking corners and closing on the start point.
 * Coordinates use a top-left origin; one grid unit defaults to one metre
@@ -21,7 +21,7 @@ regulatory compliance calculation.
 * Stairs spaces may set `linked_stair_id` to another stairs space. The pair
   adds a navigation edge between the two stair centroids; when an occupant
   reaches the center of one stair they teleport to the other. A stair whose
-  center lies inside a room/corridor is treated as an opening of that host
+  center lies inside a room is treated as an opening of that host
   space (no extra door required) and does not emit its own collision walls.
   Stairs can also sit as their own polygons entered via doors. This is a
   flat-canvas multi-level shortcut, not continuous vertical geometry.
@@ -60,7 +60,8 @@ regulatory compliance calculation.
   excess demand piles up and waits outside the opening throat.
 * Legacy `door_flow_per_s` / `exit_flow_per_s` / `stairs_flow_per_s` parameters
   remain on the API but no longer drive primary door throughput.
-* Corridors may still enforce soft density limits via `FlowModel`.
+* Soft density limits may still apply via `FlowModel` for spaces that set
+  `capacity_density_per_m2` (and for stairs via defaults).
 * Capacity / aperture bookkeeping stays behind a `FlowModel` interface.
 
 ## Hazards not modelled

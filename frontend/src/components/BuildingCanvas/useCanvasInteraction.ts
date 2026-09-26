@@ -111,7 +111,7 @@ export function useCanvasInteraction({
       return;
     }
 
-    if (tool === 'occupants' || tool === 'spawn') {
+    if (tool === 'occupants') {
       const spaceId = spaceContaining(layout, p.x, p.y);
       if (!spaceId) return;
       const id = uid('group');

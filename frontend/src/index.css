@@ -117,7 +117,7 @@ body {
 
 .main {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   min-height: 0;
   overflow: hidden;
 }
@@ -156,6 +156,13 @@ body {
   line-height: 1;
   font-size: 1.1rem;
   color: #64748b;
+}
+
+.inspector-sidebar {
+  width: 260px;
+  overflow: auto;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
 }
 
 .panel-rail {

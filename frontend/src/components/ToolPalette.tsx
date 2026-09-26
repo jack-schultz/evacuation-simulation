@@ -3,12 +3,10 @@ import type { EditorTool } from '../types/building';
 const TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'select', label: 'Select' },
   { id: 'room', label: 'Room' },
-  { id: 'corridor', label: 'Corridor' },
   { id: 'stairs', label: 'Stairs' },
   { id: 'door', label: 'Door' },
   { id: 'exit', label: 'Exit' },
   { id: 'occupants', label: 'Occupants' },
-  { id: 'spawn', label: 'Spawn point' },
 ];
 
 interface Props {
@@ -35,11 +33,11 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
         ))}
       </div>
       <p className="hint">
-        Room, corridor and stairs: click corners to draw a polygon, then click the
+        Room and stairs: click corners to draw a polygon, then click the
         starting point to close it (Esc or right-click cancels). Door, exit and
-        occupants and spawn points place with a click. Use Select to drag spaces,
-        doors, exits, spawn points or hazard centres. Drag occupants to move their
-        spawn point. Positions snap to the 0.5 m grid.
+        occupants place with a click. Use Select to drag spaces, doors, exits,
+        occupants or hazard centres. Drag occupants to move their spawn point.
+        Positions snap to the 0.5 m grid.
       </p>
     </div>
   );

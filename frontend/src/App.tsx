@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FloodPanel } from './components/FloodPanel';
 import { EmergencyPanel } from './components/EmergencyPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
@@ -12,7 +12,7 @@ import { useBuildingEditor } from './hooks/useBuildingEditor';
 import { useBuildingPersistence } from './hooks/useBuildingPersistence';
 import { useSimulationSession } from './hooks/useSimulationSession';
 
-const DEFAULT_OPEN: PanelId[] = ['tools', 'properties'];
+const DEFAULT_OPEN: PanelId[] = ['tools'];
 
 export default function App() {
   const [busy, setBusy] = useState(false);
@@ -48,16 +48,6 @@ export default function App() {
       return next;
     });
   };
-
-  useEffect(() => {
-    if (!editor.selected) return;
-    setOpenPanels((current) => {
-      if (current.has('properties')) return current;
-      const next = new Set(current);
-      next.add('properties');
-      return next;
-    });
-  }, [editor.selected]);
 
   return (
     <div className="app">
@@ -148,16 +138,6 @@ export default function App() {
                 <p className="hint">Create another building with New, set its size and name, then Save.</p>
               </section>
             ),
-            properties: (
-              <PropertiesPanel
-                layout={editor.layout}
-                selected={editor.selected}
-                onChange={editor.updateLayout}
-                onSelect={editor.setSelected}
-                onDeleteSelected={editor.onDeleteSelected}
-                disabled={disabled}
-              />
-            ),
             flood: (
               <FloodPanel layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
             ),
@@ -185,6 +165,19 @@ export default function App() {
             fireRadiusM={session.playback.currentFrame?.fire_radius_m}
           />
         </main>
+
+        {editor.selected && (
+          <aside className="inspector-sidebar" aria-label="Properties">
+            <PropertiesPanel
+              layout={editor.layout}
+              selected={editor.selected}
+              onChange={editor.updateLayout}
+              onSelect={editor.setSelected}
+              onDeleteSelected={editor.onDeleteSelected}
+              disabled={disabled}
+            />
+          </aside>
+        )}
       </div>
 
       <ResultsPanel results={session.playback.results} />

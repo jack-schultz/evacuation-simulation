@@ -6,7 +6,7 @@ A short mental model of the evacuation simulation app. For setup and run command
 
 ## What this is
 
-You sketch a floor plan in the browser (rooms, corridors, doors, exits, people), save it, and click **Run**. The server computes an evacuation timeline; the UI plays it back and shows summary stats (times, waits, congestion hotspots).
+You sketch a floor plan in the browser (rooms, stairs, doors, exits, people), save it, and click **Run**. The server computes an evacuation timeline; the UI plays it back and shows summary stats (times, waits, congestion hotspots).
 
 ## Parts of the system
 
@@ -27,7 +27,7 @@ flowchart LR
 
 ## Building blocks
 
-- **Spaces** — Closed polygons (rooms, corridors, or stairs). Draw by clicking
+- **Spaces** — Closed polygons (rooms or stairs). Draw by clicking
   corners and closing on the first point. Centroid nodes define connectivity
   between openings; people do not walk to room centroids as waypoints.
 - **Doors** — Connect two spaces. Clear opening width limits how many people
@@ -60,7 +60,7 @@ other and with space-edge segments, and squeeze through openings.
 
 - **Evacuation times** — Approximate travel time plus time spent waiting in
   crowds under the model’s rules (body collisions and opening width).
-- **Wait / congestion hotspots** — Elements (doors, corridors, stairs, exits) where people queued.
+- **Wait / congestion hotspots** — Elements (doors, stairs, exits) where people queued.
 - Treat numbers as planning estimates under simplified assumptions, not code-compliance evidence.
 
 Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).

@@ -1,12 +1,10 @@
 export type EditorTool =
   | 'select'
   | 'room'
-  | 'corridor'
   | 'stairs'
   | 'door'
   | 'exit'
-  | 'occupants'
-  | 'spawn';
+  | 'occupants';
 
 export type SelectedRef =
   | { kind: 'space'; id: string }

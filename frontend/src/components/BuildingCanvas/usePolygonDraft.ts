@@ -3,7 +3,7 @@ import type { BuildingLayout, EditorTool, SelectedRef } from '../../types/buildi
 import { polygonArea, samePoint, uid, type Point } from '../../utils';
 import { toFlatPoints } from './geometryHelpers';
 
-const SPACE_TOOLS: EditorTool[] = ['room', 'corridor', 'stairs'];
+const SPACE_TOOLS: EditorTool[] = ['room', 'stairs'];
 
 export function usePolygonDraft({
   tool,
@@ -43,7 +43,7 @@ export function usePolygonDraft({
     draftPoints.length >= 3 && samePoint(p, draftPoints[0]);
 
   const commitSpace = (vertices: Point[]) => {
-    if (tool !== 'room' && tool !== 'corridor' && tool !== 'stairs') return;
+    if (tool !== 'room' && tool !== 'stairs') return;
     if (vertices.length < 3 || polygonArea(vertices) < 1e-6) return;
     const id = uid(tool);
     onChange({
@@ -55,7 +55,7 @@ export function usePolygonDraft({
           name: `${tool} ${layout.spaces.length + 1}`,
           type: tool,
           vertices,
-          capacity_density_per_m2: tool === 'corridor' ? 1.5 : null,
+          capacity_density_per_m2: null,
         },
       ],
     });

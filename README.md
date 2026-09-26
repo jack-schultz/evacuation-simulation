@@ -7,7 +7,7 @@ regulatory compliance calculation.**
 ## What was implemented (iteration 1)
 
 * FastAPI backend with domain/service separation and SQLite persistence
-* Building CRUD API + seeded example (two offices, corridor bottleneck, ~85 occupants)
+* Building CRUD API + seeded example (two offices, hallway bottleneck, ~85 occupants)
 * Navigation graph + Dijkstra routing + capacity-based congestion model
 * Discrete-time simulation engine returning animation frames and statistics
 * React + TypeScript + Vite frontend with Konva layout editor
@@ -91,7 +91,7 @@ Health: http://localhost:8000/api/health
 See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 
 * Rectangle geometry; shortest-path routing; no fire/smoke/panic
-* Capacity queues at doors/corridors/stairs/exits
+* Capacity queues at doors/stairs/exits
 * Results are estimates only
 
 ## Known limitations
