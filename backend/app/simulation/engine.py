@@ -21,6 +21,7 @@ from app.simulation.collision import (
     dist,
     in_throat,
     resolve_overlaps,
+    resolve_space_containment,
     resolve_wall_collisions,
 )
 from app.simulation.flood import FloodRouteSelector, apply_flood
@@ -79,8 +80,10 @@ class SimulationEngine:
         wall_solids = build_collision_solids(
             layout.walls, layout.spaces, layout.doors, layout.exits
         )
+        spaces = {s.id: s for s in layout.spaces}
+        doors = {d.id: d for d in layout.doors}
         occupants = self._spawn_occupants(
-            layout, graph, params.occupant_radius_m, wall_solids
+            layout, graph, params.occupant_radius_m, wall_solids, spaces, doors
         )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
@@ -95,7 +98,9 @@ class SimulationEngine:
                 break
 
             t += params.timestep_s
-            self._step(occupants, graph, queues, params, t, wall_solids)
+            self._step(
+                occupants, graph, queues, params, t, wall_solids, spaces, doors
+            )
 
             if t + 1e-9 >= next_frame_t:
                 frames.append(self._capture_frame(t, occupants))
@@ -113,9 +118,12 @@ class SimulationEngine:
         graph,
         radius_m: float,
         wall_solids: list[Aabb] | None = None,
+        spaces: dict | None = None,
+        doors: dict | None = None,
     ) -> list[SimulatedOccupant]:
         occupants: list[SimulatedOccupant] = []
-        spaces = {s.id: s for s in layout.spaces}
+        spaces = spaces if spaces is not None else {s.id: s for s in layout.spaces}
+        doors = doors if doors is not None else {d.id: d for d in layout.doors}
         spacing = max(2.0 * radius_m + 0.05, 0.45)
         margin = radius_m + 0.1
         solids = wall_solids or []
@@ -151,6 +159,7 @@ class SimulationEngine:
                         group_id=group.id,
                         speed_mps=group.walking_speed_mps,
                         route=list(route),
+                        current_space_id=group.space_id,
                         status=OccupantStatus.TRAPPED if len(route) == 1 else OccupantStatus.ACTIVE,
                         x=ox,
                         y=oy,
@@ -159,6 +168,7 @@ class SimulationEngine:
                 )
         resolve_overlaps(occupants, radius_m, iterations=6)
         resolve_wall_collisions(occupants, solids, radius_m)
+        resolve_space_containment(occupants, spaces, doors, graph, radius_m)
         return occupants
 
     def _step(
@@ -169,9 +179,13 @@ class SimulationEngine:
         params: SimulationParameters,
         t: float,
         wall_solids: list[Aabb] | None = None,
+        spaces: dict | None = None,
+        doors: dict | None = None,
     ) -> None:
         radius = params.occupant_radius_m
         solids = wall_solids or []
+        spaces = spaces or {}
+        doors = doors or {}
         flood_active = any(e.speed_factor != 1.0 for e in graph.edges.values())
 
         contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
@@ -336,6 +350,9 @@ class SimulationEngine:
             occ.x, occ.y = clamp_outside_throat(occ.x, occ.y, waypoint.x, waypoint.y, radius)
 
         resolve_wall_collisions(occupants, solids, radius)
+        resolve_space_containment(
+            occupants, spaces, doors, graph, radius, admitted=admitted
+        )
 
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):

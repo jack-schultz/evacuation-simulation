@@ -22,6 +22,7 @@ class SimulatedOccupant:
     group_id: str
     speed_mps: float
     route: list[str]
+    current_space_id: str = ""
     route_index: int = 0
     progress_on_edge: float = 0.0  # metres travelled toward current waypoint (approx)
     x: float = 0.0
@@ -239,6 +240,8 @@ class SpatialMovementModel:
 
         occupant.route_index += 1
         occupant.progress_on_edge = 0.0
+        if waypoint.kind == NodeKind.SPACE:
+            occupant.current_space_id = waypoint.ref_id
 
         if waypoint.kind == NodeKind.EXIT or occupant.next_node_id is None:
             occupant.status = OccupantStatus.EVACUATED

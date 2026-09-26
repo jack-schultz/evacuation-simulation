@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from app.domain.building import Door, Exit, OccupantStatus, Space, Wall
+from app.simulation.graph import NodeKind
 
 
 class PositionedOccupant(Protocol):
@@ -282,6 +283,141 @@ def push_out_of_aabb(x: float, y: float, box: Aabb) -> tuple[float, float]:
     if m == dt:
         return x, box.y
     return x, box.bottom
+
+
+def inset_aabb(space: Space, radius_m: float) -> Aabb:
+    """Walkable interior: body centers stay at least radius_m inside the space rect."""
+    r = max(radius_m, 0.0)
+    if space.width <= 2.0 * r or space.height <= 2.0 * r:
+        cx = space.x + space.width / 2.0
+        cy = space.y + space.height / 2.0
+        return Aabb(cx, cy, 0.0, 0.0)
+    return Aabb(
+        space.x + r,
+        space.y + r,
+        space.width - 2.0 * r,
+        space.height - 2.0 * r,
+    )
+
+
+def clamp_point_to_aabb(x: float, y: float, box: Aabb) -> tuple[float, float]:
+    """Project (x, y) onto the closed AABB."""
+    return (
+        min(max(x, box.x), box.right),
+        min(max(y, box.y), box.bottom),
+    )
+
+
+def _clamp_to_nearest_aabb(
+    x: float, y: float, boxes: list[Aabb]
+) -> tuple[float, float]:
+    """Keep point if inside any box; otherwise snap to the closest box."""
+    if any(b.contains_point(x, y) for b in boxes):
+        return x, y
+    best_x, best_y = x, y
+    best_d = float("inf")
+    for box in boxes:
+        cx, cy = clamp_point_to_aabb(x, y, box)
+        d = dist(x, y, cx, cy)
+        if d < best_d:
+            best_d = d
+            best_x, best_y = cx, cy
+    return best_x, best_y
+
+
+def _door_other_space(door: Door, space_id: str) -> str | None:
+    a, b = door.connects
+    if a == space_id:
+        return b
+    if b == space_id:
+        return a
+    return None
+
+
+class ContainedOccupant(Protocol):
+    id: str
+    x: float
+    y: float
+    status: OccupantStatus
+    current_space_id: str
+    route: list[str]
+    route_index: int
+
+    @property
+    def current_node_id(self) -> str: ...
+
+    @property
+    def next_node_id(self) -> str | None: ...
+
+
+def _transit_destination_space_id(
+    occupant: ContainedOccupant,
+    graph: object,
+    doors: dict[str, Door],
+    admitted: set[str] | None,
+) -> str | None:
+    """Destination space when mid-door-crossing or admitted toward a connecting door."""
+    nodes = graph.nodes  # type: ignore[attr-defined]
+    space_id = occupant.current_space_id
+    if not space_id:
+        return None
+
+    cur = nodes.get(occupant.current_node_id)
+    if cur is not None and cur.kind == NodeKind.DOOR:
+        door = doors.get(cur.ref_id)
+        if door is not None:
+            return _door_other_space(door, space_id)
+
+    nxt_id = occupant.next_node_id
+    if nxt_id is None:
+        return None
+    nxt = nodes.get(nxt_id)
+    if nxt is None or nxt.kind != NodeKind.DOOR:
+        return None
+    if admitted is not None and occupant.id not in admitted:
+        return None
+    door = doors.get(nxt.ref_id)
+    if door is None:
+        return None
+    return _door_other_space(door, space_id)
+
+
+def resolve_space_containment(
+    occupants: list[ContainedOccupant],
+    spaces: dict[str, Space],
+    doors: dict[str, Door],
+    graph: object,
+    radius_m: float,
+    admitted: set[str] | None = None,
+) -> None:
+    """Clamp active occupants into their current space (plus door-transit destination)."""
+    if radius_m < 0:
+        return
+    inset_cache: dict[str, Aabb] = {}
+
+    def inset_for(space_id: str) -> Aabb | None:
+        if space_id in inset_cache:
+            return inset_cache[space_id]
+        space = spaces.get(space_id)
+        if space is None:
+            return None
+        box = inset_aabb(space, radius_m)
+        inset_cache[space_id] = box
+        return box
+
+    for o in occupants:
+        if o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+            continue
+        current = inset_for(o.current_space_id)
+        if current is None:
+            continue
+        boxes = [current]
+        dest_id = _transit_destination_space_id(o, graph, doors, admitted)
+        if dest_id is not None:
+            dest = inset_for(dest_id)
+            if dest is not None:
+                boxes.append(dest)
+        o.x, o.y = _clamp_to_nearest_aabb(o.x, o.y, boxes)
 
 
 def resolve_wall_collisions(

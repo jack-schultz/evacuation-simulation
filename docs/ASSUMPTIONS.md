@@ -33,6 +33,10 @@ regulatory compliance calculation.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
   cannot cross space boundaries or solid walls except through door/exit gaps.
+* Each occupant tracks a **current space** and is clamped inside that space
+  until they transit an admitted door aperture into the next space on their
+  route (then membership updates). This prevents discrete-step “teleports”
+  through thin shared walls.
 * Door, stair, and exit openings admit about `floor(width / (2 * radius))`
   people at once (minimum 1). Wider openings allow more concurrent passage;
   excess demand piles up and waits outside the opening throat.

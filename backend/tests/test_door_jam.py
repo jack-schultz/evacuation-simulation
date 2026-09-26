@@ -8,13 +8,16 @@ from app.simulation.collision import (
     aperture_slots,
     build_collision_solids,
     dist,
+    inset_aabb,
     resolve_overlaps,
+    resolve_space_containment,
     resolve_wall_collisions,
     solid_wall_rects,
     space_boundary_rects,
 )
 from app.simulation.engine import SimulationEngine
-from app.simulation.movement import SimulatedOccupant
+from app.simulation.graph import NavigationGraphBuilder
+from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
 
 
 def packed_room(door_width: float, count: int = 12, walls: list | None = None) -> BuildingLayout:
@@ -301,6 +304,104 @@ class DoorJamTests(unittest.TestCase):
                 f"expected queue mostly on office side at t={frame.t}",
             )
         self.assertTrue(saw_jam, "expected a multi-person jam near the door")
+
+
+class SpaceContainmentTests(unittest.TestCase):
+    _defaults = {
+        "door_flow_per_s": 1.2,
+        "stairs_flow_per_s": 1.0,
+        "exit_flow_per_s": 1.5,
+        "corridor_density_per_m2": 2.0,
+    }
+
+    def test_forced_through_shared_wall_clamps_back(self):
+        layout = two_room_layout(count=1)
+        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        spaces = {s.id: s for s in layout.spaces}
+        doors = {d.id: d for d in layout.doors}
+        radius = 0.25
+        # Place body center deep in the corridor without door admission
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:office", "door:d1", "space:corridor", "exit:out"],
+            current_space_id="office",
+            x=12.0,
+            y=18.0,
+        )
+        resolve_space_containment([occ], spaces, doors, graph, radius, admitted=set())
+        office_inset = inset_aabb(spaces["office"], radius)
+        self.assertTrue(
+            office_inset.contains_point(occ.x, occ.y),
+            f"expected clamp into office inset, got ({occ.x}, {occ.y})",
+        )
+        self.assertEqual(occ.current_space_id, "office")
+
+    def test_admitted_door_transit_allows_destination(self):
+        layout = two_room_layout(count=1)
+        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        spaces = {s.id: s for s in layout.spaces}
+        doors = {d.id: d for d in layout.doors}
+        radius = 0.25
+        corridor_inset = inset_aabb(spaces["corridor"], radius)
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:office", "door:d1", "space:corridor", "exit:out"],
+            current_space_id="office",
+            x=corridor_inset.x + corridor_inset.width / 2,
+            y=corridor_inset.y + corridor_inset.height / 2,
+        )
+        resolve_space_containment(
+            [occ], spaces, doors, graph, radius, admitted={"g:0"}
+        )
+        self.assertTrue(
+            corridor_inset.contains_point(occ.x, occ.y),
+            "admitted toward door should allow destination inset",
+        )
+
+        # After claiming the door and advancing onto the destination space node
+        occ.route_index = 1  # on door
+        SpatialMovementModel().try_advance_route(
+            occ, graph, radius, t=1.0, admitted=True
+        )
+        # Force position at corridor centroid and advance again if still on door
+        if occ.current_node_id.startswith("door:"):
+            dest = graph.nodes["space:corridor"]
+            occ.x, occ.y = dest.x, dest.y
+            SpatialMovementModel().try_advance_route(
+                occ, graph, radius, t=1.0, admitted=True
+            )
+        self.assertEqual(occ.current_space_id, "corridor")
+
+        # Without admission back to office, clamp stays in corridor
+        occ.x, occ.y = 10.0, 8.0  # deep in office
+        resolve_space_containment([occ], spaces, doors, graph, radius, admitted=set())
+        self.assertTrue(corridor_inset.contains_point(occ.x, occ.y))
+
+    def test_large_step_toward_solid_edge_stays_inside(self):
+        layout = packed_room(door_width=0.9, count=1)
+        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        spaces = {s.id: s for s in layout.spaces}
+        doors = {d.id: d for d in layout.doors}
+        radius = 0.25
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=5.0,
+            route=["space:room", "exit:out"],
+            current_space_id="room",
+            x=5.0,
+            y=5.0,
+        )
+        # Simulate a huge discrete step through the bottom edge
+        occ.y = 12.0
+        resolve_space_containment([occ], spaces, doors, graph, radius)
+        inset = inset_aabb(spaces["room"], radius)
+        self.assertTrue(inset.contains_point(occ.x, occ.y))
+        self.assertLessEqual(occ.y, inset.bottom + 1e-9)
 
 
 if __name__ == "__main__":
