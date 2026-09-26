@@ -42,7 +42,8 @@ class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
     Occupants steer continuously toward fixed Dijkstra waypoints, collide via
-    body radius and walls, and pass doors/exits through width-limited apertures.
+    body radius and space boundaries, and pass doors/exits through width-limited
+    apertures.
     """
 
     def __init__(
@@ -77,13 +78,13 @@ class SimulationEngine:
         graph = self.graph_builder.build(layout, defaults)
         apply_flood(graph, layout.flood)
 
-        wall_solids = build_collision_solids(
-            layout.walls, layout.spaces, layout.doors, layout.exits
+        boundary_solids = build_collision_solids(
+            layout.spaces, layout.doors, layout.exits
         )
         spaces = {s.id: s for s in layout.spaces}
         doors = {d.id: d for d in layout.doors}
         occupants = self._spawn_occupants(
-            layout, graph, params.occupant_radius_m, wall_solids, spaces, doors
+            layout, graph, params.occupant_radius_m, boundary_solids, spaces, doors
         )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
@@ -99,7 +100,7 @@ class SimulationEngine:
 
             t += params.timestep_s
             self._step(
-                occupants, graph, queues, params, t, wall_solids, spaces, doors
+                occupants, graph, queues, params, t, boundary_solids, spaces, doors
             )
 
             if t + 1e-9 >= next_frame_t:
@@ -117,7 +118,7 @@ class SimulationEngine:
         layout: BuildingLayout,
         graph,
         radius_m: float,
-        wall_solids: list[Aabb] | None = None,
+        boundary_solids: list[Aabb] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
     ) -> list[SimulatedOccupant]:
@@ -126,7 +127,7 @@ class SimulationEngine:
         doors = doors if doors is not None else {d.id: d for d in layout.doors}
         spacing = max(2.0 * radius_m + 0.05, 0.45)
         margin = radius_m + 0.1
-        solids = wall_solids or []
+        solids = boundary_solids or []
 
         for group in layout.occupant_groups:
             start_node = graph.space_node_ids[group.space_id]
@@ -178,12 +179,12 @@ class SimulationEngine:
         queues: dict[str, ElementQueueState],
         params: SimulationParameters,
         t: float,
-        wall_solids: list[Aabb] | None = None,
+        boundary_solids: list[Aabb] | None = None,
         spaces: dict | None = None,
         doors: dict | None = None,
     ) -> None:
         radius = params.occupant_radius_m
-        solids = wall_solids or []
+        solids = boundary_solids or []
         spaces = spaces or {}
         doors = doors or {}
         flood_active = any(e.speed_factor != 1.0 for e in graph.edges.values())

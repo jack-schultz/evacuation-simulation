@@ -97,7 +97,7 @@ See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 ## Known limitations
 
 * Single-floor style layout (stairs are capacity nodes, not multi-level physics)
-* Space edges (and optional walls) block movement except at door/exit gaps; connectivity stays door/exit based
+* Space edges block movement except at door/exit gaps; connectivity stays door/exit based
 * No live WebSocket streaming (full timeline computed server-side)
 * No authentication or multi-user collaboration
 * Congestion model is intentionally simple

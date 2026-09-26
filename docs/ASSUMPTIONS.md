@@ -7,12 +7,11 @@ regulatory compliance calculation.
 ## Geometry
 
 * Building geometry is simplified to axis-aligned rectangles (rooms, corridors,
-  stairs, walls).
+  stairs).
 * Coordinates use a top-left origin; one grid unit defaults to one metre
   (`meters_per_cell`).
 * Space rectangle edges are solid for spatial movement; door and exit clear
-  widths are the only gaps on those edges. Optional explicit walls are additional
-  obstacles (also punched at openings). Neither space edges nor walls alter the
+  widths are the only gaps on those edges. Space edges do not alter the
   navigation graph (spaces/doors/exits define connectivity).
 
 ## Occupant knowledge and behaviour
@@ -32,7 +31,7 @@ regulatory compliance calculation.
   centroids, doors, exits) rather than sliding on a single shared edge line.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
-  cannot cross space boundaries or solid walls except through door/exit gaps.
+  cannot cross space boundaries except through door/exit gaps.
 * Each occupant tracks a **current space** and is clamped inside that space
   until they transit an admitted door aperture into the next space on their
   route (then membership updates). This prevents discrete-step “teleports”

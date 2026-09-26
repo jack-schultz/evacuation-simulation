@@ -20,7 +20,6 @@ const emptyLayout = (): BuildingLayout => ({
   height: 40,
   meters_per_cell: 1,
   spaces: [],
-  walls: [],
   doors: [],
   exits: [],
   occupant_groups: [],
@@ -186,8 +185,6 @@ export default function App() {
         exits: layout.exits.filter((e) => e.connected_space_id !== selected.id),
         occupant_groups: layout.occupant_groups.filter((g) => g.space_id !== selected.id),
       });
-    } else if (selected.kind === 'wall') {
-      updateLayout({ ...layout, walls: layout.walls.filter((w) => w.id !== selected.id) });
     } else if (selected.kind === 'door') {
       updateLayout({ ...layout, doors: layout.doors.filter((d) => d.id !== selected.id) });
     } else if (selected.kind === 'exit') {
