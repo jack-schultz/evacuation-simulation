@@ -4,6 +4,7 @@ from app.domain.building import (
     BuildingLayout,
     Door,
     Exit,
+    FloodEmergency,
     Floor,
     OccupantGroup,
     Space,
@@ -298,4 +299,580 @@ def create_23_floor_template() -> BuildingLayout:
             ),
         ],
         occupant_groups=occupant_groups,
+    )
+
+
+def create_titanic_template() -> BuildingLayout:
+    """RMS Titanic–inspired multi-deck evacuation template.
+
+    Condensed ship plan (~106 m × 14 m beam on a 110 × 20 m canvas). Flood
+    starts at the bow on F Deck; occupants climb and move aft to Poop Deck exits.
+    """
+    # Canvas and hull extents (bow west / left, stern east / right).
+    width, height = 110.0, 20.0
+    ship_top, ship_bot = 3.0, 17.0
+    mid_y = (ship_top + ship_bot) / 2.0  # 10.0
+    corridor_top, corridor_bot = 8.5, 11.5
+
+    bow_x0, bow_x1 = 2.0, 16.0
+    fwd_x0, fwd_x1 = 16.0, 40.0
+    mid_x0, mid_x1 = 40.0, 70.0
+    aft_x0, aft_x1 = 70.0, 94.0
+    stern_x0, stern_x1 = 94.0, 108.0
+
+    deck_specs = [
+        ("floor-0", "F Deck (Orlop)", 0.0, 0),
+        ("floor-1", "E Deck", 3.2, 1),
+        ("floor-2", "D Deck", 6.4, 2),
+        ("floor-3", "B Deck", 9.6, 3),
+        ("floor-4", "Boat Deck", 12.8, 4),
+        ("floor-5", "Poop Deck", 16.0, 5),
+    ]
+    floors = [
+        Floor(id=fid, name=name, elevation_m=elev, order=order)
+        for fid, name, elev, order in deck_specs
+    ]
+
+    def bow_vertices() -> list[tuple[float, float]]:
+        # Pointed bow taper into the full beam at bow_x1.
+        return [
+            (bow_x0, mid_y),
+            (bow_x0 + 6.0, ship_top + 1.5),
+            (bow_x1, ship_top),
+            (bow_x1, ship_bot),
+            (bow_x0 + 6.0, ship_bot - 1.5),
+        ]
+
+    def stern_vertices() -> list[tuple[float, float]]:
+        # Slightly narrowed but blunt stern (room for embarkation width).
+        return [
+            (stern_x0, ship_top),
+            (stern_x1, ship_top + 1.5),
+            (stern_x1, ship_bot - 1.5),
+            (stern_x0, ship_bot),
+        ]
+
+    def poop_vertices() -> list[tuple[float, float]]:
+        # Stern raised deck with a wide aft face for lifeboat exits.
+        poop_x0 = 86.0
+        return [
+            (poop_x0, ship_top + 1.0),
+            (stern_x1, ship_top + 1.5),
+            (stern_x1, ship_bot - 1.5),
+            (poop_x0, ship_bot - 1.0),
+        ]
+
+    spaces: list[Space] = []
+    doors: list[Door] = []
+    occupant_groups: list[OccupantGroup] = []
+
+    # --- Habitable lower decks: F, E, D, B (floors 0–3) ---
+    lower_room_names = {
+        0: {
+            "bow": "F Deck bow hold",
+            "corridor": "F Deck alleyway",
+            "port_fwd": "F Deck port stores",
+            "stbd_fwd": "F Deck starboard stores",
+            "port_mid": "F Deck port boiler flats",
+            "stbd_mid": "F Deck starboard boiler flats",
+            "port_aft": "F Deck port third-class",
+            "stbd_aft": "F Deck starboard third-class",
+            "stern": "F Deck stern hold",
+        },
+        1: {
+            "bow": "E Deck bow cabins",
+            "corridor": "Scotland Road",
+            "port_fwd": "E Deck port cabins",
+            "stbd_fwd": "E Deck starboard cabins",
+            "port_mid": "E Deck port cabins mid",
+            "stbd_mid": "E Deck starboard cabins mid",
+            "port_aft": "E Deck port aft cabins",
+            "stbd_aft": "E Deck starboard aft cabins",
+            "stern": "E Deck stern cabins",
+        },
+        2: {
+            "bow": "D Deck bow",
+            "corridor": "D Deck reception corridor",
+            "port_fwd": "D Deck port dining",
+            "stbd_fwd": "D Deck starboard dining",
+            "port_mid": "First-class dining saloon (port)",
+            "stbd_mid": "First-class dining saloon (stbd)",
+            "port_aft": "D Deck port reception",
+            "stbd_aft": "D Deck starboard reception",
+            "stern": "D Deck second-class dining",
+        },
+        3: {
+            "bow": "B Deck bow suites",
+            "corridor": "B Deck corridor",
+            "port_fwd": "B Deck port suites",
+            "stbd_fwd": "B Deck starboard suites",
+            "port_mid": "B Deck port cabins",
+            "stbd_mid": "B Deck starboard cabins",
+            "port_aft": "B Deck port aft",
+            "stbd_aft": "B Deck starboard aft",
+            "stern": "B Deck second-class",
+        },
+    }
+
+    for floor_index in range(4):
+        floor_id = f"floor-{floor_index}"
+        names = lower_room_names[floor_index]
+        prefix = f"d{floor_index}"
+
+        bow_id = f"{prefix}_bow"
+        corridor_id = f"{prefix}_corridor"
+        stern_id = f"{prefix}_stern"
+        port_fwd_id = f"{prefix}_port_fwd"
+        stbd_fwd_id = f"{prefix}_stbd_fwd"
+        port_mid_id = f"{prefix}_port_mid"
+        stbd_mid_id = f"{prefix}_stbd_mid"
+        port_aft_id = f"{prefix}_port_aft"
+        stbd_aft_id = f"{prefix}_stbd_aft"
+
+        spaces.extend(
+            [
+                Space(
+                    id=bow_id,
+                    name=names["bow"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=bow_vertices(),
+                ),
+                Space(
+                    id=corridor_id,
+                    name=names["corridor"],
+                    type=SpaceType.CORRIDOR,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        fwd_x0, corridor_top, stern_x0 - fwd_x0, corridor_bot - corridor_top
+                    ),
+                ),
+                Space(
+                    id=port_fwd_id,
+                    name=names["port_fwd"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        fwd_x0, ship_top, fwd_x1 - fwd_x0, corridor_top - ship_top
+                    ),
+                ),
+                Space(
+                    id=stbd_fwd_id,
+                    name=names["stbd_fwd"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        fwd_x0, corridor_bot, fwd_x1 - fwd_x0, ship_bot - corridor_bot
+                    ),
+                ),
+                Space(
+                    id=port_mid_id,
+                    name=names["port_mid"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        mid_x0, ship_top, mid_x1 - mid_x0, corridor_top - ship_top
+                    ),
+                ),
+                Space(
+                    id=stbd_mid_id,
+                    name=names["stbd_mid"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        mid_x0, corridor_bot, mid_x1 - mid_x0, ship_bot - corridor_bot
+                    ),
+                ),
+                Space(
+                    id=port_aft_id,
+                    name=names["port_aft"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        aft_x0, ship_top, aft_x1 - aft_x0, corridor_top - ship_top
+                    ),
+                ),
+                Space(
+                    id=stbd_aft_id,
+                    name=names["stbd_aft"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=rect_vertices(
+                        aft_x0, corridor_bot, aft_x1 - aft_x0, ship_bot - corridor_bot
+                    ),
+                ),
+                Space(
+                    id=stern_id,
+                    name=names["stern"],
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=stern_vertices(),
+                ),
+            ]
+        )
+
+        # Longitudinal + cabin doors (shared edges).
+        door_specs = [
+            (f"door_{prefix}_bow", bow_x1, mid_y, bow_id, corridor_id, 1.4),
+            (f"door_{prefix}_stern", stern_x0, mid_y, corridor_id, stern_id, 1.4),
+            (
+                f"door_{prefix}_port_fwd",
+                (fwd_x0 + fwd_x1) / 2,
+                corridor_top,
+                port_fwd_id,
+                corridor_id,
+                1.2,
+            ),
+            (
+                f"door_{prefix}_stbd_fwd",
+                (fwd_x0 + fwd_x1) / 2,
+                corridor_bot,
+                stbd_fwd_id,
+                corridor_id,
+                1.2,
+            ),
+            (
+                f"door_{prefix}_port_mid",
+                (mid_x0 + mid_x1) / 2,
+                corridor_top,
+                port_mid_id,
+                corridor_id,
+                1.2,
+            ),
+            (
+                f"door_{prefix}_stbd_mid",
+                (mid_x0 + mid_x1) / 2,
+                corridor_bot,
+                stbd_mid_id,
+                corridor_id,
+                1.2,
+            ),
+            (
+                f"door_{prefix}_port_aft",
+                (aft_x0 + aft_x1) / 2,
+                corridor_top,
+                port_aft_id,
+                corridor_id,
+                1.2,
+            ),
+            (
+                f"door_{prefix}_stbd_aft",
+                (aft_x0 + aft_x1) / 2,
+                corridor_bot,
+                stbd_aft_id,
+                corridor_id,
+                1.2,
+            ),
+        ]
+        for door_id, dx, dy, a, b, w in door_specs:
+            doors.append(
+                Door(
+                    id=door_id,
+                    name=door_id.replace("_", " "),
+                    x=dx,
+                    y=dy,
+                    width=w,
+                    connects=(a, b),
+                    floor_id=floor_id,
+                )
+            )
+
+    # Occupants on lower decks.
+    occupant_specs = [
+        (0, "d0_bow", "F Deck bow crew", 6, 1.15),
+        (0, "d0_port_aft", "F Deck third-class port", 8, 1.1),
+        (0, "d0_stbd_aft", "F Deck third-class stbd", 8, 1.1),
+        (1, "d1_port_fwd", "E Deck third-class port", 10, 1.15),
+        (1, "d1_stbd_fwd", "E Deck third-class stbd", 10, 1.15),
+        (1, "d1_port_aft", "E Deck aft port", 8, 1.15),
+        (1, "d1_stbd_aft", "E Deck aft stbd", 8, 1.15),
+        (2, "d2_port_mid", "D Deck diners port", 12, 1.2),
+        (2, "d2_stbd_mid", "D Deck diners stbd", 12, 1.2),
+        (2, "d2_stern", "D Deck second-class diners", 8, 1.2),
+        (3, "d3_port_fwd", "B Deck first-class port", 6, 1.25),
+        (3, "d3_stbd_fwd", "B Deck first-class stbd", 6, 1.25),
+        (3, "d3_port_mid", "B Deck cabins port", 4, 1.2),
+        (3, "d3_stbd_mid", "B Deck cabins stbd", 4, 1.2),
+        (3, "d3_stern", "B Deck second-class", 6, 1.2),
+        (4, "boat_mid", "Boat Deck promenaders", 6, 1.25),
+    ]
+    for floor_index, space_id, name, count, speed in occupant_specs:
+        occupant_groups.append(
+            OccupantGroup(
+                id=f"occ_{space_id}",
+                name=name,
+                count=count,
+                space_id=space_id,
+                floor_id=f"floor-{floor_index}",
+                walking_speed_mps=speed,
+            )
+        )
+
+    # --- Boat Deck (floor 4): open promenade bow → mid → stern ---
+    boat_floor = "floor-4"
+    boat_bow_id = "boat_bow"
+    boat_mid_id = "boat_mid"
+    boat_stern_id = "boat_stern"
+    spaces.extend(
+        [
+            Space(
+                id=boat_bow_id,
+                name="Boat Deck forward promenade",
+                type=SpaceType.ROOM,
+                floor_id=boat_floor,
+                vertices=[
+                    (bow_x0, mid_y),
+                    (bow_x0 + 6.0, ship_top + 1.5),
+                    (fwd_x1, ship_top),
+                    (fwd_x1, ship_bot),
+                    (bow_x0 + 6.0, ship_bot - 1.5),
+                ],
+            ),
+            Space(
+                id=boat_mid_id,
+                name="Boat Deck midships promenade",
+                type=SpaceType.ROOM,
+                floor_id=boat_floor,
+                vertices=rect_vertices(
+                    mid_x0, ship_top, aft_x0 - mid_x0, ship_bot - ship_top
+                ),
+            ),
+            Space(
+                id=boat_stern_id,
+                name="Boat Deck aft promenade",
+                type=SpaceType.ROOM,
+                floor_id=boat_floor,
+                vertices=[
+                    (aft_x0, ship_top),
+                    (stern_x1, ship_top + 1.5),
+                    (stern_x1, ship_bot - 1.5),
+                    (aft_x0, ship_bot),
+                ],
+            ),
+        ]
+    )
+    doors.extend(
+        [
+            Door(
+                id="door_boat_bow_mid",
+                name="Boat Deck forward–mid",
+                x=fwd_x1,
+                y=mid_y,
+                width=2.0,
+                connects=(boat_bow_id, boat_mid_id),
+                floor_id=boat_floor,
+            ),
+            Door(
+                id="door_boat_mid_stern",
+                name="Boat Deck mid–aft",
+                x=aft_x0,
+                y=mid_y,
+                width=2.0,
+                connects=(boat_mid_id, boat_stern_id),
+                floor_id=boat_floor,
+            ),
+        ]
+    )
+
+    # --- Poop Deck (floor 5): midships landing + stern exits ---
+    poop_floor = "floor-5"
+    poop_mid_id = "poop_mid"
+    poop_walk_id = "poop_walk"
+    poop_id = "poop_deck"
+    spaces.extend(
+        [
+            Space(
+                id=poop_mid_id,
+                name="Poop Deck midships landing",
+                type=SpaceType.ROOM,
+                floor_id=poop_floor,
+                vertices=rect_vertices(
+                    mid_x0 + 4.0,
+                    ship_top + 1.0,
+                    16.0,
+                    ship_bot - ship_top - 2.0,
+                ),
+            ),
+            Space(
+                id=poop_walk_id,
+                name="Poop Deck aft walkway",
+                type=SpaceType.CORRIDOR,
+                floor_id=poop_floor,
+                vertices=rect_vertices(
+                    mid_x0 + 20.0,
+                    corridor_top,
+                    86.0 - (mid_x0 + 20.0),
+                    corridor_bot - corridor_top,
+                ),
+            ),
+            Space(
+                id=poop_id,
+                name="Poop Deck",
+                type=SpaceType.ROOM,
+                floor_id=poop_floor,
+                vertices=poop_vertices(),
+            ),
+        ]
+    )
+    doors.extend(
+        [
+            Door(
+                id="door_poop_mid_walk",
+                name="Poop midships–walkway",
+                x=mid_x0 + 20.0,
+                y=mid_y,
+                width=1.6,
+                connects=(poop_mid_id, poop_walk_id),
+                floor_id=poop_floor,
+            ),
+            Door(
+                id="door_poop_walk_stern",
+                name="Poop walkway–stern",
+                x=86.0,
+                y=mid_y,
+                width=1.6,
+                connects=(poop_walk_id, poop_id),
+                floor_id=poop_floor,
+            ),
+        ]
+    )
+
+    # --- Stair banks (overlay inside host corridors / promenades) ---
+    # Forward: F–Boat. Grand + aft: F–Poop (both reach poop exits).
+    # Aft stairs sit in the full-beam stern so cabins can reach them without
+    # squeezing through the narrow corridor against the stair polygons.
+    stair_banks = [
+        # key, label, x, boat_host, poop_host, max_floor, lower_host_kind
+        ("fwd", "Forward", 22.0, boat_bow_id, None, 4, "corridor"),
+        ("grand", "Grand staircase", 52.0, boat_mid_id, poop_mid_id, 5, "corridor"),
+        ("aft", "Aft", 97.0, boat_stern_id, poop_id, 5, "stern"),
+    ]
+
+    for bank_key, bank_label, stair_x, boat_host, poop_host, max_floor, lower_host in stair_banks:
+        for floor_index in range(max_floor + 1):
+            floor_id = f"floor-{floor_index}"
+            down_id = f"{bank_key}_stair_down_{floor_index}"
+            up_id = f"{bank_key}_stair_up_{floor_index}"
+
+            if floor_index <= 3 and lower_host == "corridor":
+                stair_y = corridor_top + 0.25
+                stair_h = corridor_bot - corridor_top - 0.5
+            else:
+                # Full-beam landings on boat/poop, or stern host on lower decks.
+                stair_y = mid_y - 2.0
+                stair_h = 4.0
+
+            spaces.append(
+                Space(
+                    id=down_id,
+                    name=f"{bank_label} down ({deck_specs[floor_index][1]})",
+                    type=SpaceType.STAIRS,
+                    floor_id=floor_id,
+                    linked_stair_id=(
+                        f"{bank_key}_stair_up_{floor_index - 1}"
+                        if floor_index > 0
+                        else None
+                    ),
+                    vertices=rect_vertices(stair_x, stair_y, 3.2, stair_h),
+                )
+            )
+            spaces.append(
+                Space(
+                    id=up_id,
+                    name=f"{bank_label} up ({deck_specs[floor_index][1]})",
+                    type=SpaceType.STAIRS,
+                    floor_id=floor_id,
+                    linked_stair_id=(
+                        f"{bank_key}_stair_down_{floor_index + 1}"
+                        if floor_index < max_floor
+                        else None
+                    ),
+                    vertices=rect_vertices(stair_x + 3.5, stair_y, 3.2, stair_h),
+                )
+            )
+            doors.append(
+                Door(
+                    id=f"door_{bank_key}_landing_{floor_index}",
+                    name=f"{bank_label} landing {floor_index}",
+                    x=stair_x + 3.35,
+                    y=stair_y + stair_h / 2,
+                    width=1.2,
+                    connects=(down_id, up_id),
+                    floor_id=floor_id,
+                )
+            )
+
+            if floor_index <= 3:
+                host_id = f"d{floor_index}_{lower_host}"
+            elif floor_index == 4:
+                host_id = boat_host
+            else:
+                host_id = poop_host
+            doors.append(
+                Door(
+                    id=f"door_{bank_key}_host_{floor_index}",
+                    name=f"{bank_label} entry {floor_index}",
+                    x=stair_x,
+                    y=stair_y + stair_h / 2,
+                    width=1.4,
+                    connects=(host_id, down_id),
+                    floor_id=floor_id,
+                )
+            )
+
+    exits = [
+        Exit(
+            id="exit_poop_port",
+            name="Poop Deck port lifeboat station",
+            x=stern_x1,
+            y=mid_y - 3.5,
+            width=1.8,
+            connected_space_id=poop_id,
+            floor_id=poop_floor,
+            flow_rate_per_s=1.2,
+        ),
+        Exit(
+            id="exit_poop_centre",
+            name="Poop Deck centre embarkation",
+            x=stern_x1,
+            y=mid_y,
+            width=2.0,
+            connected_space_id=poop_id,
+            floor_id=poop_floor,
+            flow_rate_per_s=1.4,
+        ),
+        Exit(
+            id="exit_poop_stbd",
+            name="Poop Deck starboard lifeboat station",
+            x=stern_x1,
+            y=mid_y + 3.5,
+            width=1.8,
+            connected_space_id=poop_id,
+            floor_id=poop_floor,
+            flow_rate_per_s=1.2,
+        ),
+    ]
+
+    return BuildingLayout(
+        name="RMS Titanic",
+        width=width,
+        height=height,
+        meters_per_cell=1.0,
+        floors=floors,
+        spaces=spaces,
+        doors=doors,
+        exits=exits,
+        occupant_groups=occupant_groups,
+        floods=[
+            FloodEmergency(
+                id="flood-bow",
+                enabled=True,
+                x=8.0,
+                y=mid_y,
+                radius_m=2.0,
+                spread_speed_mps=0.15,
+                intensity=60.0,
+                floor_id="floor-0",
+            )
+        ],
     )

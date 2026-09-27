@@ -11,7 +11,11 @@ from sqlalchemy.orm import Session
 from app.domain.building import BuildingLayout
 from app.models.building import BuildingRecord
 from app.schemas.api import BuildingResponse, BuildingSummary
-from app.services.seed import create_23_floor_template, create_seed_layout
+from app.services.seed import (
+    create_23_floor_template,
+    create_seed_layout,
+    create_titanic_template,
+)
 
 
 class BuildingService:
@@ -84,6 +88,14 @@ class BuildingService:
                     self.db.delete(legacy)
                     self.db.commit()
             created = created or template
+        titanic_exists = (
+            self.db.query(BuildingRecord)
+            .filter(BuildingRecord.name == "RMS Titanic")
+            .first()
+        )
+        if titanic_exists is None:
+            titanic = self.create_building(create_titanic_template())
+            created = created or titanic
         return created
 
     def get_layout(self, building_id: str) -> BuildingLayout:
