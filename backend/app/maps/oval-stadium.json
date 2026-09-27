@@ -3,32 +3,32 @@
   "version": 1,
   "layout": {
     "name": "Oval Stadium",
-    "width": 96.0,
-    "height": 64.0,
-    "meters_per_cell": 1.0,
+    "width": 96,
+    "height": 64,
+    "meters_per_cell": 1,
     "floors": [
       {
         "id": "floor-0",
         "name": "Basement",
-        "elevation_m": -4.0,
+        "elevation_m": -4,
         "order": 0
       },
       {
         "id": "floor-1",
         "name": "Ground",
-        "elevation_m": 0.0,
+        "elevation_m": 0,
         "order": 1
       },
       {
         "id": "floor-2",
         "name": "Upper Concourse",
-        "elevation_m": 5.0,
+        "elevation_m": 5,
         "order": 2
       },
       {
         "id": "floor-3",
         "name": "Upper Deck",
-        "elevation_m": 10.0,
+        "elevation_m": 10,
         "order": 3
       }
     ],
@@ -460,7 +460,7 @@
           ],
           [
             71.1,
-            32.0
+            32
           ],
           [
             69.34161720101072,
@@ -475,7 +475,7 @@
             17.77225519932618
           ],
           [
-            48.0,
+            48,
             16.599999999999998
           ],
           [
@@ -1001,11 +1001,11 @@
             9.02
           ],
           [
-            48.0,
+            48,
             9.02
           ],
           [
-            48.0,
+            48,
             12.42
           ],
           [
@@ -1023,7 +1023,7 @@
         "type": "stairs",
         "vertices": [
           [
-            48.0,
+            48,
             9.02
           ],
           [
@@ -1035,7 +1035,7 @@
             12.42
           ],
           [
-            48.0,
+            48,
             12.42
           ]
         ],
@@ -1209,11 +1209,11 @@
             9.02
           ],
           [
-            48.0,
+            48,
             9.02
           ],
           [
-            48.0,
+            48,
             12.42
           ],
           [
@@ -1231,7 +1231,7 @@
         "type": "stairs",
         "vertices": [
           [
-            48.0,
+            48,
             9.02
           ],
           [
@@ -1243,7 +1243,7 @@
             12.42
           ],
           [
-            48.0,
+            48,
             12.42
           ]
         ],
@@ -1417,11 +1417,11 @@
             9.02
           ],
           [
-            48.0,
+            48,
             9.02
           ],
           [
-            48.0,
+            48,
             12.42
           ],
           [
@@ -1439,7 +1439,7 @@
         "type": "stairs",
         "vertices": [
           [
-            48.0,
+            48,
             9.02
           ],
           [
@@ -1451,7 +1451,7 @@
             12.42
           ],
           [
-            48.0,
+            48,
             12.42
           ]
         ],
@@ -1625,11 +1625,11 @@
             9.02
           ],
           [
-            48.0,
+            48,
             9.02
           ],
           [
-            48.0,
+            48,
             12.42
           ],
           [
@@ -1647,7 +1647,7 @@
         "type": "stairs",
         "vertices": [
           [
-            48.0,
+            48,
             9.02
           ],
           [
@@ -1659,7 +1659,7 @@
             12.42
           ],
           [
-            48.0,
+            48,
             12.42
           ]
         ],
@@ -1985,8 +1985,8 @@
       {
         "id": "stadium_field_door_0",
         "name": "Playing field gate 1",
-        "x": 69.34161720101072,
-        "y": 32.0,
+        "x": 71,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_1_east",
@@ -1998,8 +1998,8 @@
       {
         "id": "stadium_field_door_1",
         "name": "Playing field gate 2",
-        "x": 63.09080224432215,
-        "y": 21.9394651704519,
+        "x": 64.5,
+        "y": 21,
         "width": 0.9,
         "connects": [
           "stadium_1_north_east",
@@ -2011,8 +2011,8 @@
       {
         "id": "stadium_field_door_2",
         "name": "Playing field gate 3",
-        "x": 48.0,
-        "y": 17.77225519932618,
+        "x": 48,
+        "y": 16.5,
         "width": 0.9,
         "connects": [
           "stadium_1_north",
@@ -2024,8 +2024,8 @@
       {
         "id": "stadium_field_door_3",
         "name": "Playing field gate 4",
-        "x": 32.90919775567785,
-        "y": 21.939465170451896,
+        "x": 32,
+        "y": 21,
         "width": 0.9,
         "connects": [
           "stadium_1_north_west",
@@ -2037,8 +2037,8 @@
       {
         "id": "stadium_field_door_4",
         "name": "Playing field gate 5",
-        "x": 26.658382798989273,
-        "y": 32.0,
+        "x": 25,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_1_west",
@@ -2050,8 +2050,8 @@
       {
         "id": "stadium_field_door_5",
         "name": "Playing field gate 6",
-        "x": 32.90919775567784,
-        "y": 42.060534829548104,
+        "x": 32,
+        "y": 43,
         "width": 0.9,
         "connects": [
           "stadium_1_south_west",
@@ -2063,8 +2063,8 @@
       {
         "id": "stadium_field_door_6",
         "name": "Playing field gate 7",
-        "x": 47.99999999999999,
-        "y": 46.22774480067382,
+        "x": 48,
+        "y": 47.5,
         "width": 0.9,
         "connects": [
           "stadium_1_south",
@@ -2076,8 +2076,8 @@
       {
         "id": "stadium_field_door_7",
         "name": "Playing field gate 8",
-        "x": 63.09080224432215,
-        "y": 42.060534829548104,
+        "x": 64.5,
+        "y": 43,
         "width": 0.9,
         "connects": [
           "stadium_1_south_east",
@@ -2298,7 +2298,7 @@
         "id": "stadium_stair_landing_east_0",
         "name": "East stair landing",
         "x": 79.92,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_stair_east_down_0",
@@ -2311,7 +2311,7 @@
         "id": "stadium_stair_entry_east_0",
         "name": "East stair entry",
         "x": 77.72,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_0_east",
@@ -2323,7 +2323,7 @@
       {
         "id": "stadium_stair_landing_north_0",
         "name": "North stair landing",
-        "x": 48.0,
+        "x": 48,
         "y": 10.719999999999999,
         "width": 0.9,
         "connects": [
@@ -2402,7 +2402,7 @@
         "id": "stadium_stair_landing_east_1",
         "name": "East stair landing",
         "x": 79.92,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_stair_east_down_1",
@@ -2415,7 +2415,7 @@
         "id": "stadium_stair_entry_east_1",
         "name": "East stair entry",
         "x": 77.72,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_1_east",
@@ -2427,7 +2427,7 @@
       {
         "id": "stadium_stair_landing_north_1",
         "name": "North stair landing",
-        "x": 48.0,
+        "x": 48,
         "y": 10.719999999999999,
         "width": 0.9,
         "connects": [
@@ -2506,7 +2506,7 @@
         "id": "stadium_stair_landing_east_2",
         "name": "East stair landing",
         "x": 79.92,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_stair_east_down_2",
@@ -2519,7 +2519,7 @@
         "id": "stadium_stair_entry_east_2",
         "name": "East stair entry",
         "x": 77.72,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_2_east",
@@ -2531,7 +2531,7 @@
       {
         "id": "stadium_stair_landing_north_2",
         "name": "North stair landing",
-        "x": 48.0,
+        "x": 48,
         "y": 10.719999999999999,
         "width": 0.9,
         "connects": [
@@ -2610,7 +2610,7 @@
         "id": "stadium_stair_landing_east_3",
         "name": "East stair landing",
         "x": 79.92,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_stair_east_down_3",
@@ -2623,7 +2623,7 @@
         "id": "stadium_stair_entry_east_3",
         "name": "East stair entry",
         "x": 77.72,
-        "y": 32.0,
+        "y": 32,
         "width": 0.9,
         "connects": [
           "stadium_3_east",
@@ -2635,7 +2635,7 @@
       {
         "id": "stadium_stair_landing_north_3",
         "name": "North stair landing",
-        "x": 48.0,
+        "x": 48,
         "y": 10.719999999999999,
         "width": 0.9,
         "connects": [
@@ -2716,7 +2716,7 @@
         "id": "stadium_exit_0_east",
         "name": "Basement East exit",
         "x": 86.80294036547404,
-        "y": 32.0,
+        "y": 32,
         "width": 2.4,
         "connected_space_id": "stadium_0_east",
         "flow_rate_per_s": 1.8,
@@ -2736,7 +2736,7 @@
         "id": "stadium_exit_1_east",
         "name": "Ground East exit",
         "x": 86.80294036547404,
-        "y": 32.0,
+        "y": 32,
         "width": 2.4,
         "connected_space_id": "stadium_1_east",
         "flow_rate_per_s": 1.8,
@@ -3151,7 +3151,18 @@
         "floor_id": "floor-3"
       }
     ],
-    "floods": [],
+    "floods": [
+      {
+        "enabled": true,
+        "x": 23,
+        "y": 29,
+        "radius_m": 3,
+        "spread_speed_mps": 0.4,
+        "intensity": 50,
+        "floor_id": "floor-3",
+        "id": "flood_cokoal6"
+      }
+    ],
     "fires": [],
     "smoke": null,
     "obstacle_map": null
