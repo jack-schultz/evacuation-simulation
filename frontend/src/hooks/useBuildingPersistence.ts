@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { emptyLayout } from '../layout/emptyLayout';
+import { normalizeHazards } from '../layout/hazards';
 import type { BuildingLayout, BuildingSummary, FloorPlanImageSummary, Selection } from '../types/building';
 
 export interface FloorPlanLibraryImage extends FloorPlanImageSummary {
@@ -71,7 +72,7 @@ export function useBuildingPersistence({
     const b = await api.getBuilding(id);
     await loadFloorPlans(id);
     setBuildingId(b.id);
-    setLayout(b.layout);
+    setLayout(normalizeHazards(b.layout));
     setUndoHistory([]);
     setSelected([]);
     setDirty(false);
@@ -97,14 +98,15 @@ export function useBuildingPersistence({
     setBusy(true);
     setError(null);
     try {
+      const payload = normalizeHazards(layout);
       if (buildingId) {
-        const b = await api.updateBuilding(buildingId, layout);
-        setLayout(b.layout);
+        const b = await api.updateBuilding(buildingId, payload);
+        setLayout(normalizeHazards(b.layout));
         setBuildingId(b.id);
       } else {
-        const b = await api.createBuilding(layout);
+        const b = await api.createBuilding(payload);
         setBuildingId(b.id);
-        setLayout(b.layout);
+        setLayout(normalizeHazards(b.layout));
       }
       setDirty(false);
       await refreshList();
@@ -131,12 +133,12 @@ export function useBuildingPersistence({
         const building = await api.createBuilding(layoutToSave);
         id = building.id;
         setBuildingId(id);
-        setLayout(building.layout);
+        setLayout(normalizeHazards(building.layout));
         setDirty(false);
         await refreshList();
       } else if (dirty || layout.obstacle_map) {
         const building = await api.updateBuilding(id, layoutToSave);
-        setLayout(building.layout);
+        setLayout(normalizeHazards(building.layout));
         setDirty(false);
       }
       const result = await api.uploadFloorPlan(id, file);
@@ -165,7 +167,7 @@ export function useBuildingPersistence({
     setBuildingId(null);
     replaceFloorPlans([]);
     setSelectedFloorPlanId(null);
-    setLayout(nextLayout);
+    setLayout(normalizeHazards(nextLayout));
     setUndoHistory([]);
     setSelected([]);
     setDirty(true);

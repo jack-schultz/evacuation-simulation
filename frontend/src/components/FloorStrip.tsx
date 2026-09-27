@@ -3,6 +3,7 @@ import type { BuildingLayout, Floor } from '../types/building';
 import { DEFAULT_FLOOR_ID } from '../types/layout';
 import { ensureFloors } from '../layout/emptyLayout';
 import { deleteFloor, duplicateFloor } from '../layout/floors';
+import { layoutFires } from '../layout/hazards';
 
 interface Props {
   layout: BuildingLayout;
@@ -17,6 +18,36 @@ type FloorMenuState = {
   x: number;
   y: number;
 };
+
+function fireBadgeForFloor(
+  floor: Floor,
+  floors: Floor[],
+  layout: BuildingLayout,
+) {
+  const fires = layoutFires(layout).filter((f) => f.enabled);
+  if (fires.length === 0) return null;
+  const elevations = fires.map(
+    (fire) =>
+      floors.find((f) => f.id === (fire.floor_id ?? DEFAULT_FLOOR_ID))?.elevation_m ?? 0,
+  );
+  const minElev = Math.min(...elevations);
+  const maxElev = Math.max(...elevations);
+  if (floor.elevation_m > maxElev + 1e-9) {
+    return (
+      <span className="floor-smoke-badge" title="Fire/smoke can rise here">
+        ↑
+      </span>
+    );
+  }
+  if (floor.elevation_m < minElev - 1e-9) {
+    return (
+      <span className="floor-smoke-badge" title="Fire/smoke can descend here">
+        ↓
+      </span>
+    );
+  }
+  return null;
+}
 
 export function FloorStrip({
   layout,
@@ -122,26 +153,7 @@ export function FloorStrip({
             title="Right-click for floor options"
           >
             {floor.name}
-            {layout.fire?.enabled && (() => {
-              const fireFloorId = layout.fire.floor_id ?? DEFAULT_FLOOR_ID;
-              const fireElev =
-                floors.find((f) => f.id === fireFloorId)?.elevation_m ?? 0;
-              if (floor.elevation_m > fireElev + 1e-9) {
-                return (
-                  <span className="floor-smoke-badge" title="Fire/smoke can rise here">
-                    ↑
-                  </span>
-                );
-              }
-              if (floor.elevation_m < fireElev - 1e-9) {
-                return (
-                  <span className="floor-smoke-badge" title="Fire/smoke can descend here">
-                    ↓
-                  </span>
-                );
-              }
-              return null;
-            })()}
+            {fireBadgeForFloor(floor, floors, layout)}
           </button>
         ))}
         <button

@@ -2,6 +2,8 @@ import type { BuildingLayout, ObjectRef, Selection } from '../../types/building'
 import { primarySelection } from '../../types/editor';
 import { DoorProperties } from './DoorProperties';
 import { ExitProperties } from './ExitProperties';
+import { FireProperties } from './FireProperties';
+import { FloodProperties } from './FloodProperties';
 import { OccupantGroupProperties } from './OccupantGroupProperties';
 import { ObstacleProperties } from './ObstacleProperties';
 import { SpaceProperties } from './SpaceProperties';
@@ -109,6 +111,38 @@ export function PropertiesPanel({
       <OccupantGroupProperties
         layout={layout}
         group={group}
+        onChange={onChange}
+        onDeleteSelected={onDeleteSelected}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (primary.kind === 'flood') {
+    const flood = (layout.floods ?? []).find((f) => f.id === primary.id) ?? (
+      layout.flood?.id === primary.id ? layout.flood : null
+    );
+    if (!flood) return null;
+    return (
+      <FloodProperties
+        layout={layout}
+        flood={flood}
+        onChange={onChange}
+        onDeleteSelected={onDeleteSelected}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (primary.kind === 'fire') {
+    const fire = (layout.fires ?? []).find((f) => f.id === primary.id) ?? (
+      layout.fire?.id === primary.id ? layout.fire : null
+    );
+    if (!fire) return null;
+    return (
+      <FireProperties
+        layout={layout}
+        fire={fire}
         onChange={onChange}
         onDeleteSelected={onDeleteSelected}
         disabled={disabled}

@@ -184,8 +184,8 @@ class BuildingLayout(BaseModel):
     doors: list[Door] = Field(default_factory=list)
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
-    flood: FloodEmergency | None = None
-    fire: FireEmergency | None = None
+    floods: list[FloodEmergency] = Field(default_factory=list)
+    fires: list[FireEmergency] = Field(default_factory=list)
     smoke: SmokeEmergency | None = None
     obstacle_map: PixelObstacleMap | None = None
 
@@ -194,9 +194,10 @@ class BuildingLayout(BaseModel):
     def ensure_default_floor(cls, data: object) -> object:
         if not isinstance(data, dict):
             return data
+        data = dict(data)
+
         floors = data.get("floors")
         if not floors:
-            data = dict(data)
             data["floors"] = [
                 {
                     "id": DEFAULT_FLOOR_ID,
@@ -205,6 +206,39 @@ class BuildingLayout(BaseModel):
                     "order": 0,
                 }
             ]
+
+        def _coerce_hazards(singular: str, plural: str) -> None:
+            items: list = []
+            if plural in data and data[plural] is not None:
+                raw = data[plural]
+                if isinstance(raw, dict):
+                    items = [raw]
+                elif isinstance(raw, list):
+                    items = list(raw)
+
+            if singular in data:
+                old = data.pop(singular)
+                if not items:
+                    if old is None:
+                        items = []
+                    elif isinstance(old, dict):
+                        items = [old]
+                    elif isinstance(old, list):
+                        items = list(old)
+
+            normalized = []
+            for index, item in enumerate(items):
+                if not isinstance(item, dict):
+                    normalized.append(item)
+                    continue
+                entry = dict(item)
+                entry.setdefault("id", f"{singular}-{index}" if index else singular)
+                normalized.append(entry)
+            data[plural] = normalized
+            data.pop(singular, None)
+
+        _coerce_hazards("flood", "floods")
+        _coerce_hazards("fire", "fires")
         return data
 
     @model_validator(mode="after")
@@ -225,8 +259,20 @@ class BuildingLayout(BaseModel):
             if hazard.floor_id not in floor_ids:
                 raise ValueError(f"{name} references unknown floor '{hazard.floor_id}'")
 
-        _check_hazard("Flood", self.flood)
-        _check_hazard("Fire", self.fire)
+        flood_ids: set[str] = set()
+        for flood in self.floods:
+            _check_hazard(f"Flood '{flood.id}'", flood)
+            if flood.id in flood_ids:
+                raise ValueError(f"Duplicate flood id '{flood.id}'")
+            flood_ids.add(flood.id)
+
+        fire_ids: set[str] = set()
+        for fire in self.fires:
+            _check_hazard(f"Fire '{fire.id}'", fire)
+            if fire.id in fire_ids:
+                raise ValueError(f"Duplicate fire id '{fire.id}'")
+            fire_ids.add(fire.id)
+
         _check_hazard("Smoke", self.smoke)
 
         space_ids = {s.id for s in self.spaces}

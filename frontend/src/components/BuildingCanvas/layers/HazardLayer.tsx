@@ -1,12 +1,26 @@
 import { Circle, Group, Text } from 'react-konva';
-import type { BuildingLayout, EditorTool } from '../../../types/building';
+import type {
+  BuildingLayout,
+  EditorTool,
+  FireEmergency,
+  FloodEmergency,
+  ObjectRef,
+  Selection,
+} from '../../../types/building';
+import { isRefSelected } from '../../../types/editor';
 import type { FloodRoomState, SmokeFloorState } from '../../../types/api';
+import { layoutFires, layoutFloods } from '../../../layout/hazards';
 import { SCALE } from '../../../utils';
-import type { DragPropsFn } from '../useCanvasInteraction';
+import type {
+  DragPropsFn,
+  HandleObjectClickFn,
+  OpenObjectContextMenuFn,
+} from '../useCanvasInteraction';
 
 interface Props {
   layout: BuildingLayout;
   tool: EditorTool;
+  selected: Selection;
   interactive: boolean;
   activeFloorId: string;
   showAllFloors?: boolean;
@@ -17,11 +31,15 @@ interface Props {
   smokeFloors?: SmokeFloorState[];
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
+  onObjectClick: HandleObjectClickFn;
+  onHover: (ref: ObjectRef | null) => void;
+  onObjectContextMenu: OpenObjectContextMenuFn;
 }
 
 export function HazardLayer({
   layout,
   tool,
+  selected,
   interactive,
   activeFloorId,
   showAllFloors = false,
@@ -32,6 +50,9 @@ export function HazardLayer({
   smokeFloors = [],
   onChange,
   dragProps,
+  onObjectClick,
+  onHover,
+  onObjectContextMenu,
 }: Props) {
   const onFloor = (floorId?: string | null) =>
     showAllFloors || (floorId ?? 'floor-0') === activeFloorId;
@@ -123,6 +144,7 @@ export function HazardLayer({
     fill: string,
     stroke: string,
     floorId: string,
+    keyPrefix: string,
   ) => {
     const reachable = connectedSpaceIds(x, y, floorId);
     return layout.spaces
@@ -138,118 +160,122 @@ export function HazardLayer({
           radius,
           fill,
           stroke,
-          `${space.id}-${x}-${y}-${radius}-${fill}`,
+          `${keyPrefix}-${space.id}-${x}-${y}-${radius}`,
         ),
       );
   };
 
-  const floodEnabled = Boolean(layout.flood?.enabled);
-  const floodOriginOnFloor = floodEnabled && onFloor(layout.flood?.floor_id);
+  const floods = layoutFloods(layout);
+  const fires = layoutFires(layout);
+  const floodsOnFloor = floods.filter((f) => onFloor(f.floor_id));
+  const firesOnFloor = fires.filter((f) => onFloor(f.floor_id));
   const floodPlumesOnFloor = floodRooms.filter((plume) => {
     const space = layout.spaces.find((s) => s.id === plume.space_id);
     return space != null && onFloor(space.floor_id);
   });
-  const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
   const fireOnActive = fireFloors.filter((p) => onFloor(p.floor_id));
   const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
-  // Before/without playback frames, preview smoke as a larger disc around the fire.
-  const smokePreview =
-    smokeOnFloor.length === 0
-    && layout.fire?.enabled
-    && layout.fire.emit_smoke !== false
-    && onFloor(layout.fire.floor_id)
-      ? {
-          x: layout.fire.x,
-          y: layout.fire.y,
-          radius_m: layout.fire.radius_m * 1.4,
-          intensity: Math.max(1, layout.fire.intensity * 0.8),
-          floor_id: layout.fire.floor_id ?? 'floor-0',
-        }
-      : null;
-  const firePreview =
-    fireOnActive.length === 0 && fireOnFloor && layout.fire
-      ? {
-          x: layout.fire.x,
-          y: layout.fire.y,
-          radius_m: fireRadiusM ?? layout.fire.radius_m,
-          intensity: layout.fire.intensity,
-          floor_id: layout.fire.floor_id ?? 'floor-0',
-        }
-      : null;
+  const markerListening = interactive && tool === 'select';
+  const playbackFlood = floodPlumesOnFloor.length > 0;
 
-  const floodFill = layout.flood
-    ? `rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`
-    : 'rgba(14, 165, 233, 0.2)';
-  const floodStroke = layout.flood && layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7';
+  const updateFlood = (id: string, patch: Partial<FloodEmergency>) => {
+    onChange({
+      ...layout,
+      floods: layoutFloods(layout).map((f) => (f.id === id ? { ...f, ...patch } : f)),
+      flood: undefined,
+    });
+  };
 
-  const originFloodSpaceId =
-    floodOriginOnFloor && layout.flood
-      ? layout.spaces.find(
-          (space) =>
-            (space.floor_id ?? 'floor-0') === (layout.flood?.floor_id ?? 'floor-0')
-            && containsPoint(space.vertices, layout.flood!.x, layout.flood!.y),
-        )?.id
-      : undefined;
+  const updateFire = (id: string, patch: Partial<FireEmergency>) => {
+    onChange({
+      ...layout,
+      fires: layoutFires(layout).map((f) => (f.id === id ? { ...f, ...patch } : f)),
+      fire: undefined,
+    });
+  };
 
-  const playbackFlood =
-    floodPlumesOnFloor.length > 0
-      ? floodPlumesOnFloor.map((plume) =>
+  return (
+    <>
+      {playbackFlood
+        && floodPlumesOnFloor.map((plume) =>
           clipSpace(
             plume.space_id,
             plume.x,
             plume.y,
             plume.radius_m,
-            floodFill,
-            floodStroke,
+            `rgba(14, 165, 233, ${0.1 + plume.intensity / 250})`,
+            plume.intensity >= 80 ? '#7c3aed' : '#0284c7',
             `flood-${plume.space_id}-${plume.x}-${plume.y}-${plume.radius_m}`,
           ),
-        )
-      : null;
+        )}
 
-  return (
-    <>
-      {floodEnabled && playbackFlood}
-      {floodOriginOnFloor && layout.flood && !playbackFlood && originFloodSpaceId && (
-        clipSpace(
-          originFloodSpaceId,
-          layout.flood.x,
-          layout.flood.y,
-          floodRadiusM ?? layout.flood.radius_m,
-          floodFill,
-          floodStroke,
-          `flood-preview-${originFloodSpaceId}`,
-        )
-      )}
-      {floodOriginOnFloor && layout.flood && (
-        <Group
-          x={layout.flood.x * SCALE}
-          y={layout.flood.y * SCALE}
-          {...dragProps(null, (x, y) => {
-            if (layout.flood) onChange({ ...layout, flood: { ...layout.flood, x, y } });
+      {!playbackFlood
+        && floodsOnFloor
+          .filter((flood) => flood.enabled)
+          .map((flood) => {
+            const originSpaceId = layout.spaces.find(
+              (space) =>
+                (space.floor_id ?? 'floor-0') === (flood.floor_id ?? 'floor-0')
+                && containsPoint(space.vertices, flood.x, flood.y),
+            )?.id;
+            if (!originSpaceId) return null;
+            return clipSpace(
+              originSpaceId,
+              flood.x,
+              flood.y,
+              floodRadiusM ?? flood.radius_m,
+              `rgba(14, 165, 233, ${0.1 + flood.intensity / 250})`,
+              flood.intensity >= 80 ? '#7c3aed' : '#0284c7',
+              `flood-preview-${flood.id}-${originSpaceId}`,
+            );
           })}
-        >
-          <Text
-            x={-55}
-            y={-30}
-            width={110}
-            align="center"
-            text={`Flood ${layout.flood.intensity}%`}
-            fill="#075985"
-            fontSize={12}
-            listening={false}
-          />
-          <Circle
-            radius={10}
-            fill="#e0f2fe"
-            stroke="#075985"
-            strokeWidth={2}
-            listening={interactive && tool === 'select'}
-          />
-          <Circle radius={3} fill="#075985" listening={false} />
-        </Group>
-      )}
 
-      {fireOnActive.map((plume) =>
+      {floodsOnFloor.map((flood) => {
+        const ref: ObjectRef = { kind: 'flood', id: flood.id };
+        const active = isRefSelected(selected, ref);
+        return (
+          <Group
+            key={`flood-marker-${flood.id}`}
+            x={flood.x * SCALE}
+            y={flood.y * SCALE}
+            onClick={(e) => onObjectClick(ref, e)}
+            onContextMenu={(e) => onObjectContextMenu(ref, e)}
+            {...dragProps(ref, (x, y) => updateFlood(flood.id, { x, y }), 0, 0, {
+              x: flood.x,
+              y: flood.y,
+            })}
+            onMouseEnter={(event) => {
+              onHover(ref);
+              if (markerListening) event.target.getStage()!.container().style.cursor = 'grab';
+            }}
+            onMouseLeave={(event) => {
+              onHover(null);
+              event.target.getStage()!.container().style.cursor = '';
+            }}
+          >
+            <Text
+              x={-55}
+              y={-30}
+              width={110}
+              align="center"
+              text={`Flood ${flood.intensity}%`}
+              fill="#075985"
+              fontSize={12}
+              listening={false}
+            />
+            <Circle
+              radius={10}
+              fill="#e0f2fe"
+              stroke={active ? '#2563eb' : '#075985'}
+              strokeWidth={active ? 3 : 2}
+              listening={markerListening}
+            />
+            <Circle radius={3} fill="#075985" listening={false} />
+          </Group>
+        );
+      })}
+
+      {fireOnActive.map((plume, index) =>
         clippedHazard(
           plume.x,
           plume.y,
@@ -257,48 +283,70 @@ export function HazardLayer({
           `rgba(249, 115, 22, ${0.1 + plume.intensity / 250})`,
           plume.intensity >= 80 ? '#b91c1c' : '#ea580c',
           plume.floor_id,
+          `fire-play-${index}`,
         ),
       )}
-      {firePreview && (
-        clippedHazard(
-          firePreview.x,
-          firePreview.y,
-          firePreview.radius_m,
-          `rgba(249, 115, 22, ${0.1 + firePreview.intensity / 250})`,
-          firePreview.intensity >= 80 ? '#b91c1c' : '#ea580c',
-          firePreview.floor_id,
-        )
-      )}
-      {fireOnFloor && layout.fire && (
-        <Group
-          x={layout.fire.x * SCALE}
-          y={layout.fire.y * SCALE}
-          {...dragProps(null, (x, y) => {
-            if (layout.fire) onChange({ ...layout, fire: { ...layout.fire, x, y } });
-          })}
-        >
-          <Text
-            x={-55}
-            y={-30}
-            width={110}
-            align="center"
-            text={`Fire ${layout.fire.intensity}%`}
-            fill="#9a3412"
-            fontSize={12}
-            listening={false}
-          />
-          <Circle
-            radius={10}
-            fill="#ffedd5"
-            stroke="#9a3412"
-            strokeWidth={2}
-            listening={interactive && tool === 'select'}
-          />
-          <Circle radius={3} fill="#9a3412" listening={false} />
-        </Group>
-      )}
+      {fireOnActive.length === 0
+        && firesOnFloor
+          .filter((fire) => fire.enabled)
+          .map((fire) =>
+            clippedHazard(
+              fire.x,
+              fire.y,
+              fireRadiusM ?? fire.radius_m,
+              `rgba(249, 115, 22, ${0.1 + fire.intensity / 250})`,
+              fire.intensity >= 80 ? '#b91c1c' : '#ea580c',
+              fire.floor_id ?? 'floor-0',
+              `fire-preview-${fire.id}`,
+            ),
+          )}
 
-      {smokeOnFloor.map((plume) =>
+      {firesOnFloor.map((fire) => {
+        const ref: ObjectRef = { kind: 'fire', id: fire.id };
+        const active = isRefSelected(selected, ref);
+        return (
+          <Group
+            key={`fire-marker-${fire.id}`}
+            x={fire.x * SCALE}
+            y={fire.y * SCALE}
+            onClick={(e) => onObjectClick(ref, e)}
+            onContextMenu={(e) => onObjectContextMenu(ref, e)}
+            {...dragProps(ref, (x, y) => updateFire(fire.id, { x, y }), 0, 0, {
+              x: fire.x,
+              y: fire.y,
+            })}
+            onMouseEnter={(event) => {
+              onHover(ref);
+              if (markerListening) event.target.getStage()!.container().style.cursor = 'grab';
+            }}
+            onMouseLeave={(event) => {
+              onHover(null);
+              event.target.getStage()!.container().style.cursor = '';
+            }}
+          >
+            <Text
+              x={-55}
+              y={-30}
+              width={110}
+              align="center"
+              text={`Fire ${fire.intensity}%`}
+              fill="#9a3412"
+              fontSize={12}
+              listening={false}
+            />
+            <Circle
+              radius={10}
+              fill="#ffedd5"
+              stroke={active ? '#2563eb' : '#9a3412'}
+              strokeWidth={active ? 3 : 2}
+              listening={markerListening}
+            />
+            <Circle radius={3} fill="#9a3412" listening={false} />
+          </Group>
+        );
+      })}
+
+      {smokeOnFloor.map((plume, index) =>
         clippedHazard(
           plume.x,
           plume.y,
@@ -306,18 +354,23 @@ export function HazardLayer({
           `rgba(100, 116, 139, ${0.12 + plume.intensity / 280})`,
           '#475569',
           plume.floor_id,
+          `smoke-play-${index}`,
         ),
       )}
-      {smokePreview && (
-        clippedHazard(
-          smokePreview.x,
-          smokePreview.y,
-          smokePreview.radius_m,
-          `rgba(100, 116, 139, ${0.12 + smokePreview.intensity / 280})`,
-          '#475569',
-          smokePreview.floor_id,
-        )
-      )}
+      {smokeOnFloor.length === 0
+        && firesOnFloor
+          .filter((fire) => fire.enabled && fire.emit_smoke !== false)
+          .map((fire) =>
+            clippedHazard(
+              fire.x,
+              fire.y,
+              fire.radius_m * 1.4,
+              `rgba(100, 116, 139, ${0.12 + Math.max(1, fire.intensity * 0.8) / 280})`,
+              '#475569',
+              fire.floor_id ?? 'floor-0',
+              `smoke-preview-${fire.id}`,
+            ),
+          )}
     </>
   );
 }

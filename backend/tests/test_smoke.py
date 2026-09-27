@@ -112,7 +112,7 @@ class SmokeUnitTests(unittest.TestCase):
 class SmokeChimneyTests(unittest.TestCase):
     def test_smoke_rises_through_linked_stairs(self):
         layout = linked_floors_layout(count=1)
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=10.0,
             y=4.0,
@@ -123,7 +123,7 @@ class SmokeChimneyTests(unittest.TestCase):
             emit_smoke=True,
             smoke_stair_spread_delay_s=1.0,
             smoke_stair_intensity_factor=0.8,
-        )
+        )]
         early = active_smoke_plumes(layout, 0.0)
         self.assertEqual({p.floor_id for p in early}, {"floor-0"})
         late = active_smoke_plumes(layout, 30.0)
@@ -133,7 +133,7 @@ class SmokeChimneyTests(unittest.TestCase):
 
     def test_smoke_descends_when_origin_is_top_floor(self):
         layout = linked_floors_layout(count=1)
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=10.0,
             y=4.0,
@@ -143,13 +143,13 @@ class SmokeChimneyTests(unittest.TestCase):
             floor_id="floor-1",
             emit_smoke=True,
             smoke_stair_spread_delay_s=0.0,
-        )
+        )]
         plumes = active_smoke_plumes(layout, 20.0)
         self.assertEqual({p.floor_id for p in plumes}, {"floor-0", "floor-1"})
 
     def test_fire_descends_from_top_floor_through_stairs(self):
         layout = linked_floors_layout(count=1)
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=10.0,
             y=4.0,
@@ -159,7 +159,7 @@ class SmokeChimneyTests(unittest.TestCase):
             floor_id="floor-1",
             emit_smoke=True,
             smoke_stair_spread_delay_s=2.0,
-        )
+        )]
         # Fire stair delay is 2×2.5 = 5s; still only on the top floor early on.
         early = active_fire_plumes(layout, 1.0)
         self.assertEqual({p.floor_id for p in early}, {"floor-1"})
@@ -293,7 +293,7 @@ class SmokeChimneyTests(unittest.TestCase):
                 ],
             }
         )
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=10.0,
             y=4.0,
@@ -304,7 +304,7 @@ class SmokeChimneyTests(unittest.TestCase):
             emit_smoke=False,
             smoke_stair_spread_delay_s=1.0,
             smoke_stair_intensity_factor=0.9,
-        )
+        )]
         early = {p.floor_id for p in active_fire_plumes(layout, 0.5)}
         # Too early for stair delay: still only origin floor.
         self.assertEqual(early, {"floor-1"})
@@ -313,7 +313,7 @@ class SmokeChimneyTests(unittest.TestCase):
 
     def test_fire_follows_stairs_slower_than_smoke(self):
         layout = linked_floors_layout(count=1)
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=10.0,
             y=4.0,
@@ -324,7 +324,7 @@ class SmokeChimneyTests(unittest.TestCase):
             emit_smoke=True,
             smoke_stair_spread_delay_s=2.0,
             smoke_stair_intensity_factor=0.8,
-        )
+        )]
         # At an intermediate time smoke has reached the upper floor but fire has not.
         mid_t = 4.0
         smoke_floors = {p.floor_id for p in active_smoke_plumes(layout, mid_t)}
@@ -445,7 +445,7 @@ class SmokeSimTests(unittest.TestCase):
     def test_fire_kills_climbers_on_stairs(self):
         layout = linked_floors_layout(count=1)
         # Fire covers the stair shaft on both floors.
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=10.0,
             y=4.0,
@@ -455,7 +455,7 @@ class SmokeSimTests(unittest.TestCase):
             floor_id="floor-1",
             emit_smoke=False,
             smoke_stair_spread_delay_s=0.0,
-        )
+        )]
         out = SimulationEngine().run(
             layout, SimulationParameters(max_time_s=60, frame_interval_s=0.5)
         )
@@ -471,7 +471,7 @@ class HazardPlaybackTests(unittest.TestCase):
         from app.services.seed import create_seed_layout
 
         layout = create_seed_layout()
-        layout.fire = FireEmergency(
+        layout.fires = [FireEmergency(
             enabled=True,
             x=12.0,
             y=10.0,
@@ -481,7 +481,7 @@ class HazardPlaybackTests(unittest.TestCase):
             floor_id="floor-1",
             emit_smoke=True,
             smoke_stair_spread_delay_s=2.0,
-        )
+        )]
         out = SimulationEngine().run(
             layout, SimulationParameters(max_time_s=120, frame_interval_s=1.0)
         )

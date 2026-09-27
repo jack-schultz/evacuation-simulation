@@ -30,6 +30,8 @@ class FloodEmergency(RadialEmergency):
     alone is not lethal. Spread is room-scoped through same-floor doors.
     """
 
+    id: str = Field(default="flood", description="Stable id for editor selection.")
+
 
 class FireEmergency(RadialEmergency):
     """Illustrative fire scenario.
@@ -40,6 +42,7 @@ class FireEmergency(RadialEmergency):
     slows people. Both spread through linked stairs in either direction.
     """
 
+    id: str = Field(default="fire", description="Stable id for editor selection.")
     emit_smoke: bool = Field(
         default=True,
         description="When true, smoke is produced from the fire (soft slowdown + stair spread).",

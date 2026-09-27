@@ -8,6 +8,7 @@ import math
 from app.domain.building import (
     BuildingLayout,
     DEFAULT_FLOOR_ID,
+    FloodEmergency,
     FloodRoomState,
     OccupantStatus,
     SpaceType,
@@ -123,6 +124,7 @@ def _build_flood_adjacency(layout: BuildingLayout) -> tuple[dict, dict, list]:
 
 
 def _flood_spread_meta(
+    flood: FloodEmergency,
     layout: BuildingLayout,
     *,
     lower_filled: dict[str, float] | None,
@@ -133,8 +135,7 @@ def _flood_spread_meta(
     ``lower_filled`` gates door expansion past descending stairs.
     ``floor_filled`` gates upward stair transfer. Pass None/empty to disable a gate.
     """
-    flood = layout.flood
-    if flood is None or not flood.enabled or flood.intensity == 0:
+    if not flood.enabled or flood.intensity == 0:
         return {}
 
     spaces = {s.id: s for s in layout.spaces}
@@ -256,13 +257,11 @@ def _flood_spread_meta(
 
 
 def _floor_fill_times(
+    flood: FloodEmergency,
     layout: BuildingLayout,
     best: dict[str, tuple[float, float, float, float, float]],
 ) -> dict[str, float]:
     """Earliest time each floor is fully covered by its wet spaces' plumes."""
-    flood = layout.flood
-    if flood is None:
-        return {}
     speed = flood.spread_speed_mps
     spaces = {s.id: s for s in layout.spaces}
     by_floor: dict[str, list[str]] = {}
@@ -283,23 +282,26 @@ def _floor_fill_times(
     return fills
 
 
-def active_flood_plumes(layout: BuildingLayout, t: float) -> list[FloodRoomState]:
-    """Expand room-by-room; dump down stairs first; rise only after a floor fills."""
-    flood = layout.flood
-    if flood is None or not flood.enabled or flood.intensity == 0:
+def _active_flood_plumes_for(
+    flood: FloodEmergency,
+    layout: BuildingLayout,
+    t: float,
+) -> list[FloodRoomState]:
+    """Expand one flood origin room-by-room with gravity-aware stairs."""
+    if not flood.enabled or flood.intensity == 0:
         return []
 
     # Pass 1: doors + downward stairs (no past-stair delay, no upward transfer).
-    best = _flood_spread_meta(layout, lower_filled=None, floor_filled=None)
-    fills = _floor_fill_times(layout, best)
+    best = _flood_spread_meta(flood, layout, lower_filled=None, floor_filled=None)
+    fills = _floor_fill_times(flood, layout, best)
 
     # Pass 2: delay expansion past descending stairs until lower floors fill;
     # allow upward transfer after each floor fills.
-    best = _flood_spread_meta(layout, lower_filled=fills, floor_filled=fills)
-    fills = _floor_fill_times(layout, best)
+    best = _flood_spread_meta(flood, layout, lower_filled=fills, floor_filled=fills)
+    fills = _floor_fill_times(flood, layout, best)
 
     # Pass 3: converge gates with updated fill times.
-    best = _flood_spread_meta(layout, lower_filled=fills, floor_filled=fills)
+    best = _flood_spread_meta(flood, layout, lower_filled=fills, floor_filled=fills)
 
     speed = flood.spread_speed_mps
     plumes: list[FloodRoomState] = []
@@ -316,6 +318,14 @@ def active_flood_plumes(layout: BuildingLayout, t: float) -> list[FloodRoomState
                 intensity=intensity,
             )
         )
+    return plumes
+
+
+def active_flood_plumes(layout: BuildingLayout, t: float) -> list[FloodRoomState]:
+    """Merge plumes from every flood origin on the layout."""
+    plumes: list[FloodRoomState] = []
+    for flood in layout.floods:
+        plumes.extend(_active_flood_plumes_for(flood, layout, t))
     return plumes
 
 

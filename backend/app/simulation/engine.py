@@ -19,8 +19,8 @@ from app.simulation.hazards import (
     active_smoke_plumes,
     apply_hazards,
     fire_emergencies_from_plumes,
-    hazard_radius_at,
     hazard_stair_spread_pending,
+    max_hazard_radius_at,
     resolve_origin_smoke,
     smoke_emergencies_from_plumes,
 )
@@ -145,8 +145,8 @@ class SimulationEngine:
                     boundary_solids,
                     spaces,
                     doors,
-                    layout.flood,
-                    layout.fire,
+                    layout.floods[0] if layout.floods else None,
+                    layout.fires[0] if layout.fires else None,
                     origin_smoke,
                     layout.obstacle_map,
                     layout.width,
@@ -176,9 +176,9 @@ class SimulationEngine:
     ) -> SimulationFrame:
         return SimulationFrame(
             t=round(t, 3),
-            flood_radius_m=hazard_radius_at(layout.flood, t),
+            flood_radius_m=max_hazard_radius_at(layout.floods, t),
             flood_rooms=active_flood_plumes(layout, t),
-            fire_radius_m=hazard_radius_at(layout.fire, t),
+            fire_radius_m=max_hazard_radius_at(layout.fires, t),
             fire_floors=active_fire_plumes(layout, t),
             smoke_floors=active_smoke_plumes(layout, t),
             occupants=[

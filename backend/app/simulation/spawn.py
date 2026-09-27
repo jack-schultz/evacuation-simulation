@@ -49,7 +49,7 @@ def spawn_occupants(
     opening_slots: dict[str, list[float]] = {}
     flood_cache: dict[int, list] = {}
     initial_hazards = (
-        layout.flood,
+        *layout.floods,
         *fire_emergencies_from_plumes(active_fire_plumes(layout, 0)),
         *smoke_emergencies_from_plumes(active_smoke_plumes(layout, 0)),
     )
@@ -62,7 +62,10 @@ def spawn_occupants(
         start_node = graph.space_node_ids[group.space_id]
         selector = (
             HazardRouteSelector()
-            if any(hazard_radius_at(h, 0) is not None for h in (layout.flood, layout.fire))
+            if any(
+                hazard_radius_at(h, 0) is not None
+                for h in (*layout.floods, *layout.fires)
+            )
             and isinstance(route_selector, DijkstraRouteSelector)
             else route_selector
         )
@@ -285,9 +288,8 @@ def _projected_route_time(route, x, y, speed_mps, graph, layout, radius_m,
     total_wait_s = 0.0
     clearance_time_s = 0.0
     flood_exposure_s = 0.0
-    flood = layout.flood
-    forecast_flood = bool(
-        not reserve and flood is not None and flood.enabled and flood.intensity > 0
+    forecast_flood = not reserve and any(
+        flood.enabled and flood.intensity > 0 for flood in layout.floods
     )
     if flood_cache is None:
         flood_cache = {}

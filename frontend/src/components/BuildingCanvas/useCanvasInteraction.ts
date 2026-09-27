@@ -7,9 +7,11 @@ import type {
   Selection,
 } from '../../types/building';
 import { applyContextSelect, isRefSelected } from '../../types/editor';
+import type { FireEmergency, FloodEmergency } from '../../types/building';
 import { SCALE, snap, uid, polygonBBox, samePoint, type Point } from '../../utils';
 import { exitSpaceAt } from '../../exitPlacement';
 import { translateSelection } from '../../layout/clipboard';
+import { layoutFires, layoutFloods } from '../../layout/hazards';
 import { findNearestSpaces, spaceContaining } from './geometryHelpers';
 import { filterLayoutByFloor } from '../../layout/emptyLayout';
 
@@ -31,6 +33,36 @@ export type ContextMenuRequest = {
   target: 'object' | 'canvas';
   ref?: ObjectRef;
 };
+
+function defaultFlood(id: string, x: number, y: number, floorId: string): FloodEmergency {
+  return {
+    id,
+    enabled: true,
+    x,
+    y,
+    radius_m: 3,
+    spread_speed_mps: 0.1,
+    intensity: 50,
+    floor_id: floorId,
+  };
+}
+
+function defaultFire(id: string, x: number, y: number, floorId: string): FireEmergency {
+  return {
+    id,
+    enabled: true,
+    x,
+    y,
+    radius_m: 3,
+    spread_speed_mps: 0.1,
+    intensity: 50,
+    floor_id: floorId,
+    emit_smoke: true,
+    smoke_visibility_m: 8,
+    smoke_stair_spread_delay_s: 8,
+    smoke_stair_intensity_factor: 0.85,
+  };
+}
 
 export function useCanvasInteraction({
   layout,
@@ -173,6 +205,22 @@ export function useCanvasInteraction({
         ],
       });
       onSelect([{ kind: 'occupants', id }]);
+      return;
+    }
+
+    if (tool === 'flood' || tool === 'fire') {
+      if (p.x < 0 || p.x > layout.width || p.y < 0 || p.y > layout.height) return;
+      if (tool === 'flood') {
+        const id = uid('flood');
+        const floods = [...layoutFloods(layout), defaultFlood(id, p.x, p.y, activeFloorId)];
+        onChange({ ...layout, floods, flood: undefined });
+        onSelect([{ kind: 'flood', id }]);
+      } else {
+        const id = uid('fire');
+        const fires = [...layoutFires(layout), defaultFire(id, p.x, p.y, activeFloorId)];
+        onChange({ ...layout, fires, fire: undefined });
+        onSelect([{ kind: 'fire', id }]);
+      }
     }
   };
 

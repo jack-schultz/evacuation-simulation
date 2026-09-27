@@ -76,9 +76,12 @@ export interface RadialEmergency {
   floor_id?: string;
 }
 
-export type FloodEmergency = RadialEmergency;
+export interface FloodEmergency extends RadialEmergency {
+  id: string;
+}
 
 export interface FireEmergency extends RadialEmergency {
+  id: string;
   emit_smoke?: boolean;
   smoke_visibility_m?: number;
   smoke_stair_spread_delay_s?: number;
@@ -109,7 +112,11 @@ export interface BuildingLayout {
   doors: Door[];
   exits: Exit[];
   occupant_groups: OccupantGroup[];
+  floods?: FloodEmergency[];
+  fires?: FireEmergency[];
+  /** @deprecated Prefer floods[]; kept for older saved layouts until normalized. */
   flood?: FloodEmergency | null;
+  /** @deprecated Prefer fires[]; kept for older saved layouts until normalized. */
   fire?: FireEmergency | null;
   /** @deprecated Smoke is produced by fire.emit_smoke; kept for older saved layouts. */
   smoke?: SmokeEmergency | null;

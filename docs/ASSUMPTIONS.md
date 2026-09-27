@@ -86,9 +86,10 @@ regulatory compliance calculation.
 
 ## Flood emergency scenarios
 
-The sidebar configures a circular flood with a centre, initial radius (metres),
-spread speed (metres per second), and relative intensity (0-100). These settings
-are saved with the building and snapshotted for each simulation.
+The editor can place multiple circular floods (Building tools → Flood) each with
+a centre, initial radius (metres), spread speed (metres per second), and relative
+intensity (0-100). These settings are saved with the building and snapshotted
+for each simulation.
 
 Flood fills **one room at a time**. The origin space (the room whose polygon
 contains the flood centre) expands as a circle with radius
@@ -144,12 +145,13 @@ context on terrain and hydraulic equation requirements, see
 
 ## Fire scenario
 
-Fire is an optional circular hazard, configured independently of flood. Set the
-centre, initial size (radius in metres), intensity (0-100%), and radial spread
-rate (metres per second). Radius at time t is initial radius + spread rate * t;
-zero spread keeps the area fixed. Disabled fire or zero intensity has no effect.
-The orange overlay expands on the simulation clock and pauses with playback.
-Settings are saved with the building and snapshotted for each run.
+Fire is an optional circular hazard; place any number independently of flood via
+Building tools → Fire. Set each centre, initial size (radius in metres), intensity
+(0-100%), and radial spread rate (metres per second). Radius at time t is
+initial radius + spread rate * t; zero spread keeps the area fixed. Disabled
+fire or zero intensity has no effect. The orange overlay expands on the
+simulation clock and pauses with playback. Settings are saved with the building
+and snapshotted for each run.
 
 People avoid entering active fire and cannot use exits within it. Anyone the
 fire circle touches — including people climbing stairs — becomes trapped

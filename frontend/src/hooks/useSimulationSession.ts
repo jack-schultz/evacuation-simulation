@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { api } from '../services/api';
+import { normalizeHazards } from '../layout/hazards';
 import { useSimulationPlayback } from '../simulation/useSimulationPlayback';
 import type { BuildingLayout } from '../types/building';
 
@@ -53,12 +54,12 @@ export function useSimulationSession({
         if (id) {
           const b = await api.updateBuilding(id, layout);
           id = b.id;
-          setLayout(b.layout);
+          setLayout(normalizeHazards(b.layout));
         } else {
           const b = await api.createBuilding(layout);
           id = b.id;
           setBuildingId(b.id);
-          setLayout(b.layout);
+          setLayout(normalizeHazards(b.layout));
         }
         setDirty(false);
         await refreshList();

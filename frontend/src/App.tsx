@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { FloodPanel } from './components/FloodPanel';
-import { EmergencyPanel } from './components/EmergencyPanel';
 import { BuildingCanvas } from './components/BuildingCanvas';
 import { ColumnResizer } from './components/ColumnResizer';
 import { FloorPlanLibrary } from './components/FloorPlanLibrary';
@@ -171,18 +169,6 @@ export default function App() {
                 tool={editor.tool}
                 onToolChange={editor.setTool}
                 disabled={disabled}
-              />
-            ),
-            flood: (
-              <FloodPanel layout={editor.layout} onChange={editor.updateLayout} disabled={disabled} />
-            ),
-            fire: (
-              <EmergencyPanel
-                kind="fire"
-                layout={editor.layout}
-                onChange={editor.updateLayout}
-                disabled={disabled}
-                activeFloorId={activeFloorId}
               />
             ),
           }}
