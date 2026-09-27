@@ -21,6 +21,7 @@ from app.simulation.hazards import (
     apply_hazards,
     fire_emergencies_from_plumes,
     hazard_radius_at,
+    hazard_stair_spread_pending,
     resolve_origin_smoke,
     smoke_emergencies_from_plumes,
 )
@@ -117,36 +118,41 @@ class SimulationEngine:
         next_frame_t = params.frame_interval_s
 
         while t < params.max_time_s:
-            if all(
+            occupants_done = all(
                 o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED)
                 for o in occupants
+            )
+            # Keep running after egress so fire/smoke can finish spreading through stairs.
+            if occupants_done and not hazard_stair_spread_pending(
+                layout, t, params.max_time_s
             ):
                 break
 
             t += params.timestep_s
             plumes = active_smoke_plumes(layout, t)
             fire_plumes = active_fire_plumes(layout, t)
-            advance_timestep(
-                self.flow_model,
-                self.movement_model,
-                occupants,
-                graph,
-                queues,
-                params,
-                t,
-                boundary_solids,
-                spaces,
-                doors,
-                layout.flood,
-                layout.fire,
-                origin_smoke,
-                layout.obstacle_map,
-                layout.width,
-                layout.height,
-                floors,
-                plumes,
-                fire_plumes,
-            )
+            if not occupants_done:
+                advance_timestep(
+                    self.flow_model,
+                    self.movement_model,
+                    occupants,
+                    graph,
+                    queues,
+                    params,
+                    t,
+                    boundary_solids,
+                    spaces,
+                    doors,
+                    layout.flood,
+                    layout.fire,
+                    origin_smoke,
+                    layout.obstacle_map,
+                    layout.width,
+                    layout.height,
+                    floors,
+                    plumes,
+                    fire_plumes,
+                )
 
             if t + 1e-9 >= next_frame_t:
                 frames.append(self._capture_frame(t, occupants, layout))

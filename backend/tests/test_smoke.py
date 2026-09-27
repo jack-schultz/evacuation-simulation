@@ -147,6 +147,170 @@ class SmokeChimneyTests(unittest.TestCase):
         plumes = active_smoke_plumes(layout, 20.0)
         self.assertEqual({p.floor_id for p in plumes}, {"floor-0", "floor-1"})
 
+    def test_fire_descends_from_top_floor_through_stairs(self):
+        layout = linked_floors_layout(count=1)
+        layout.fire = FireEmergency(
+            enabled=True,
+            x=10.0,
+            y=4.0,
+            radius_m=5.0,
+            spread_speed_mps=0.0,
+            intensity=70,
+            floor_id="floor-1",
+            emit_smoke=True,
+            smoke_stair_spread_delay_s=2.0,
+        )
+        # Fire stair delay is 2×2.5 = 5s; still only on the top floor early on.
+        early = active_fire_plumes(layout, 1.0)
+        self.assertEqual({p.floor_id for p in early}, {"floor-1"})
+        late = active_fire_plumes(layout, 6.0)
+        self.assertEqual({p.floor_id for p in late}, {"floor-0", "floor-1"})
+        ground = next(p for p in late if p.floor_id == "floor-0")
+        self.assertAlmostEqual(ground.x, 10.0)
+        self.assertAlmostEqual(ground.y, 4.0)
+
+    def test_fire_climbs_then_lower_floors_can_descend_further(self):
+        """Middle origin spreads both up and down through stairs."""
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 40,
+                "height": 20,
+                "floors": [
+                    {"id": "floor-0", "name": "G", "elevation_m": 0, "order": 0},
+                    {"id": "floor-1", "name": "1", "elevation_m": 3.2, "order": 1},
+                    {"id": "floor-2", "name": "2", "elevation_m": 6.4, "order": 2},
+                ],
+                "spaces": [
+                    {
+                        "id": "r0",
+                        "name": "R0",
+                        "type": "room",
+                        "floor_id": "floor-0",
+                        "vertices": [[0, 0], [8, 0], [8, 8], [0, 8]],
+                    },
+                    {
+                        "id": "s0",
+                        "name": "S0",
+                        "type": "stairs",
+                        "floor_id": "floor-0",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s1",
+                    },
+                    {
+                        "id": "r1",
+                        "name": "R1",
+                        "type": "room",
+                        "floor_id": "floor-1",
+                        "vertices": [[0, 0], [8, 0], [8, 8], [0, 8]],
+                    },
+                    {
+                        "id": "s1",
+                        "name": "S1",
+                        "type": "stairs",
+                        "floor_id": "floor-1",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s0",
+                    },
+                    {
+                        "id": "s1u",
+                        "name": "S1u",
+                        "type": "stairs",
+                        "floor_id": "floor-1",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s2",
+                    },
+                    {
+                        "id": "r2",
+                        "name": "R2",
+                        "type": "room",
+                        "floor_id": "floor-2",
+                        "vertices": [[0, 0], [8, 0], [8, 8], [0, 8]],
+                    },
+                    {
+                        "id": "s2",
+                        "name": "S2",
+                        "type": "stairs",
+                        "floor_id": "floor-2",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s1u",
+                    },
+                ],
+                "doors": [
+                    {
+                        "id": "d0",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-0",
+                        "connects": ["r0", "s0"],
+                    },
+                    {
+                        "id": "d1",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-1",
+                        "connects": ["r1", "s1"],
+                    },
+                    {
+                        "id": "d1u",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-1",
+                        "connects": ["r1", "s1u"],
+                    },
+                    {
+                        "id": "d2",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-2",
+                        "connects": ["r2", "s2"],
+                    },
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 0,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-0",
+                        "connected_space_id": "r0",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "G",
+                        "count": 1,
+                        "space_id": "r1",
+                        "floor_id": "floor-1",
+                        "spawn_x": 2,
+                        "spawn_y": 4,
+                        "walking_speed_mps": 1.2,
+                    }
+                ],
+            }
+        )
+        layout.fire = FireEmergency(
+            enabled=True,
+            x=10.0,
+            y=4.0,
+            radius_m=2.0,
+            spread_speed_mps=1.0,
+            intensity=70,
+            floor_id="floor-1",
+            emit_smoke=False,
+            smoke_stair_spread_delay_s=1.0,
+            smoke_stair_intensity_factor=0.9,
+        )
+        early = {p.floor_id for p in active_fire_plumes(layout, 0.5)}
+        # Too early for stair delay: still only origin floor.
+        self.assertEqual(early, {"floor-1"})
+        late = {p.floor_id for p in active_fire_plumes(layout, 30.0)}
+        self.assertEqual(late, {"floor-0", "floor-1", "floor-2"})
+
     def test_fire_follows_stairs_slower_than_smoke(self):
         layout = linked_floors_layout(count=1)
         layout.fire = FireEmergency(
@@ -221,6 +385,189 @@ class SmokeSimTests(unittest.TestCase):
         self.assertEqual(out.results.evacuated_count, 1)
         self.assertTrue(any(f.smoke_floors for f in out.frames))
         self.assertTrue(any(f.fire_floors for f in out.frames))
+
+
+class HazardPlaybackTests(unittest.TestCase):
+    def test_sim_continues_for_downward_fire_after_egress(self):
+        """Egress alone must not truncate frames before stair spread finishes."""
+        from app.services.seed import create_seed_layout
+
+        layout = create_seed_layout()
+        layout.fire = FireEmergency(
+            enabled=True,
+            x=12.0,
+            y=10.0,
+            radius_m=3.0,
+            spread_speed_mps=0.5,
+            intensity=70,
+            floor_id="floor-1",
+            emit_smoke=True,
+            smoke_stair_spread_delay_s=2.0,
+        )
+        out = SimulationEngine().run(
+            layout, SimulationParameters(max_time_s=120, frame_interval_s=1.0)
+        )
+        self.assertTrue(out.frames[-1].t > 15.0)
+        self.assertTrue(
+            any(
+                any(p.floor_id == "floor-0" for p in f.fire_floors)
+                for f in out.frames
+            ),
+            "expected fire on ground floor in playback frames",
+        )
+        self.assertTrue(
+            any(
+                any(p.floor_id == "floor-0" for p in f.smoke_floors)
+                for f in out.frames
+            ),
+            "expected smoke on ground floor in playback frames",
+        )
+
+    def test_one_way_stair_chain_still_reaches_ground(self):
+        """Climb chain s0→s1→s2→s3 must still allow smoke back down to ground."""
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 40,
+                "height": 20,
+                "floors": [
+                    {"id": "floor-0", "name": "Ground", "elevation_m": 0, "order": 0},
+                    {"id": "floor-1", "name": "1", "elevation_m": 3.2, "order": 1},
+                    {"id": "floor-2", "name": "2", "elevation_m": 6.4, "order": 2},
+                    {"id": "floor-3", "name": "3", "elevation_m": 9.6, "order": 3},
+                ],
+                "spaces": [
+                    {
+                        "id": "r0",
+                        "name": "R0",
+                        "type": "room",
+                        "floor_id": "floor-0",
+                        "vertices": [[0, 0], [16, 0], [16, 10], [0, 10]],
+                    },
+                    {
+                        "id": "r1",
+                        "name": "R1",
+                        "type": "room",
+                        "floor_id": "floor-1",
+                        "vertices": [[0, 0], [16, 0], [16, 10], [0, 10]],
+                    },
+                    {
+                        "id": "r2",
+                        "name": "R2",
+                        "type": "room",
+                        "floor_id": "floor-2",
+                        "vertices": [[0, 0], [16, 0], [16, 10], [0, 10]],
+                    },
+                    {
+                        "id": "r3",
+                        "name": "R3",
+                        "type": "room",
+                        "floor_id": "floor-3",
+                        "vertices": [[0, 0], [16, 0], [16, 10], [0, 10]],
+                    },
+                    {
+                        "id": "s0",
+                        "name": "S0",
+                        "type": "stairs",
+                        "floor_id": "floor-0",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s1",
+                    },
+                    {
+                        "id": "s1",
+                        "name": "S1",
+                        "type": "stairs",
+                        "floor_id": "floor-1",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s2",
+                    },
+                    {
+                        "id": "s2",
+                        "name": "S2",
+                        "type": "stairs",
+                        "floor_id": "floor-2",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s3",
+                    },
+                    {
+                        "id": "s3",
+                        "name": "S3",
+                        "type": "stairs",
+                        "floor_id": "floor-3",
+                        "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                        "linked_stair_id": "s2",
+                    },
+                ],
+                "doors": [
+                    {
+                        "id": "d0",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-0",
+                        "connects": ["r0", "s0"],
+                    },
+                    {
+                        "id": "d1",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-1",
+                        "connects": ["r1", "s1"],
+                    },
+                    {
+                        "id": "d2",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-2",
+                        "connects": ["r2", "s2"],
+                    },
+                    {
+                        "id": "d3",
+                        "x": 8,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-3",
+                        "connects": ["r3", "s3"],
+                    },
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 0,
+                        "y": 4,
+                        "width": 1.2,
+                        "floor_id": "floor-0",
+                        "connected_space_id": "r0",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "G",
+                        "count": 1,
+                        "space_id": "r1",
+                        "floor_id": "floor-1",
+                        "spawn_x": 2,
+                        "spawn_y": 4,
+                        "walking_speed_mps": 1.2,
+                    }
+                ],
+                "fire": {
+                    "enabled": True,
+                    "x": 10,
+                    "y": 4,
+                    "radius_m": 2,
+                    "spread_speed_mps": 1,
+                    "intensity": 70,
+                    "floor_id": "floor-1",
+                    "emit_smoke": True,
+                    "smoke_stair_spread_delay_s": 1,
+                },
+            }
+        )
+        late = {p.floor_id for p in active_smoke_plumes(layout, 30.0)}
+        self.assertEqual(late, {"floor-0", "floor-1", "floor-2", "floor-3"})
 
 
 if __name__ == "__main__":

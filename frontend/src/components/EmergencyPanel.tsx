@@ -116,10 +116,9 @@ export function EmergencyPanel({ kind, layout, onChange, disabled, activeFloorId
                     />
                   </label>
                   <p className="hint">
-                    Smoke expands faster than the fire on each floor. Both climb linked stairs;
-                    once they reach the top floor they cascade downward. Fire follows the same
-                    path with a longer stair delay. Smoke slows people and shortens sightlines
-                    but does not hard-block exits.
+                    Smoke expands faster than the fire on each floor. Both spread through
+                    linked stairs upward and downward; fire is slower on the stairs. Smoke
+                    slows people and shortens sightlines but does not hard-block exits.
                   </p>
                 </>
               )}

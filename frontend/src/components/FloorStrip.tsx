@@ -126,8 +126,6 @@ export function FloorStrip({
               const fireFloorId = layout.fire.floor_id ?? DEFAULT_FLOOR_ID;
               const fireElev =
                 floors.find((f) => f.id === fireFloorId)?.elevation_m ?? 0;
-              const topElev = Math.max(...floors.map((f) => f.elevation_m));
-              const fireOnTop = fireElev >= topElev - 1e-9;
               if (floor.elevation_m > fireElev + 1e-9) {
                 return (
                   <span className="floor-smoke-badge" title="Fire/smoke can rise here">
@@ -135,7 +133,7 @@ export function FloorStrip({
                   </span>
                 );
               }
-              if (fireOnTop && floor.elevation_m < fireElev - 1e-9) {
+              if (floor.elevation_m < fireElev - 1e-9) {
                 return (
                   <span className="floor-smoke-badge" title="Fire/smoke can descend here">
                     ↓
