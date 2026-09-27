@@ -161,6 +161,18 @@ export function useBuildingPersistence({
     onResetSimulation();
   };
 
+  const onImportLayout = (nextLayout: BuildingLayout) => {
+    setBuildingId(null);
+    replaceFloorPlans([]);
+    setSelectedFloorPlanId(null);
+    setLayout(nextLayout);
+    setUndoHistory([]);
+    setSelected([]);
+    setDirty(true);
+    setFloorPlanStatus('Map imported. Save to add it as a building in this project.');
+    onResetSimulation();
+  };
+
   return {
     buildingId,
     setBuildingId,
@@ -176,6 +188,7 @@ export function useBuildingPersistence({
     loadBuilding,
     onSave,
     onImportFloorPlan,
+    onImportLayout,
     onNew,
   };
 }
