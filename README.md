@@ -4,15 +4,6 @@ Web application for building planners to model simplified evacuation paths and
 estimate evacuation times. **Estimation only — not a safety certification or
 regulatory compliance calculation.**
 
-## What was implemented (iteration 1)
-
-* FastAPI backend with domain/service separation and SQLite persistence
-* Building CRUD API + seeded examples, including a four-floor oval stadium with two exits on both basement and ground
-* Navigation graph + Dijkstra routing + capacity-based congestion model
-* Discrete-time simulation engine returning animation frames and statistics
-* React + TypeScript + Vite frontend with Konva layout editor
-* Run / pause / play / reset / speed controls and results panel
-
 ## Project structure
 
 ```text
@@ -91,23 +82,3 @@ See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 * Polygonal multi-floor geometry; shortest-path routing; illustrative fire/flood/smoke
 * Capacity queues at doors/stairs/exits; stairs slow ascent/descent along a directed path
 * Results are estimates only
-
-## Known limitations
-
-* Floors are stacked 2D plans with climb time — not continuous 3D mesh physics
-* Space edges block movement except at door/exit gaps; connectivity is doors, exits, and linked stairs
-* No WebSocket streaming (NDJSON frame stream over HTTP instead)
-* No authentication or multi-user collaboration
-* Congestion model is intentionally simple
-
-## Recommended next steps
-
-* Smarter route choice (familiar exits, congestion avoidance, replanning)
-* Continuous-space / social-force movement models
-* Import from DXF / simple BIM subsets
-* Scenario comparison and report export
-
-## License
-
-Use and modify for planning and research. Do not present outputs as code
-compliance without appropriate professional validation.
