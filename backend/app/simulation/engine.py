@@ -152,10 +152,15 @@ class SimulationEngine:
             trapped_casualties_pending = self._trapped_casualties_pending(
                 occupants, params, future_fire_plumes, future_flood_plumes
             )
+            trapped_motion_pending = any(
+                occupant.status == OccupantStatus.TRAPPED
+                and not occupant.deceased
+                for occupant in occupants
+            )
             # Keep running after egress so fire/smoke can finish spreading through stairs.
             if occupants_done and not hazard_stair_spread_pending(
                 layout, t, params.max_time_s
-            ) and not trapped_casualties_pending:
+            ) and not trapped_casualties_pending and not trapped_motion_pending:
                 break
 
             t += params.timestep_s
@@ -188,10 +193,19 @@ class SimulationEngine:
                 layout.obstacles,
             )
 
-            if t + 1e-9 >= next_frame_t:
+            living_trapped = any(
+                occupant.status == OccupantStatus.TRAPPED and not occupant.deceased
+                for occupant in occupants
+            )
+            if t + 1e-9 >= next_frame_t or living_trapped:
                 yield self._capture_frame(t, occupants, layout)
                 last_frame_t = t
-                next_frame_t += params.frame_interval_s
+                capture_interval = (
+                    min(params.frame_interval_s, params.timestep_s)
+                    if living_trapped
+                    else params.frame_interval_s
+                )
+                next_frame_t = t + capture_interval
 
         if last_frame_t < t:
             yield self._capture_frame(t, occupants, layout)

@@ -43,6 +43,8 @@ class SimulatedOccupant:
     climb_to_space_id: str | None = None
     # Full-intensity-equivalent seconds spent in flood water (dose).
     flood_exposure_s: float = 0.0
+    # Per-occupant random stream for continuous movement while trapped.
+    trapped_wander_step: int = 0
 
     @property
     def current_node_id(self) -> str:

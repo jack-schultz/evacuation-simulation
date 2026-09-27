@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 import math
+import random
 
 from app.domain.building import (
     FloodEmergency,
@@ -150,6 +151,86 @@ def _apply_fire_casualties(
             occ.climb_to_space_id = None
 
 
+def _advance_trapped_wander(
+    occupants: list[SimulatedOccupant],
+    movement_model,
+    spaces: dict,
+    doors: dict,
+    graph,
+    solids: list[WallSegment],
+    obstacles,
+    obstacle_map: PixelObstacleMap | None,
+    world_width: float,
+    world_height: float,
+    radius: float,
+    dt: float,
+) -> None:
+    """Move living trapped occupants in short, collision-safe random steps."""
+    floor_obstacles = {
+        floor_id: [item for item in obstacles if item.floor_id == floor_id]
+        for floor_id in {o.floor_id for o in occupants}
+    }
+    for occ in occupants:
+        if occ.status != OccupantStatus.TRAPPED or occ.deceased:
+            continue
+        old_x, old_y = occ.x, occ.y
+        old_progress = occ.progress_on_edge
+        rng = random.Random(f"{occ.id}:confusion:{occ.trapped_wander_step}")
+        occ.trapped_wander_step += 1
+        desired = min(0.2, 0.8 * dt)
+        occ.status = OccupantStatus.ACTIVE
+        actual = 0.0
+        # Try a few fresh random headings so a wall in one direction does not
+        # leave an occupant stationary while other directions are open.
+        for _ in range(8):
+            angle = rng.uniform(0.0, math.tau)
+            occ.x, occ.y = old_x, old_y
+            occ.progress_on_edge = old_progress
+            movement_model.step_toward(
+                occ,
+                old_x + math.cos(angle) * desired,
+                old_y + math.sin(angle) * desired,
+                desired,
+            )
+            if not clear_segment(
+                (old_x, old_y),
+                (occ.x, occ.y),
+                floor_obstacles.get(occ.floor_id, []),
+                radius,
+            ):
+                continue
+
+            if obstacle_map is not None:
+                distance = dist(old_x, old_y, occ.x, occ.y)
+                cell = min(world_width / obstacle_map.width, world_height / obstacle_map.height)
+                samples = max(1, math.ceil(distance / max(cell * 0.4, 1e-4)))
+                safe_x, safe_y = old_x, old_y
+                for sample in range(1, samples + 1):
+                    fraction = sample / samples
+                    x = old_x + (occ.x - old_x) * fraction
+                    y = old_y + (occ.y - old_y) * fraction
+                    if not position_is_walkable(
+                        obstacle_map, x, y, radius, world_width, world_height
+                    ):
+                        break
+                    safe_x, safe_y = x, y
+                occ.x, occ.y = safe_x, safe_y
+
+            resolve_wall_collisions([occ], solids, radius)
+            resolve_space_containment(
+                [occ], spaces, radius, doors=doors, graph=graph, admitted=set()
+            )
+            actual = dist(old_x, old_y, occ.x, occ.y)
+            if actual > 1e-6:
+                break
+
+        occ.progress_on_edge = old_progress
+        occ.status = OccupantStatus.TRAPPED
+        if actual > 1e-6:
+            occ.distance_m += actual
+            occ.travel_time_s += dt
+
+
 def advance_timestep(
     flow_model,
     movement_model,
@@ -185,6 +266,21 @@ def advance_timestep(
     fire_active = bool(fire_plumes)
     has_hazard = flood_active or fire_active
     speed_factors: dict[str, float] = {}
+
+    _advance_trapped_wander(
+        occupants,
+        movement_model,
+        spaces,
+        doors,
+        graph,
+        solids,
+        obstacles,
+        obstacle_map,
+        world_width,
+        world_height,
+        radius,
+        params.timestep_s,
+    )
 
     _apply_fire_casualties(occupants, fire_plumes, radius)
     _advance_climbers(
