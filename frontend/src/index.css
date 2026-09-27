@@ -118,7 +118,7 @@ body {
 .main {
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto 260px;
+  grid-template-columns: auto minmax(0, 1fr) auto 220px;
   min-height: 0;
   overflow: hidden;
 }
@@ -162,7 +162,7 @@ body {
 
 .inspector-sidebar {
   position: relative;
-  width: 260px;
+  width: 220px;
   overflow: auto;
   background: var(--panel);
   border-left: 1px solid var(--border);
@@ -174,7 +174,7 @@ body {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 260px;
+  width: 220px;
   min-width: 0;
   overflow: auto;
   padding: 0.85rem;

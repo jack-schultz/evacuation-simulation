@@ -19,7 +19,7 @@ const DEFAULT_OPEN: PanelId[] = ['tools'];
 
 export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
-  const [columnWidths, setColumnWidths] = useState({ tools: 260, properties: 260, library: 260 });
+  const [columnWidths, setColumnWidths] = useState({ tools: 260, properties: 220, library: 220 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaths, setShowPaths] = useState(false);
@@ -73,7 +73,7 @@ export default function App() {
         + (column !== 'properties' && inspectorVisible ? current.properties : 0)
         + (column !== 'library' ? current.library : 0);
       const railWidth = column === 'tools' ? 44 : 0;
-      const minWidth = column === 'library' ? 200 : 180;
+      const minWidth = column === 'library' ? 180 : 170;
       const maxWidth = Math.max(minWidth, available - otherWidths - railWidth - 280);
       return {
         ...current,
