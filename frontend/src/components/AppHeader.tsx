@@ -12,6 +12,8 @@ interface Props {
   onSave: () => void;
   dirty: boolean;
   onImportFloorPlan: (file?: File) => void;
+  onImportLayout: (file?: File) => void | Promise<void>;
+  onExportLayout: () => void;
   busy: boolean;
   simulating: boolean;
 }
@@ -28,6 +30,8 @@ export function AppHeader({
   onSave,
   dirty,
   onImportFloorPlan,
+  onImportLayout,
+  onExportLayout,
   busy,
   simulating,
 }: Props) {
@@ -70,6 +74,21 @@ export function AppHeader({
         </button>
         <button type="button" onClick={onSave} disabled={busy}>
           Save{dirty ? ' *' : ''}
+        </button>
+        <label className="file-import">
+          Import JSON
+          <input
+            type="file"
+            accept="application/json,.json"
+            disabled={busy || simulating}
+            onChange={(e) => {
+              void onImportLayout(e.currentTarget.files?.[0]);
+              e.currentTarget.value = '';
+            }}
+          />
+        </label>
+        <button type="button" onClick={onExportLayout} disabled={busy}>
+          Export JSON
         </button>
         <label className="file-import">
           Import PNG
