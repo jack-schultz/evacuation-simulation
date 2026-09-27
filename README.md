@@ -98,7 +98,7 @@ See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md). Summary:
 
 * Floors are stacked 2D plans with climb time — not continuous 3D mesh physics
 * Space edges block movement except at door/exit gaps; connectivity is doors, exits, and linked stairs
-* No live WebSocket streaming (full timeline computed server-side)
+* No WebSocket streaming (NDJSON frame stream over HTTP instead)
 * No authentication or multi-user collaboration
 * Congestion model is intentionally simple
 

@@ -30,7 +30,7 @@ API routers → services → domain / simulation engine
 
 - **ORM models** (`backend/app/models/`) are thin persistence; business types live in Pydantic domain models.
 - **Frontend types** mirror the backend domain; keep them in sync when schemas change.
-- Simulation runs **synchronously** on the server; the full frame timeline is returned in one response (no WebSockets).
+- Simulation runs on the server and streams NDJSON frames to the browser as they are computed; the full timeline and results are still retained in SQLite. No WebSockets are used.
 
 ## Where to change what
 
