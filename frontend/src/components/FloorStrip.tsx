@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { BuildingLayout, Floor } from '../types/building';
 import { DEFAULT_FLOOR_ID } from '../types/layout';
 import { ensureFloors } from '../layout/emptyLayout';
+import { deleteFloor, duplicateFloor } from '../layout/floors';
 
 interface Props {
   layout: BuildingLayout;
@@ -9,6 +11,12 @@ interface Props {
   onChange: (layout: BuildingLayout) => void;
   disabled?: boolean;
 }
+
+type FloorMenuState = {
+  floorId: string;
+  x: number;
+  y: number;
+};
 
 export function FloorStrip({
   layout,
@@ -19,6 +27,28 @@ export function FloorStrip({
 }: Props) {
   const floors = [...ensureFloors(layout)].sort((a, b) => a.order - b.order);
   const active = floors.find((f) => f.id === activeFloorId) ?? floors[0];
+  const [menu, setMenu] = useState<FloorMenuState | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menu) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (menuRef.current?.contains(event.target as Node)) return;
+      setMenu(null);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(null);
+    };
+    const onScroll = () => setMenu(null);
+    window.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      window.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [menu]);
 
   const updateFloor = (id: string, patch: Partial<Floor>) => {
     const nextFloors = ensureFloors(layout).map((f) =>
@@ -43,6 +73,40 @@ export function FloorStrip({
     onActiveFloorChange(id);
   };
 
+  const openFloorMenu = (floorId: string, event: ReactMouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onActiveFloorChange(floorId);
+    setMenu({ floorId, x: event.clientX, y: event.clientY });
+  };
+
+  const runMenu = (action: () => void) => {
+    action();
+    setMenu(null);
+  };
+
+  const handleDuplicate = (floorId: string) => {
+    if (disabled) return;
+    const result = duplicateFloor(layout, floorId);
+    if (!result) return;
+    onChange(result.layout);
+    onActiveFloorChange(result.newFloorId);
+  };
+
+  const handleDelete = (floorId: string) => {
+    if (disabled || floors.length <= 1) return;
+    const next = deleteFloor(layout, floorId);
+    if (!next) return;
+    onChange(next);
+    if (activeFloorId === floorId) {
+      const remaining = [...ensureFloors(next)].sort((a, b) => a.order - b.order);
+      onActiveFloorChange(remaining[0]?.id ?? DEFAULT_FLOOR_ID);
+    }
+  };
+
+  const menuFloor = menu ? floors.find((f) => f.id === menu.floorId) : null;
+  const canDelete = floors.length > 1;
+
   return (
     <div className="floor-strip" aria-label="Building floors">
       <div className="floor-tabs">
@@ -54,6 +118,8 @@ export function FloorStrip({
               floor.id === activeFloorId ? 'floor-tab active' : 'floor-tab'
             }
             onClick={() => onActiveFloorChange(floor.id)}
+            onContextMenu={(e) => openFloorMenu(floor.id, e)}
+            title="Right-click for floor options"
           >
             {floor.name}
             {layout.fire?.enabled && (() => {
@@ -116,6 +182,34 @@ export function FloorStrip({
               }}
             />
           </label>
+        </div>
+      )}
+      {menu && menuFloor && (
+        <div
+          ref={menuRef}
+          className="context-menu"
+          style={{ left: menu.x, top: menu.y }}
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="context-menu-item"
+            disabled={disabled}
+            onClick={() => runMenu(() => handleDuplicate(menu.floorId))}
+          >
+            Duplicate floor
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="context-menu-item danger"
+            disabled={disabled || !canDelete}
+            onClick={() => runMenu(() => handleDelete(menu.floorId))}
+            title={!canDelete ? 'Keep at least one floor' : undefined}
+          >
+            Delete floor
+          </button>
         </div>
       )}
     </div>
