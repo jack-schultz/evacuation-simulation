@@ -11,6 +11,7 @@ import { PropertiesPanel } from './components/PropertiesPanel';
 import { ResultsPanel } from './components/ResultsPanel';
 import { SimulationControls } from './components/SimulationControls';
 import { ToolPalette } from './components/ToolPalette';
+import { downloadLayoutFile, readLayoutFile } from './layout/layoutFile';
 import { useBuildingEditor } from './hooks/useBuildingEditor';
 import { useBuildingPersistence } from './hooks/useBuildingPersistence';
 import { useSimulationSession } from './hooks/useSimulationSession';
@@ -83,6 +84,19 @@ export default function App() {
     });
   };
 
+  const onImportLayoutFile = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      persistence.onImportLayout(await readLayoutFile(file));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="app">
       <AppHeader
@@ -97,6 +111,8 @@ export default function App() {
         onSave={persistence.onSave}
         dirty={editor.dirty}
         onImportFloorPlan={persistence.onImportFloorPlan}
+        onImportLayout={onImportLayoutFile}
+        onExportLayout={() => downloadLayoutFile(editor.layout)}
         busy={busy}
         simulating={session.simulating}
       />
