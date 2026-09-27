@@ -450,80 +450,6 @@
         "floor_id": "floor-1"
       },
       {
-        "id": "stadium_arena_floor",
-        "name": "Oval playing field",
-        "type": "room",
-        "vertices": [
-          [
-            69.34161720101072,
-            37.89332485842238
-          ],
-          [
-            71.1,
-            32
-          ],
-          [
-            69.34161720101072,
-            26.106675141577618
-          ],
-          [
-            64.33416664540925,
-            21.11055556972717
-          ],
-          [
-            56.839987287633576,
-            17.77225519932618
-          ],
-          [
-            48,
-            16.599999999999998
-          ],
-          [
-            39.160012712366424,
-            17.77225519932618
-          ],
-          [
-            31.665833354590752,
-            21.11055556972717
-          ],
-          [
-            26.658382798989276,
-            26.106675141577615
-          ],
-          [
-            24.9,
-            31.999999999999996
-          ],
-          [
-            26.658382798989273,
-            37.89332485842238
-          ],
-          [
-            31.665833354590742,
-            42.88944443027283
-          ],
-          [
-            39.16001271236641,
-            46.22774480067382
-          ],
-          [
-            47.99999999999999,
-            47.400000000000006
-          ],
-          [
-            56.839987287633576,
-            46.22774480067382
-          ],
-          [
-            64.33416664540923,
-            42.889444430272846
-          ]
-        ],
-        "capacity_density_per_m2": null,
-        "linked_stair_id": null,
-        "floor_id": "floor-1"
-      },
-      {
         "id": "stadium_2_east",
         "name": "Upper Concourse East stands and concourse",
         "type": "room",
@@ -1770,6 +1696,48 @@
         "capacity_density_per_m2": null,
         "linked_stair_id": null,
         "floor_id": "floor-3"
+      },
+      {
+        "id": "room_d5bksu5",
+        "name": "Field",
+        "type": "room",
+        "vertices": [
+          [
+            39.5,
+            18
+          ],
+          [
+            57,
+            18
+          ],
+          [
+            69,
+            26
+          ],
+          [
+            69,
+            38
+          ],
+          [
+            56.5,
+            46
+          ],
+          [
+            39.5,
+            46
+          ],
+          [
+            27,
+            37.5
+          ],
+          [
+            27,
+            26.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
       }
     ],
     "obstacles": [],
@@ -1978,110 +1946,6 @@
         "connects": [
           "stadium_1_south",
           "stadium_1_south_east"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_0",
-        "name": "Playing field gate 1",
-        "x": 71,
-        "y": 32,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_east",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_1",
-        "name": "Playing field gate 2",
-        "x": 64.5,
-        "y": 21,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_north_east",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_2",
-        "name": "Playing field gate 3",
-        "x": 48,
-        "y": 16.5,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_north",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_3",
-        "name": "Playing field gate 4",
-        "x": 32,
-        "y": 21,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_north_west",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_4",
-        "name": "Playing field gate 5",
-        "x": 25,
-        "y": 32,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_west",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_5",
-        "name": "Playing field gate 6",
-        "x": 32,
-        "y": 43,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_south_west",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_6",
-        "name": "Playing field gate 7",
-        "x": 48,
-        "y": 47.5,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_south",
-          "stadium_arena_floor"
-        ],
-        "flow_rate_per_s": null,
-        "floor_id": "floor-1"
-      },
-      {
-        "id": "stadium_field_door_7",
-        "name": "Playing field gate 8",
-        "x": 64.5,
-        "y": 43,
-        "width": 0.9,
-        "connects": [
-          "stadium_1_south_east",
-          "stadium_arena_floor"
         ],
         "flow_rate_per_s": null,
         "floor_id": "floor-1"
@@ -2709,6 +2573,32 @@
         ],
         "flow_rate_per_s": null,
         "floor_id": "floor-3"
+      },
+      {
+        "id": "door_eokv9r7",
+        "name": "Door 65",
+        "x": 27,
+        "y": 32,
+        "width": 0.9,
+        "connects": [
+          "room_d5bksu5",
+          "stadium_1_west"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_sj29uvp",
+        "name": "Door 66",
+        "x": 27,
+        "y": 32.5,
+        "width": 0.9,
+        "connects": [
+          "room_d5bksu5",
+          "stadium_1_west"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
       }
     ],
     "exits": [
@@ -2947,18 +2837,6 @@
         "floor_id": "floor-1"
       },
       {
-        "id": "stadium_arena_crowd",
-        "name": "Playing field crowd",
-        "count": 20,
-        "space_id": "stadium_arena_floor",
-        "spawn_x": null,
-        "spawn_y": null,
-        "walking_speed_mps": 1.3,
-        "destination_exit_id": null,
-        "behaviour": {},
-        "floor_id": "floor-1"
-      },
-      {
         "id": "stadium_crowd_2_0",
         "name": "Upper Concourse East crowd",
         "count": 4,
@@ -3149,6 +3027,30 @@
         "destination_exit_id": null,
         "behaviour": {},
         "floor_id": "floor-3"
+      },
+      {
+        "id": "group_yrm5m2q",
+        "name": "Group 33",
+        "count": 10,
+        "space_id": "room_d5bksu5",
+        "spawn_x": 32.5,
+        "spawn_y": 31,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_j176ylz",
+        "name": "Group 34",
+        "count": 10,
+        "space_id": "room_d5bksu5",
+        "spawn_x": 63,
+        "spawn_y": 31.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
       }
     ],
     "floods": [
