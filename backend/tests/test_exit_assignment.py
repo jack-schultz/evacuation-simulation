@@ -28,8 +28,14 @@ def run(layout):
 
 class ExitAssignmentTests(unittest.TestCase):
     def test_crowd_uses_both_exits_and_finishes_sooner(self):
-        single = run(building(two_exits=False))
-        distributed = run(building())
+        # Center the cluster so both exits are competitive; a side spawn
+        # would bias everyone toward the nearer exit.
+        single = building(two_exits=False)
+        distributed = building()
+        for layout in (single, distributed):
+            layout.occupant_groups[0].spawn_x = 6
+        single = run(single)
+        distributed = run(distributed)
         counts = Counter(o.route_node_ids[-1] for o in distributed.results.occupants)
         self.assertGreater(counts['exit:left'], 0)
         self.assertGreater(counts['exit:right'], 0)
