@@ -12,6 +12,7 @@ export function useSimulationSession({
   setError: (error: string | null) => void;
 }) {
   const [simId, setSimId] = useState<string | null>(null);
+  const [playbackBuildingId, setPlaybackBuildingId] = useState<string | null>(null);
   const [occupantRadiusM, setOccupantRadiusM] = useState(0.25);
   const streamController = useRef<AbortController | null>(null);
   const runVersion = useRef(0);
@@ -32,6 +33,7 @@ export function useSimulationSession({
     setBusy(false);
     playback.reset();
     setSimId(null);
+    setPlaybackBuildingId(null);
     setOccupantRadiusM(0.25);
   }, [playback, setBusy]);
 
@@ -87,6 +89,7 @@ export function useSimulationSession({
       });
       if (currentRun !== runVersion.current) return;
       setSimId(created.id);
+      setPlaybackBuildingId(id);
       playback.startStream();
       streamStarted = true;
       await api.streamSimulation(
@@ -115,6 +118,7 @@ export function useSimulationSession({
     setBusy(false);
     playback.reset();
     setOccupantRadiusM(0.25);
+    setPlaybackBuildingId(null);
     if (simId) {
       try {
         await api.resetSimulation(simId);
@@ -128,6 +132,7 @@ export function useSimulationSession({
 
   return {
     playback,
+    playbackBuildingId,
     simulating,
     streaming: playback.streaming,
     congestedIds,

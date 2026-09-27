@@ -1,5 +1,7 @@
 """Seed example buildings used by the editor."""
 
+import math
+
 from app.domain.building import (
     BuildingLayout,
     Door,
@@ -875,4 +877,233 @@ def create_titanic_template() -> BuildingLayout:
                 floor_id="floor-0",
             )
         ],
+    )
+
+
+def create_oval_stadium_template() -> BuildingLayout:
+    """Create a four-floor oval stadium with lower-level perimeter exits."""
+    floor_specs = [
+        ("floor-0", "Basement", -4.0, 0),
+        ("floor-1", "Ground", 0.0, 1),
+        ("floor-2", "Upper Concourse", 5.0, 2),
+        ("floor-3", "Upper Deck", 10.0, 3),
+    ]
+    floors = [
+        Floor(id=floor_id, name=name, elevation_m=elevation, order=order)
+        for floor_id, name, elevation, order in floor_specs
+    ]
+
+    width, height = 96.0, 64.0
+    center_x, center_y = width / 2, height / 2
+    radius_x, radius_y = 42.0, 28.0
+    sector_count = 8
+    vertices_per_oval = sector_count * 2
+    inner_scale = 0.55
+    boundary_angle = -math.pi / sector_count
+
+    def ellipse_points(scale: float) -> list[tuple[float, float]]:
+        return [
+            (
+                center_x + radius_x * scale * math.cos(
+                    boundary_angle + index * 2 * math.pi / vertices_per_oval
+                ),
+                center_y - radius_y * scale * math.sin(
+                    boundary_angle + index * 2 * math.pi / vertices_per_oval
+                ),
+            )
+            for index in range(vertices_per_oval)
+        ]
+
+    outer_points = ellipse_points(1.0)
+    inner_points = ellipse_points(inner_scale)
+    section_names = (
+        "East", "North-East", "North", "North-West",
+        "West", "South-West", "South", "South-East",
+    )
+    spaces: list[Space] = []
+    doors: list[Door] = []
+    exits: list[Exit] = []
+    occupant_groups: list[OccupantGroup] = []
+    section_ids: dict[tuple[int, int], str] = {}
+
+    for floor_index, (floor_id, floor_name, _, _) in enumerate(floor_specs):
+        for section_index, section_name in enumerate(section_names):
+            first_vertex = section_index * 2
+            next_vertex = (first_vertex + 2) % vertices_per_oval
+            section_id = f"stadium_{floor_index}_{section_name.lower().replace('-', '_')}"
+            section_ids[(floor_index, section_index)] = section_id
+            spaces.append(
+                Space(
+                    id=section_id,
+                    name=f"{floor_name} {section_name} stands and concourse",
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=[
+                        outer_points[first_vertex],
+                        outer_points[next_vertex],
+                        inner_points[next_vertex],
+                        inner_points[first_vertex],
+                    ],
+                )
+            )
+            occupant_groups.append(
+                OccupantGroup(
+                    id=f"stadium_crowd_{floor_index}_{section_index}",
+                    name=f"{floor_name} {section_name} crowd",
+                    count=floor_index + 2,
+                    space_id=section_id,
+                    floor_id=floor_id,
+                    walking_speed_mps=1.25,
+                )
+            )
+
+        for section_index in range(sector_count):
+            first_vertex = section_index * 2
+            previous_section = (section_index - 1) % sector_count
+            outer = outer_points[first_vertex]
+            inner = inner_points[first_vertex]
+            doors.append(
+                Door(
+                    id=f"stadium_ring_door_{floor_index}_{section_index}",
+                    name=f"{floor_name} concourse connection {section_index + 1}",
+                    x=(outer[0] + inner[0]) / 2,
+                    y=(outer[1] + inner[1]) / 2,
+                    width=0.9,
+                    connects=(
+                        section_ids[(floor_index, previous_section)],
+                        section_ids[(floor_index, section_index)],
+                    ),
+                    floor_id=floor_id,
+                )
+            )
+
+        if floor_index == 1:
+            field_id = "stadium_arena_floor"
+            spaces.append(
+                Space(
+                    id=field_id,
+                    name="Oval playing field",
+                    type=SpaceType.ROOM,
+                    floor_id=floor_id,
+                    vertices=inner_points,
+                )
+            )
+            occupant_groups.append(
+                OccupantGroup(
+                    id="stadium_arena_crowd",
+                    name="Playing field crowd",
+                    count=20,
+                    space_id=field_id,
+                    floor_id=floor_id,
+                    walking_speed_mps=1.3,
+                )
+            )
+            for section_index in range(sector_count):
+                first_vertex = section_index * 2
+                next_vertex = (first_vertex + 2) % vertices_per_oval
+                start = inner_points[first_vertex]
+                end = inner_points[next_vertex]
+                doors.append(
+                    Door(
+                        id=f"stadium_field_door_{section_index}",
+                        name=f"Playing field gate {section_index + 1}",
+                        x=(start[0] + end[0]) / 2,
+                        y=(start[1] + end[1]) / 2,
+                        width=0.9,
+                        connects=(section_ids[(floor_index, section_index)], field_id),
+                        floor_id=floor_id,
+                    )
+                )
+
+        if floor_index < 2:
+            for section_index, gate_name in ((0, "East"), (4, "West")):
+                first_vertex = section_index * 2
+                next_vertex = (first_vertex + 2) % vertices_per_oval
+                start = outer_points[first_vertex]
+                end = outer_points[next_vertex]
+                exits.append(
+                    Exit(
+                        id=f"stadium_exit_{floor_index}_{gate_name.lower()}",
+                        name=f"{floor_name} {gate_name} exit",
+                        x=(start[0] + end[0]) / 2,
+                        y=(start[1] + end[1]) / 2,
+                        width=2.4,
+                        connected_space_id=section_ids[(floor_index, section_index)],
+                        floor_id=floor_id,
+                        flow_rate_per_s=1.8,
+                    )
+                )
+
+    stair_banks = ((0, "east"), (2, "north"), (4, "west"), (6, "south"))
+    for floor_index, (floor_id, _, _, _) in enumerate(floor_specs):
+        for section_index, bank_name in stair_banks:
+            angle = section_index * 2 * math.pi / sector_count
+            stair_center_x = center_x + radius_x * 0.76 * math.cos(angle)
+            stair_center_y = center_y - radius_y * 0.76 * math.sin(angle)
+            down_id = f"stadium_stair_{bank_name}_down_{floor_index}"
+            up_id = f"stadium_stair_{bank_name}_up_{floor_index}"
+            stair_y = stair_center_y - 1.7
+            down_x = stair_center_x - 2.2
+            up_x = stair_center_x
+            spaces.extend(
+                [
+                    Space(
+                        id=down_id,
+                        name=f"{bank_name.title()} stair down ({floor_specs[floor_index][1]})",
+                        type=SpaceType.STAIRS,
+                        floor_id=floor_id,
+                        linked_stair_id=(
+                            f"stadium_stair_{bank_name}_up_{floor_index - 1}"
+                            if floor_index > 0
+                            else None
+                        ),
+                        vertices=rect_vertices(down_x, stair_y, 2.2, 3.4),
+                    ),
+                    Space(
+                        id=up_id,
+                        name=f"{bank_name.title()} stair up ({floor_specs[floor_index][1]})",
+                        type=SpaceType.STAIRS,
+                        floor_id=floor_id,
+                        linked_stair_id=(
+                            f"stadium_stair_{bank_name}_down_{floor_index + 1}"
+                            if floor_index < len(floor_specs) - 1
+                            else None
+                        ),
+                        vertices=rect_vertices(up_x, stair_y, 2.2, 3.4),
+                    ),
+                ]
+            )
+            doors.extend(
+                [
+                    Door(
+                        id=f"stadium_stair_landing_{bank_name}_{floor_index}",
+                        name=f"{bank_name.title()} stair landing",
+                        x=up_x,
+                        y=stair_center_y,
+                        width=0.9,
+                        connects=(down_id, up_id),
+                        floor_id=floor_id,
+                    ),
+                    Door(
+                        id=f"stadium_stair_entry_{bank_name}_{floor_index}",
+                        name=f"{bank_name.title()} stair entry",
+                        x=down_x,
+                        y=stair_center_y,
+                        width=0.9,
+                        connects=(section_ids[(floor_index, section_index)], down_id),
+                        floor_id=floor_id,
+                    ),
+                ]
+            )
+
+    return BuildingLayout(
+        name="Oval Stadium",
+        width=width,
+        height=height,
+        meters_per_cell=1.0,
+        floors=floors,
+        spaces=spaces,
+        doors=doors,
+        exits=exits,
+        occupant_groups=occupant_groups,
     )

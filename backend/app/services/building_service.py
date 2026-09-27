@@ -13,6 +13,7 @@ from app.models.building import BuildingRecord
 from app.schemas.api import BuildingResponse, BuildingSummary
 from app.services.seed import (
     create_23_floor_template,
+    create_oval_stadium_template,
     create_seed_layout,
     create_titanic_template,
 )
@@ -96,6 +97,14 @@ class BuildingService:
         if titanic_exists is None:
             titanic = self.create_building(create_titanic_template())
             created = created or titanic
+        stadium_exists = (
+            self.db.query(BuildingRecord)
+            .filter(BuildingRecord.name == "Oval Stadium")
+            .first()
+        )
+        if stadium_exists is None:
+            stadium = self.create_building(create_oval_stadium_template())
+            created = created or stadium
         return created
 
     def get_layout(self, building_id: str) -> BuildingLayout:

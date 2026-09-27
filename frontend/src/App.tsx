@@ -41,6 +41,9 @@ export default function App() {
   });
 
   const disabled = busy || session.simulating;
+  const playbackMatchesBuilding = session.playbackBuildingId === persistence.buildingId;
+  const playbackFrame = playbackMatchesBuilding ? session.playback.currentFrame : null;
+  const playbackResults = playbackMatchesBuilding ? session.playback.results : null;
 
   useEffect(() => {
     setActiveFloorId((current) => resolveActiveFloorId(editor.layout, current));
@@ -111,7 +114,7 @@ export default function App() {
         running={busy}
         simulating={session.simulating}
         streaming={session.streaming}
-        results={session.playback.results}
+        results={playbackResults}
         evacuatedCount={liveEvacuated}
         deathCount={liveDeaths}
         showPaths={showPaths}
@@ -161,6 +164,7 @@ export default function App() {
             disabled={disabled}
           />
           <BuildingCanvas
+            key={persistence.buildingId ?? 'draft'}
             layout={editor.layout}
             floorPlanUrl={persistence.floorPlanUrl}
             floorPlanOpacity={persistence.floorPlanOpacity}
@@ -175,17 +179,17 @@ export default function App() {
             onDuplicate={editor.onDuplicate}
             onDeleteSelected={editor.onDeleteSelected}
             canPaste={editor.canPaste}
-            occupants={session.playback.currentFrame?.occupants ?? []}
-            routeOccupants={session.playback.results?.occupants ?? []}
+            occupants={playbackFrame?.occupants ?? []}
+            routeOccupants={playbackResults?.occupants ?? []}
             showPaths={showPaths}
-            congestedIds={session.congestedIds}
+            congestedIds={playbackMatchesBuilding ? session.congestedIds : undefined}
             interactive={!disabled}
             occupantRadiusM={session.occupantRadiusM}
-            floodRadiusM={session.playback.currentFrame?.flood_radius_m}
-            floodRooms={session.playback.currentFrame?.flood_rooms ?? []}
-            fireRadiusM={session.playback.currentFrame?.fire_radius_m}
-            fireFloors={session.playback.currentFrame?.fire_floors ?? []}
-            smokeRooms={session.playback.currentFrame?.smoke_rooms ?? []}
+            floodRadiusM={playbackFrame?.flood_radius_m}
+            floodRooms={playbackFrame?.flood_rooms ?? []}
+            fireRadiusM={playbackFrame?.fire_radius_m}
+            fireFloors={playbackFrame?.fire_floors ?? []}
+            smokeRooms={playbackFrame?.smoke_rooms ?? []}
             activeFloorId={activeFloorId}
           />
         </main>
@@ -216,7 +220,7 @@ export default function App() {
       </div>
 
       <ResultsPanel
-        results={session.playback.results}
+        results={playbackResults}
         evacuatedCount={liveEvacuated}
       />
     </div>

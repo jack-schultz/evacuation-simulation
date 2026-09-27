@@ -36,6 +36,8 @@ export function useBuildingPersistence({
   const [selectedFloorPlanId, setSelectedFloorPlanId] = useState<string | null>(null);
   const [floorPlanOpacity, setFloorPlanOpacity] = useState(0.2);
   const imageUrls = useRef<string[]>([]);
+  const buildingLoadVersion = useRef(0);
+  const floorPlanLoadVersion = useRef(0);
 
   const replaceFloorPlans = useCallback((next: FloorPlanLibraryImage[]) => {
     imageUrls.current.forEach((url) => URL.revokeObjectURL(url));
@@ -44,11 +46,18 @@ export function useBuildingPersistence({
   }, []);
 
   const loadFloorPlans = useCallback(async (id: string, preferredId?: string) => {
+    const requestVersion = ++floorPlanLoadVersion.current;
     const summaries = await api.listFloorPlans(id);
     const assets = await Promise.all(summaries.map(async (summary) => ({
       ...summary,
       url: await api.getFloorPlan(id, summary.id) ?? '',
     })));
+    if (requestVersion !== floorPlanLoadVersion.current) {
+      assets.forEach((image) => {
+        if (image.url) URL.revokeObjectURL(image.url);
+      });
+      return;
+    }
     const loaded = assets.filter((image) => image.url);
     replaceFloorPlans(loaded);
     setSelectedFloorPlanId(
@@ -69,16 +78,30 @@ export function useBuildingPersistence({
   }, []);
 
   const loadBuilding = useCallback(async (id: string) => {
-    const b = await api.getBuilding(id);
-    await loadFloorPlans(id);
-    setBuildingId(b.id);
-    setLayout(normalizeHazards(b.layout));
-    setUndoHistory([]);
-    setSelected([]);
-    setDirty(false);
-    setFloorPlanStatus(null);
+    const requestVersion = ++buildingLoadVersion.current;
+    floorPlanLoadVersion.current += 1;
     onResetSimulation();
-  }, [setLayout, setUndoHistory, setSelected, setDirty, onResetSimulation, loadFloorPlans]);
+    setBusy(true);
+    setError(null);
+    try {
+      const b = await api.getBuilding(id);
+      if (requestVersion !== buildingLoadVersion.current) return;
+      await loadFloorPlans(id);
+      if (requestVersion !== buildingLoadVersion.current) return;
+      setBuildingId(b.id);
+      setLayout(normalizeHazards(b.layout));
+      setUndoHistory([]);
+      setSelected([]);
+      setDirty(false);
+      setFloorPlanStatus(null);
+    } catch (e) {
+      if (requestVersion === buildingLoadVersion.current) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      if (requestVersion === buildingLoadVersion.current) setBusy(false);
+    }
+  }, [setLayout, setUndoHistory, setSelected, setDirty, onResetSimulation, loadFloorPlans, setBusy, setError]);
 
   useEffect(() => {
     (async () => {
@@ -152,6 +175,8 @@ export function useBuildingPersistence({
   };
 
   const onNew = () => {
+    buildingLoadVersion.current += 1;
+    floorPlanLoadVersion.current += 1;
     setBuildingId(null);
     replaceFloorPlans([]);
     setSelectedFloorPlanId(null);
@@ -164,6 +189,8 @@ export function useBuildingPersistence({
   };
 
   const onImportLayout = (nextLayout: BuildingLayout) => {
+    buildingLoadVersion.current += 1;
+    floorPlanLoadVersion.current += 1;
     setBuildingId(null);
     replaceFloorPlans([]);
     setSelectedFloorPlanId(null);
