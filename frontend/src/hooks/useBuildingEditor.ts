@@ -17,10 +17,12 @@ export function useBuildingEditor({
   simulating,
   busy,
   setError,
+  activeFloorId,
 }: {
   simulating: boolean;
   busy: boolean;
   setError: (error: string | null) => void;
+  activeFloorId: string;
 }) {
   const [layout, setLayout] = useState<BuildingLayout>(emptyLayout());
   const [undoHistory, setUndoHistory] = useState<BuildingLayout[]>([]);
@@ -73,11 +75,11 @@ export function useBuildingEditor({
       const offset = worldPoint
         ? offsetToWorldPoint(payload, worldPoint.x, worldPoint.y)
         : { x: PASTE_OFFSET_M, y: PASTE_OFFSET_M };
-      const result = pastePayload(layout, payload, offset);
+      const result = pastePayload(layout, payload, offset, activeFloorId);
       updateLayout(result.layout);
       setSelected(result.selection);
     },
-    [busy, simulating, layout],
+    [busy, simulating, layout, activeFloorId],
   );
 
   const onDuplicate = useCallback(() => {
@@ -86,10 +88,10 @@ export function useBuildingEditor({
     const result = pastePayload(layout, payload, {
       x: PASTE_OFFSET_M,
       y: PASTE_OFFSET_M,
-    });
+    }, activeFloorId);
     updateLayout(result.layout);
     setSelected(result.selection);
-  }, [selected, busy, simulating, layout]);
+  }, [selected, busy, simulating, layout, activeFloorId]);
 
   const selectObject = useCallback(
     (

@@ -134,6 +134,7 @@ export function pastePayload(
   layout: BuildingLayout,
   payload: ClipboardPayload,
   offset: { x: number; y: number },
+  targetFloorId?: string,
 ): { layout: BuildingLayout; selection: Selection } {
   const idMap = new Map<string, string>();
 
@@ -154,6 +155,7 @@ export function pastePayload(
     ...space,
     id: idMap.get(space.id)!,
     name: `${space.name} copy`,
+    ...(targetFloorId ? { floor_id: targetFloorId } : {}),
     linked_stair_id: space.linked_stair_id
       ? remapId(idMap, space.linked_stair_id)
       : null,
@@ -166,6 +168,7 @@ export function pastePayload(
     ...door,
     id: idMap.get(door.id)!,
     name: `${door.name} copy`,
+    ...(targetFloorId ? { floor_id: targetFloorId } : {}),
     x: snap(door.x + offset.x),
     y: snap(door.y + offset.y),
     connects: [
@@ -178,6 +181,7 @@ export function pastePayload(
     ...exit,
     id: idMap.get(exit.id)!,
     name: `${exit.name} copy`,
+    ...(targetFloorId ? { floor_id: targetFloorId } : {}),
     x: snap(exit.x + offset.x),
     y: snap(exit.y + offset.y),
     connected_space_id: remapId(idMap, exit.connected_space_id),
@@ -192,6 +196,7 @@ export function pastePayload(
       ...group,
       id: idMap.get(group.id)!,
       name: `${group.name} copy`,
+      ...(targetFloorId ? { floor_id: targetFloorId } : {}),
       space_id: remapId(idMap, group.space_id),
       spawn_x,
       spawn_y,
@@ -201,12 +206,15 @@ export function pastePayload(
     };
   });
 
-  const obstacles = (payload.obstacles ?? []).map(o => ({ ...o, id: uid('obstacle'),
+  const obstacles = (payload.obstacles ?? []).map((o) => ({
+    ...o,
+    id: uid('obstacle'),
+    ...(targetFloorId ? { floor_id: targetFloorId } : {}),
     x: Math.max(0, Math.min(layout.width - o.width, snap(o.x + offset.x))),
     y: Math.max(0, Math.min(layout.height - o.height, snap(o.y + offset.y))),
   }));
   const selection: Selection = [
-    ...obstacles.map(o => ({ kind: 'obstacle' as const, id: o.id })),
+    ...obstacles.map((o) => ({ kind: 'obstacle' as const, id: o.id })),
     ...spaces.map((s) => ({ kind: 'space' as const, id: s.id })),
     ...doors.map((d) => ({ kind: 'door' as const, id: d.id })),
     ...exits.map((e) => ({ kind: 'exit' as const, id: e.id })),

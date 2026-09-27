@@ -59,7 +59,8 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
         Obstacle: click and drag a rectangle; release to place it.
         Use Select to drag spaces, obstacles, doors, exits, occupants or
         flood/fire centres. Shift or Cmd/Ctrl+click to multi-select.
-        Right-click for copy, paste, duplicate, and delete. Hover an object
+        Right-click for copy, paste, duplicate, and delete. Copy on one floor
+        and paste on another to reuse geometry across storeys. Hover an object
         and press E to select it. Drag occupants to move their spawn point.
         Edge lengths show while drawing rooms/stairs. Positions snap to
         the 0.5 m grid (axis-aligned edges lock near horizontal/vertical).

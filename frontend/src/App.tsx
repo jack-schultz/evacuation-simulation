@@ -27,6 +27,7 @@ export default function App() {
     simulating: session.simulating,
     busy,
     setError,
+    activeFloorId,
   });
   const persistence = useBuildingPersistence({
     layout: editor.layout,
