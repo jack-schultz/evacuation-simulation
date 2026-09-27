@@ -1,0 +1,891 @@
+{
+  "format": "evacuation-simulation-layout",
+  "version": 1,
+  "layout": {
+    "name": "EM building",
+    "width": 64,
+    "height": 41.5,
+    "meters_per_cell": 1,
+    "floors": [
+      {
+        "id": "floor-0",
+        "name": "Ground",
+        "elevation_m": 0,
+        "order": 0
+      },
+      {
+        "id": "floor-1",
+        "name": "Level 1",
+        "elevation_m": 3.2,
+        "order": 1
+      }
+    ],
+    "spaces": [
+      {
+        "id": "stairs_5q2qafk",
+        "name": "stairs 1",
+        "type": "stairs",
+        "vertices": [
+          [
+            62,
+            27
+          ],
+          [
+            51,
+            27
+          ],
+          [
+            51,
+            40
+          ],
+          [
+            62,
+            40
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stairs_nc58l6c",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_6bq5vhk",
+        "name": "Room 5",
+        "type": "room",
+        "vertices": [
+          [
+            51,
+            26.5
+          ],
+          [
+            51,
+            24.5
+          ],
+          [
+            33,
+            24.5
+          ],
+          [
+            33,
+            39.5
+          ],
+          [
+            51,
+            39.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_gpt7zgb",
+        "name": "Room 4",
+        "type": "room",
+        "vertices": [
+          [
+            33,
+            25
+          ],
+          [
+            14.5,
+            25
+          ],
+          [
+            14.5,
+            40
+          ],
+          [
+            33,
+            40
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_v3nmrjj",
+        "name": "Room 3",
+        "type": "room",
+        "vertices": [
+          [
+            14.5,
+            25
+          ],
+          [
+            0,
+            25
+          ],
+          [
+            0,
+            40
+          ],
+          [
+            14.5,
+            40
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_w1nrh5u",
+        "name": "bathoom",
+        "type": "room",
+        "vertices": [
+          [
+            62,
+            12.5
+          ],
+          [
+            50,
+            12.5
+          ],
+          [
+            50,
+            0
+          ],
+          [
+            62,
+            0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_e5mug5y",
+        "name": "Room 2",
+        "type": "room",
+        "vertices": [
+          [
+            50,
+            2
+          ],
+          [
+            50,
+            0
+          ],
+          [
+            25.5,
+            0
+          ],
+          [
+            25.5,
+            15
+          ],
+          [
+            50,
+            15
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_fn13zz0",
+        "name": "Room 1",
+        "type": "room",
+        "vertices": [
+          [
+            25.5,
+            2
+          ],
+          [
+            25.5,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            15
+          ],
+          [
+            25.5,
+            15
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stairs_nc58l6c",
+        "name": "stairs 2",
+        "type": "stairs",
+        "vertices": [
+          [
+            54,
+            40
+          ],
+          [
+            62,
+            40
+          ],
+          [
+            62,
+            29
+          ],
+          [
+            54,
+            29
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stairs_5q2qafk",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "room_0g27rhb",
+        "name": "Room  9",
+        "type": "room",
+        "vertices": [
+          [
+            54,
+            40
+          ],
+          [
+            54,
+            25
+          ],
+          [
+            31,
+            25
+          ],
+          [
+            31,
+            40
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "room_qfhzuni",
+        "name": "Room 8",
+        "type": "room",
+        "vertices": [
+          [
+            31,
+            25
+          ],
+          [
+            0,
+            25
+          ],
+          [
+            0,
+            40
+          ],
+          [
+            31,
+            40
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "room_pc8tldn",
+        "name": "bathroom",
+        "type": "room",
+        "vertices": [
+          [
+            48,
+            0
+          ],
+          [
+            48,
+            10.5
+          ],
+          [
+            54,
+            10.5
+          ],
+          [
+            54,
+            0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "room_lackkld",
+        "name": "DL",
+        "type": "room",
+        "vertices": [
+          [
+            48,
+            15
+          ],
+          [
+            48,
+            0
+          ],
+          [
+            33,
+            0
+          ],
+          [
+            33,
+            15
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "room_l6p2wk6",
+        "name": "Room 6",
+        "type": "room",
+        "vertices": [
+          [
+            33,
+            15
+          ],
+          [
+            33,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            15
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "room_i5l7ps9",
+        "name": "",
+        "type": "room",
+        "vertices": [
+          [
+            0,
+            15
+          ],
+          [
+            50,
+            15
+          ],
+          [
+            50,
+            12.5
+          ],
+          [
+            62,
+            12.5
+          ],
+          [
+            62,
+            26.5
+          ],
+          [
+            62,
+            27
+          ],
+          [
+            51,
+            27
+          ],
+          [
+            51,
+            25
+          ],
+          [
+            0,
+            25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "room_4yb3eec",
+        "name": "",
+        "type": "room",
+        "vertices": [
+          [
+            0,
+            15
+          ],
+          [
+            48,
+            15
+          ],
+          [
+            48,
+            10.5
+          ],
+          [
+            54,
+            10.5
+          ],
+          [
+            54,
+            12
+          ],
+          [
+            62,
+            12
+          ],
+          [
+            62,
+            29
+          ],
+          [
+            54,
+            29
+          ],
+          [
+            54,
+            25
+          ],
+          [
+            0,
+            25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      }
+    ],
+    "obstacles": [
+      {
+        "id": "obstacle_3orx13i",
+        "name": "Obstacle",
+        "x": 54,
+        "y": 0,
+        "width": 8,
+        "height": 12,
+        "floor_id": "floor-1"
+      }
+    ],
+    "doors": [
+      {
+        "id": "door_7iq4hef",
+        "name": "Door 1",
+        "x": 47,
+        "y": 25,
+        "width": 0.9,
+        "connects": [
+          "room_6bq5vhk",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_b7wyp93",
+        "name": "Door 2",
+        "x": 28,
+        "y": 25,
+        "width": 0.9,
+        "connects": [
+          "room_gpt7zgb",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_9sn08k9",
+        "name": "Door 3",
+        "x": 10,
+        "y": 25,
+        "width": 0.9,
+        "connects": [
+          "room_v3nmrjj",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_taxstpt",
+        "name": "Door 4",
+        "x": 52.5,
+        "y": 12.5,
+        "width": 0.9,
+        "connects": [
+          "room_w1nrh5u",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_veu2sjt",
+        "name": "Door 5",
+        "x": 45,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_e5mug5y",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_g2xmrrr",
+        "name": "Door 6",
+        "x": 31,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_e5mug5y",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_dil8yst",
+        "name": "Door 7",
+        "x": 18,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_fn13zz0",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_g6ho3aw",
+        "name": "Door 8",
+        "x": 5.5,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_fn13zz0",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_f117avq",
+        "name": "Door 9",
+        "x": 49.5,
+        "y": 10.5,
+        "width": 0.9,
+        "connects": [
+          "room_pc8tldn",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_lfy5kpl",
+        "name": "Door 10",
+        "x": 36,
+        "y": 25,
+        "width": 0.9,
+        "connects": [
+          "room_0g27rhb",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_a7yp596",
+        "name": "Door 11",
+        "x": 25,
+        "y": 25,
+        "width": 0.9,
+        "connects": [
+          "room_qfhzuni",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_knjvt1r",
+        "name": "Door 12",
+        "x": 6,
+        "y": 25,
+        "width": 0.9,
+        "connects": [
+          "room_qfhzuni",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_hesan8b",
+        "name": "Door 13",
+        "x": 36,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_lackkld",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_uo8llv7",
+        "name": "Door 14",
+        "x": 26.5,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_l6p2wk6",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_czhntdl",
+        "name": "Door 15",
+        "x": 5.5,
+        "y": 15,
+        "width": 0.9,
+        "connects": [
+          "room_l6p2wk6",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_99uk9qo",
+        "name": "Door 16",
+        "x": 57,
+        "y": 29,
+        "width": 0.9,
+        "connects": [
+          "stairs_nc58l6c",
+          "room_4yb3eec"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_o9552yh",
+        "name": "Door 17",
+        "x": 54,
+        "y": 27,
+        "width": 0.9,
+        "connects": [
+          "stairs_5q2qafk",
+          "room_i5l7ps9"
+        ],
+        "flow_rate_per_s": 0.8,
+        "floor_id": "floor-0"
+      }
+    ],
+    "exits": [
+      {
+        "id": "exit_m14j1hu",
+        "name": "Exit 2",
+        "x": 62,
+        "y": 20.5,
+        "width": 1.2,
+        "connected_space_id": "room_i5l7ps9",
+        "flow_rate_per_s": 1,
+        "floor_id": "floor-0"
+      }
+    ],
+    "occupant_groups": [
+      {
+        "id": "group_9t2slem",
+        "name": "Group 1",
+        "count": 10,
+        "space_id": "room_fn13zz0",
+        "spawn_x": 16,
+        "spawn_y": 7.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_3tw3lll",
+        "name": "Group 2",
+        "count": 10,
+        "space_id": "room_e5mug5y",
+        "spawn_x": 41.5,
+        "spawn_y": 8.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_bbm2wcn",
+        "name": "Group 3",
+        "count": 10,
+        "space_id": "room_6bq5vhk",
+        "spawn_x": 44.5,
+        "spawn_y": 34,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_n2p5wnd",
+        "name": "Group 4",
+        "count": 10,
+        "space_id": "room_gpt7zgb",
+        "spawn_x": 26.5,
+        "spawn_y": 33.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_hnjsiqx",
+        "name": "Group 5",
+        "count": 10,
+        "space_id": "room_v3nmrjj",
+        "spawn_x": 10,
+        "spawn_y": 33,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_wgul5rn",
+        "name": "Group 6",
+        "count": 10,
+        "space_id": "room_w1nrh5u",
+        "spawn_x": 55.5,
+        "spawn_y": 4,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_e165ob0",
+        "name": "Group 7",
+        "count": 10,
+        "space_id": "room_i5l7ps9",
+        "spawn_x": 28,
+        "spawn_y": 19.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_d31q5cw",
+        "name": "Group 8",
+        "count": 10,
+        "space_id": "room_l6p2wk6",
+        "spawn_x": 17.5,
+        "spawn_y": 6,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_4vfhct1",
+        "name": "Group 9",
+        "count": 10,
+        "space_id": "room_lackkld",
+        "spawn_x": 41,
+        "spawn_y": 9.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_knypasr",
+        "name": "Group 10",
+        "count": 10,
+        "space_id": "room_pc8tldn",
+        "spawn_x": 52,
+        "spawn_y": 8,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_riy88qi",
+        "name": "Group 11",
+        "count": 10,
+        "space_id": "room_0g27rhb",
+        "spawn_x": 39,
+        "spawn_y": 34.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_r0vyco5",
+        "name": "Group 12",
+        "count": 10,
+        "space_id": "room_qfhzuni",
+        "spawn_x": 18.5,
+        "spawn_y": 31.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_1c13xp4",
+        "name": "Group 13",
+        "count": 10,
+        "space_id": "room_qfhzuni",
+        "spawn_x": 7,
+        "spawn_y": 31,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      }
+    ],
+    "floods": [
+      {
+        "enabled": true,
+        "x": 3.5,
+        "y": 20,
+        "radius_m": 3,
+        "spread_speed_mps": 0.1,
+        "intensity": 50,
+        "floor_id": "floor-1",
+        "id": "flood_a6pfbk1"
+      }
+    ],
+    "fires": [],
+    "smoke": null,
+    "obstacle_map": null
+  }
+}
