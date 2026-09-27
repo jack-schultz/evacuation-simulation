@@ -1,0 +1,4361 @@
+{
+  "format": "evacuation-simulation-layout",
+  "version": 1,
+  "layout": {
+    "name": "Twin Towers 20m",
+    "width": 54.0,
+    "height": 24.0,
+    "meters_per_cell": 1.0,
+    "floors": [
+      {
+        "id": "floor-0",
+        "name": "Ground",
+        "elevation_m": 0.0,
+        "order": 0
+      },
+      {
+        "id": "floor-1",
+        "name": "Level 1",
+        "elevation_m": 3.2,
+        "order": 1
+      },
+      {
+        "id": "floor-2",
+        "name": "Level 2",
+        "elevation_m": 6.4,
+        "order": 2
+      },
+      {
+        "id": "floor-3",
+        "name": "Level 3",
+        "elevation_m": 9.600000000000001,
+        "order": 3
+      },
+      {
+        "id": "floor-4",
+        "name": "Level 4",
+        "elevation_m": 12.8,
+        "order": 4
+      },
+      {
+        "id": "floor-5",
+        "name": "Level 5",
+        "elevation_m": 16.0,
+        "order": 5
+      },
+      {
+        "id": "floor-6",
+        "name": "Level 6",
+        "elevation_m": 19.200000000000003,
+        "order": 6
+      }
+    ],
+    "spaces": [
+      {
+        "id": "west_bottom_0",
+        "name": "West Tower bottom Ground",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_top_0",
+        "name": "West Tower top Ground",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_left_0",
+        "name": "West Tower left Ground",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_right_0",
+        "name": "West Tower right Ground",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_middle_0",
+        "name": "West Tower middle Ground",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_stair_down_0",
+        "name": "West Tower south stairs Ground",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_stair_up_0",
+        "name": "West Tower north stairs Ground",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_bottom_0",
+        "name": "East Tower bottom Ground",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_top_0",
+        "name": "East Tower top Ground",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_left_0",
+        "name": "East Tower left Ground",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_right_0",
+        "name": "East Tower right Ground",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_middle_0",
+        "name": "East Tower middle Ground",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_stair_down_0",
+        "name": "East Tower south stairs Ground",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "east_stair_up_0",
+        "name": "East Tower north stairs Ground",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "west_bottom_1",
+        "name": "West Tower bottom Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_top_1",
+        "name": "West Tower top Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_left_1",
+        "name": "West Tower left Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_right_1",
+        "name": "West Tower right Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_middle_1",
+        "name": "West Tower middle Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_stair_down_1",
+        "name": "West Tower south stairs Level 1",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_stair_up_1",
+        "name": "West Tower north stairs Level 1",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_bottom_1",
+        "name": "East Tower bottom Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_top_1",
+        "name": "East Tower top Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_left_1",
+        "name": "East Tower left Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_right_1",
+        "name": "East Tower right Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_middle_1",
+        "name": "East Tower middle Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_stair_down_1",
+        "name": "East Tower south stairs Level 1",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "east_stair_up_1",
+        "name": "East Tower north stairs Level 1",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "west_bottom_2",
+        "name": "West Tower bottom Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_top_2",
+        "name": "West Tower top Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_left_2",
+        "name": "West Tower left Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_right_2",
+        "name": "West Tower right Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_middle_2",
+        "name": "West Tower middle Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_stair_down_2",
+        "name": "West Tower south stairs Level 2",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_stair_up_2",
+        "name": "West Tower north stairs Level 2",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_bottom_2",
+        "name": "East Tower bottom Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_top_2",
+        "name": "East Tower top Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_left_2",
+        "name": "East Tower left Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_right_2",
+        "name": "East Tower right Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_middle_2",
+        "name": "East Tower middle Level 2",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_stair_down_2",
+        "name": "East Tower south stairs Level 2",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "east_stair_up_2",
+        "name": "East Tower north stairs Level 2",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "west_bottom_3",
+        "name": "West Tower bottom Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_top_3",
+        "name": "West Tower top Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_left_3",
+        "name": "West Tower left Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_right_3",
+        "name": "West Tower right Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_middle_3",
+        "name": "West Tower middle Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_stair_down_3",
+        "name": "West Tower south stairs Level 3",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_stair_up_3",
+        "name": "West Tower north stairs Level 3",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_down_4",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_bottom_3",
+        "name": "East Tower bottom Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_top_3",
+        "name": "East Tower top Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_left_3",
+        "name": "East Tower left Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_right_3",
+        "name": "East Tower right Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_middle_3",
+        "name": "East Tower middle Level 3",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_stair_down_3",
+        "name": "East Tower south stairs Level 3",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "east_stair_up_3",
+        "name": "East Tower north stairs Level 3",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_down_4",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "west_bottom_4",
+        "name": "West Tower bottom Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_top_4",
+        "name": "West Tower top Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_left_4",
+        "name": "West Tower left Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_right_4",
+        "name": "West Tower right Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_middle_4",
+        "name": "West Tower middle Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_stair_down_4",
+        "name": "West Tower south stairs Level 4",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_up_3",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_stair_up_4",
+        "name": "West Tower north stairs Level 4",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_down_5",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_bottom_4",
+        "name": "East Tower bottom Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_top_4",
+        "name": "East Tower top Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_left_4",
+        "name": "East Tower left Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_right_4",
+        "name": "East Tower right Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_middle_4",
+        "name": "East Tower middle Level 4",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_stair_down_4",
+        "name": "East Tower south stairs Level 4",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_up_3",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "east_stair_up_4",
+        "name": "East Tower north stairs Level 4",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_down_5",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "west_bottom_5",
+        "name": "West Tower bottom Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_top_5",
+        "name": "West Tower top Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_left_5",
+        "name": "West Tower left Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_right_5",
+        "name": "West Tower right Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_middle_5",
+        "name": "West Tower middle Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_stair_down_5",
+        "name": "West Tower south stairs Level 5",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_up_4",
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_stair_up_5",
+        "name": "West Tower north stairs Level 5",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_down_6",
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_bottom_5",
+        "name": "East Tower bottom Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_top_5",
+        "name": "East Tower top Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_left_5",
+        "name": "East Tower left Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_right_5",
+        "name": "East Tower right Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_middle_5",
+        "name": "East Tower middle Level 5",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_stair_down_5",
+        "name": "East Tower south stairs Level 5",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_up_4",
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "east_stair_up_5",
+        "name": "East Tower north stairs Level 5",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_down_6",
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "west_bottom_6",
+        "name": "West Tower bottom Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            2.0
+          ],
+          [
+            22.0,
+            2.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            2.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "west_top_6",
+        "name": "West Tower top Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            17.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            22.0,
+            22.0
+          ],
+          [
+            2.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "west_left_6",
+        "name": "West Tower left Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            7.0
+          ],
+          [
+            7.0,
+            7.0
+          ],
+          [
+            7.0,
+            17.0
+          ],
+          [
+            2.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "west_right_6",
+        "name": "West Tower right Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            17.0,
+            7.0
+          ],
+          [
+            22.0,
+            7.0
+          ],
+          [
+            22.0,
+            17.0
+          ],
+          [
+            17.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "west_middle_6",
+        "name": "West Tower middle Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            7.0,
+            7.0
+          ],
+          [
+            17.0,
+            7.0
+          ],
+          [
+            17.0,
+            17.0
+          ],
+          [
+            7.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "west_stair_down_6",
+        "name": "West Tower south stairs Level 6",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            7.5
+          ],
+          [
+            14.0,
+            7.5
+          ],
+          [
+            14.0,
+            10.5
+          ],
+          [
+            10.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "west_stair_up_5",
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "west_stair_up_6",
+        "name": "West Tower north stairs Level 6",
+        "type": "stairs",
+        "vertices": [
+          [
+            10.0,
+            13.5
+          ],
+          [
+            14.0,
+            13.5
+          ],
+          [
+            14.0,
+            16.5
+          ],
+          [
+            10.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_bottom_6",
+        "name": "East Tower bottom Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            2.0
+          ],
+          [
+            52.0,
+            2.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            32.0,
+            7.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_top_6",
+        "name": "East Tower top Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            17.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            52.0,
+            22.0
+          ],
+          [
+            32.0,
+            22.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_left_6",
+        "name": "East Tower left Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            32.0,
+            7.0
+          ],
+          [
+            37.0,
+            7.0
+          ],
+          [
+            37.0,
+            17.0
+          ],
+          [
+            32.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_right_6",
+        "name": "East Tower right Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            47.0,
+            7.0
+          ],
+          [
+            52.0,
+            7.0
+          ],
+          [
+            52.0,
+            17.0
+          ],
+          [
+            47.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_middle_6",
+        "name": "East Tower middle Level 6",
+        "type": "room",
+        "vertices": [
+          [
+            37.0,
+            7.0
+          ],
+          [
+            47.0,
+            7.0
+          ],
+          [
+            47.0,
+            17.0
+          ],
+          [
+            37.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_stair_down_6",
+        "name": "East Tower south stairs Level 6",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            7.5
+          ],
+          [
+            44.0,
+            7.5
+          ],
+          [
+            44.0,
+            10.5
+          ],
+          [
+            40.0,
+            10.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "east_stair_up_5",
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "east_stair_up_6",
+        "name": "East Tower north stairs Level 6",
+        "type": "stairs",
+        "vertices": [
+          [
+            40.0,
+            13.5
+          ],
+          [
+            44.0,
+            13.5
+          ],
+          [
+            44.0,
+            16.5
+          ],
+          [
+            40.0,
+            16.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-6"
+      }
+    ],
+    "obstacles": [],
+    "doors": [
+      {
+        "id": "door_west_bottom_0",
+        "name": "door west bottom 0",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_0",
+          "west_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_west_top_0",
+        "name": "door west top 0",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_0",
+          "west_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_west_left_0",
+        "name": "door west left 0",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_0",
+          "west_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_west_right_0",
+        "name": "door west right 0",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_0",
+          "west_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_west_stair_crossing_0",
+        "name": "door west stair crossing 0",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_0",
+          "west_stair_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_east_bottom_0",
+        "name": "door east bottom 0",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_0",
+          "east_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_east_top_0",
+        "name": "door east top 0",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_0",
+          "east_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_east_left_0",
+        "name": "door east left 0",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_0",
+          "east_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_east_right_0",
+        "name": "door east right 0",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_0",
+          "east_middle_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_east_stair_crossing_0",
+        "name": "door east stair crossing 0",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_0",
+          "east_stair_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_west_bottom_1",
+        "name": "door west bottom 1",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_1",
+          "west_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_west_top_1",
+        "name": "door west top 1",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_1",
+          "west_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_west_left_1",
+        "name": "door west left 1",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_1",
+          "west_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_west_right_1",
+        "name": "door west right 1",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_1",
+          "west_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_west_stair_crossing_1",
+        "name": "door west stair crossing 1",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_1",
+          "west_stair_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_east_bottom_1",
+        "name": "door east bottom 1",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_1",
+          "east_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_east_top_1",
+        "name": "door east top 1",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_1",
+          "east_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_east_left_1",
+        "name": "door east left 1",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_1",
+          "east_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_east_right_1",
+        "name": "door east right 1",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_1",
+          "east_middle_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_east_stair_crossing_1",
+        "name": "door east stair crossing 1",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_1",
+          "east_stair_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_west_bottom_2",
+        "name": "door west bottom 2",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_2",
+          "west_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_west_top_2",
+        "name": "door west top 2",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_2",
+          "west_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_west_left_2",
+        "name": "door west left 2",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_2",
+          "west_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_west_right_2",
+        "name": "door west right 2",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_2",
+          "west_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_west_stair_crossing_2",
+        "name": "door west stair crossing 2",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_2",
+          "west_stair_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_east_bottom_2",
+        "name": "door east bottom 2",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_2",
+          "east_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_east_top_2",
+        "name": "door east top 2",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_2",
+          "east_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_east_left_2",
+        "name": "door east left 2",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_2",
+          "east_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_east_right_2",
+        "name": "door east right 2",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_2",
+          "east_middle_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_east_stair_crossing_2",
+        "name": "door east stair crossing 2",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_2",
+          "east_stair_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_west_bottom_3",
+        "name": "door west bottom 3",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_3",
+          "west_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_west_top_3",
+        "name": "door west top 3",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_3",
+          "west_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_west_left_3",
+        "name": "door west left 3",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_3",
+          "west_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_west_right_3",
+        "name": "door west right 3",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_3",
+          "west_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_west_stair_crossing_3",
+        "name": "door west stair crossing 3",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_3",
+          "west_stair_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_east_bottom_3",
+        "name": "door east bottom 3",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_3",
+          "east_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_east_top_3",
+        "name": "door east top 3",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_3",
+          "east_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_east_left_3",
+        "name": "door east left 3",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_3",
+          "east_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_east_right_3",
+        "name": "door east right 3",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_3",
+          "east_middle_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_east_stair_crossing_3",
+        "name": "door east stair crossing 3",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_3",
+          "east_stair_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_west_bottom_4",
+        "name": "door west bottom 4",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_4",
+          "west_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_west_top_4",
+        "name": "door west top 4",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_4",
+          "west_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_west_left_4",
+        "name": "door west left 4",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_4",
+          "west_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_west_right_4",
+        "name": "door west right 4",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_4",
+          "west_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_west_stair_crossing_4",
+        "name": "door west stair crossing 4",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_4",
+          "west_stair_up_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_east_bottom_4",
+        "name": "door east bottom 4",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_4",
+          "east_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_east_top_4",
+        "name": "door east top 4",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_4",
+          "east_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_east_left_4",
+        "name": "door east left 4",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_4",
+          "east_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_east_right_4",
+        "name": "door east right 4",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_4",
+          "east_middle_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_east_stair_crossing_4",
+        "name": "door east stair crossing 4",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_4",
+          "east_stair_up_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_west_bottom_5",
+        "name": "door west bottom 5",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_5",
+          "west_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_west_top_5",
+        "name": "door west top 5",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_5",
+          "west_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_west_left_5",
+        "name": "door west left 5",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_5",
+          "west_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_west_right_5",
+        "name": "door west right 5",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_5",
+          "west_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_west_stair_crossing_5",
+        "name": "door west stair crossing 5",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_5",
+          "west_stair_up_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_east_bottom_5",
+        "name": "door east bottom 5",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_5",
+          "east_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_east_top_5",
+        "name": "door east top 5",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_5",
+          "east_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_east_left_5",
+        "name": "door east left 5",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_5",
+          "east_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_east_right_5",
+        "name": "door east right 5",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_5",
+          "east_middle_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_east_stair_crossing_5",
+        "name": "door east stair crossing 5",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_5",
+          "east_stair_up_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_west_bottom_6",
+        "name": "door west bottom 6",
+        "x": 12.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "west_bottom_6",
+          "west_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_west_top_6",
+        "name": "door west top 6",
+        "x": 12.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "west_top_6",
+          "west_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_west_left_6",
+        "name": "door west left 6",
+        "x": 7.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_left_6",
+          "west_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_west_right_6",
+        "name": "door west right 6",
+        "x": 17.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_right_6",
+          "west_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_west_stair_crossing_6",
+        "name": "door west stair crossing 6",
+        "x": 12.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "west_stair_down_6",
+          "west_stair_up_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_east_bottom_6",
+        "name": "door east bottom 6",
+        "x": 42.0,
+        "y": 7.0,
+        "width": 1.2,
+        "connects": [
+          "east_bottom_6",
+          "east_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_east_top_6",
+        "name": "door east top 6",
+        "x": 42.0,
+        "y": 17.0,
+        "width": 1.2,
+        "connects": [
+          "east_top_6",
+          "east_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_east_left_6",
+        "name": "door east left 6",
+        "x": 37.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_left_6",
+          "east_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_east_right_6",
+        "name": "door east right 6",
+        "x": 47.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_right_6",
+          "east_middle_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "door_east_stair_crossing_6",
+        "name": "door east stair crossing 6",
+        "x": 42.0,
+        "y": 12.0,
+        "width": 1.2,
+        "connects": [
+          "east_stair_down_6",
+          "east_stair_up_6"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-6"
+      }
+    ],
+    "exits": [
+      {
+        "id": "exit_west",
+        "name": "West Tower street exit",
+        "x": 2.0,
+        "y": 12.0,
+        "width": 1.4,
+        "connected_space_id": "west_left_0",
+        "flow_rate_per_s": 1.2,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "exit_east",
+        "name": "East Tower street exit",
+        "x": 52.0,
+        "y": 12.0,
+        "width": 1.4,
+        "connected_space_id": "east_right_0",
+        "flow_rate_per_s": 1.2,
+        "floor_id": "floor-0"
+      }
+    ],
+    "occupant_groups": [
+      {
+        "id": "occupants_west_bottom_0",
+        "name": "West Tower bottom occupants Ground",
+        "count": 6,
+        "space_id": "west_bottom_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_west_top_0",
+        "name": "West Tower top occupants Ground",
+        "count": 6,
+        "space_id": "west_top_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_west_left_0",
+        "name": "West Tower left occupants Ground",
+        "count": 6,
+        "space_id": "west_left_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_west_right_0",
+        "name": "West Tower right occupants Ground",
+        "count": 6,
+        "space_id": "west_right_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_east_bottom_0",
+        "name": "East Tower bottom occupants Ground",
+        "count": 6,
+        "space_id": "east_bottom_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_east_top_0",
+        "name": "East Tower top occupants Ground",
+        "count": 6,
+        "space_id": "east_top_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_east_left_0",
+        "name": "East Tower left occupants Ground",
+        "count": 6,
+        "space_id": "east_left_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_east_right_0",
+        "name": "East Tower right occupants Ground",
+        "count": 6,
+        "space_id": "east_right_0",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occupants_west_bottom_1",
+        "name": "West Tower bottom occupants Level 1",
+        "count": 6,
+        "space_id": "west_bottom_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_west_top_1",
+        "name": "West Tower top occupants Level 1",
+        "count": 6,
+        "space_id": "west_top_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_west_left_1",
+        "name": "West Tower left occupants Level 1",
+        "count": 6,
+        "space_id": "west_left_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_west_right_1",
+        "name": "West Tower right occupants Level 1",
+        "count": 6,
+        "space_id": "west_right_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_west_middle_1",
+        "name": "West Tower middle occupants Level 1",
+        "count": 4,
+        "space_id": "west_middle_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_east_bottom_1",
+        "name": "East Tower bottom occupants Level 1",
+        "count": 6,
+        "space_id": "east_bottom_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_east_top_1",
+        "name": "East Tower top occupants Level 1",
+        "count": 6,
+        "space_id": "east_top_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_east_left_1",
+        "name": "East Tower left occupants Level 1",
+        "count": 6,
+        "space_id": "east_left_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_east_right_1",
+        "name": "East Tower right occupants Level 1",
+        "count": 6,
+        "space_id": "east_right_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_east_middle_1",
+        "name": "East Tower middle occupants Level 1",
+        "count": 4,
+        "space_id": "east_middle_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occupants_west_bottom_2",
+        "name": "West Tower bottom occupants Level 2",
+        "count": 6,
+        "space_id": "west_bottom_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_west_top_2",
+        "name": "West Tower top occupants Level 2",
+        "count": 6,
+        "space_id": "west_top_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_west_left_2",
+        "name": "West Tower left occupants Level 2",
+        "count": 6,
+        "space_id": "west_left_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_west_right_2",
+        "name": "West Tower right occupants Level 2",
+        "count": 6,
+        "space_id": "west_right_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_west_middle_2",
+        "name": "West Tower middle occupants Level 2",
+        "count": 4,
+        "space_id": "west_middle_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_east_bottom_2",
+        "name": "East Tower bottom occupants Level 2",
+        "count": 6,
+        "space_id": "east_bottom_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_east_top_2",
+        "name": "East Tower top occupants Level 2",
+        "count": 6,
+        "space_id": "east_top_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_east_left_2",
+        "name": "East Tower left occupants Level 2",
+        "count": 6,
+        "space_id": "east_left_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_east_right_2",
+        "name": "East Tower right occupants Level 2",
+        "count": 6,
+        "space_id": "east_right_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_east_middle_2",
+        "name": "East Tower middle occupants Level 2",
+        "count": 4,
+        "space_id": "east_middle_2",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occupants_west_bottom_3",
+        "name": "West Tower bottom occupants Level 3",
+        "count": 6,
+        "space_id": "west_bottom_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_west_top_3",
+        "name": "West Tower top occupants Level 3",
+        "count": 6,
+        "space_id": "west_top_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_west_left_3",
+        "name": "West Tower left occupants Level 3",
+        "count": 6,
+        "space_id": "west_left_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_west_right_3",
+        "name": "West Tower right occupants Level 3",
+        "count": 6,
+        "space_id": "west_right_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_west_middle_3",
+        "name": "West Tower middle occupants Level 3",
+        "count": 4,
+        "space_id": "west_middle_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_east_bottom_3",
+        "name": "East Tower bottom occupants Level 3",
+        "count": 6,
+        "space_id": "east_bottom_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_east_top_3",
+        "name": "East Tower top occupants Level 3",
+        "count": 6,
+        "space_id": "east_top_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_east_left_3",
+        "name": "East Tower left occupants Level 3",
+        "count": 6,
+        "space_id": "east_left_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_east_right_3",
+        "name": "East Tower right occupants Level 3",
+        "count": 6,
+        "space_id": "east_right_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_east_middle_3",
+        "name": "East Tower middle occupants Level 3",
+        "count": 4,
+        "space_id": "east_middle_3",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occupants_west_bottom_4",
+        "name": "West Tower bottom occupants Level 4",
+        "count": 6,
+        "space_id": "west_bottom_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_west_top_4",
+        "name": "West Tower top occupants Level 4",
+        "count": 6,
+        "space_id": "west_top_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_west_left_4",
+        "name": "West Tower left occupants Level 4",
+        "count": 6,
+        "space_id": "west_left_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_west_right_4",
+        "name": "West Tower right occupants Level 4",
+        "count": 6,
+        "space_id": "west_right_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_west_middle_4",
+        "name": "West Tower middle occupants Level 4",
+        "count": 4,
+        "space_id": "west_middle_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_east_bottom_4",
+        "name": "East Tower bottom occupants Level 4",
+        "count": 6,
+        "space_id": "east_bottom_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_east_top_4",
+        "name": "East Tower top occupants Level 4",
+        "count": 6,
+        "space_id": "east_top_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_east_left_4",
+        "name": "East Tower left occupants Level 4",
+        "count": 6,
+        "space_id": "east_left_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_east_right_4",
+        "name": "East Tower right occupants Level 4",
+        "count": 6,
+        "space_id": "east_right_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_east_middle_4",
+        "name": "East Tower middle occupants Level 4",
+        "count": 4,
+        "space_id": "east_middle_4",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "occupants_west_bottom_5",
+        "name": "West Tower bottom occupants Level 5",
+        "count": 6,
+        "space_id": "west_bottom_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_west_top_5",
+        "name": "West Tower top occupants Level 5",
+        "count": 6,
+        "space_id": "west_top_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_west_left_5",
+        "name": "West Tower left occupants Level 5",
+        "count": 6,
+        "space_id": "west_left_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_west_right_5",
+        "name": "West Tower right occupants Level 5",
+        "count": 6,
+        "space_id": "west_right_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_west_middle_5",
+        "name": "West Tower middle occupants Level 5",
+        "count": 4,
+        "space_id": "west_middle_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_east_bottom_5",
+        "name": "East Tower bottom occupants Level 5",
+        "count": 6,
+        "space_id": "east_bottom_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_east_top_5",
+        "name": "East Tower top occupants Level 5",
+        "count": 6,
+        "space_id": "east_top_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_east_left_5",
+        "name": "East Tower left occupants Level 5",
+        "count": 6,
+        "space_id": "east_left_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_east_right_5",
+        "name": "East Tower right occupants Level 5",
+        "count": 6,
+        "space_id": "east_right_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_east_middle_5",
+        "name": "East Tower middle occupants Level 5",
+        "count": 4,
+        "space_id": "east_middle_5",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "occupants_west_bottom_6",
+        "name": "West Tower bottom occupants Level 6",
+        "count": 6,
+        "space_id": "west_bottom_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_west_top_6",
+        "name": "West Tower top occupants Level 6",
+        "count": 6,
+        "space_id": "west_top_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_west_left_6",
+        "name": "West Tower left occupants Level 6",
+        "count": 6,
+        "space_id": "west_left_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_west_right_6",
+        "name": "West Tower right occupants Level 6",
+        "count": 6,
+        "space_id": "west_right_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_west_middle_6",
+        "name": "West Tower middle occupants Level 6",
+        "count": 4,
+        "space_id": "west_middle_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_east_bottom_6",
+        "name": "East Tower bottom occupants Level 6",
+        "count": 6,
+        "space_id": "east_bottom_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_east_top_6",
+        "name": "East Tower top occupants Level 6",
+        "count": 6,
+        "space_id": "east_top_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_east_left_6",
+        "name": "East Tower left occupants Level 6",
+        "count": 6,
+        "space_id": "east_left_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_east_right_6",
+        "name": "East Tower right occupants Level 6",
+        "count": 6,
+        "space_id": "east_right_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      },
+      {
+        "id": "occupants_east_middle_6",
+        "name": "East Tower middle occupants Level 6",
+        "count": 4,
+        "space_id": "east_middle_6",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-6"
+      }
+    ],
+    "floods": [],
+    "fires": [],
+    "smoke": null,
+    "obstacle_map": null
+  }
+}

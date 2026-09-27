@@ -11,12 +11,7 @@ from sqlalchemy.orm import Session
 from app.domain.building import BuildingLayout
 from app.models.building import BuildingRecord
 from app.schemas.api import BuildingResponse, BuildingSummary
-from app.services.seed import (
-    create_23_floor_template,
-    create_oval_stadium_template,
-    create_seed_layout,
-    create_titanic_template,
-)
+from app.services.seed import iter_default_maps
 
 
 class BuildingService:
@@ -67,44 +62,27 @@ class BuildingService:
         self.db.commit()
 
     def ensure_seed(self) -> BuildingResponse | None:
-        existing = self.db.query(BuildingRecord).first()
+        """Import every *.json map from app/maps/ when its name is not already present."""
         created: BuildingResponse | None = None
-        if existing is None:
-            created = self.create_building(create_seed_layout())
-        template_exists = (
-            self.db.query(BuildingRecord)
-            .filter(BuildingRecord.name == "Dual NYC Office Template (2001)")
-            .first()
-        )
-        if template_exists is None:
-            template = self.create_building(create_23_floor_template())
-            legacy = (
+        existing_names = {
+            row.name for row in self.db.query(BuildingRecord.name).all()
+        }
+        for _path, layout in iter_default_maps():
+            if layout.name in existing_names:
+                continue
+            created = self.create_building(layout)
+            existing_names.add(layout.name)
+
+        # Drop superseded twin-tower seed if the 20 m map was just imported.
+        if "Twin Towers 20m" in existing_names:
+            legacy_twin = (
                 self.db.query(BuildingRecord)
-                .filter(BuildingRecord.name == "Dual NYC Office Template (2001)")
+                .filter(BuildingRecord.name == "Twin Towers 30m")
                 .first()
             )
-            if legacy:
-                legacy_layout = BuildingLayout.model_validate_json(legacy.layout_json)
-                if len(legacy_layout.floors) == 23 and len(legacy_layout.spaces) == 46:
-                    self.db.delete(legacy)
-                    self.db.commit()
-            created = created or template
-        titanic_exists = (
-            self.db.query(BuildingRecord)
-            .filter(BuildingRecord.name == "RMS Titanic")
-            .first()
-        )
-        if titanic_exists is None:
-            titanic = self.create_building(create_titanic_template())
-            created = created or titanic
-        stadium_exists = (
-            self.db.query(BuildingRecord)
-            .filter(BuildingRecord.name == "Oval Stadium")
-            .first()
-        )
-        if stadium_exists is None:
-            stadium = self.create_building(create_oval_stadium_template())
-            created = created or stadium
+            if legacy_twin is not None:
+                self.db.delete(legacy_twin)
+                self.db.commit()
         return created
 
     def get_layout(self, building_id: str) -> BuildingLayout:

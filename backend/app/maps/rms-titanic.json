@@ -1,0 +1,3200 @@
+{
+  "format": "evacuation-simulation-layout",
+  "version": 1,
+  "layout": {
+    "name": "RMS Titanic",
+    "width": 110.0,
+    "height": 20.0,
+    "meters_per_cell": 1.0,
+    "floors": [
+      {
+        "id": "floor-0",
+        "name": "F Deck (Orlop)",
+        "elevation_m": 0.0,
+        "order": 0
+      },
+      {
+        "id": "floor-1",
+        "name": "E Deck",
+        "elevation_m": 3.2,
+        "order": 1
+      },
+      {
+        "id": "floor-2",
+        "name": "D Deck",
+        "elevation_m": 6.4,
+        "order": 2
+      },
+      {
+        "id": "floor-3",
+        "name": "B Deck",
+        "elevation_m": 9.6,
+        "order": 3
+      },
+      {
+        "id": "floor-4",
+        "name": "Boat Deck",
+        "elevation_m": 12.8,
+        "order": 4
+      },
+      {
+        "id": "floor-5",
+        "name": "Poop Deck",
+        "elevation_m": 16.0,
+        "order": 5
+      }
+    ],
+    "spaces": [
+      {
+        "id": "d0_bow",
+        "name": "F Deck bow hold",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            10.0
+          ],
+          [
+            8.0,
+            4.5
+          ],
+          [
+            16.0,
+            3.0
+          ],
+          [
+            16.0,
+            17.0
+          ],
+          [
+            8.0,
+            15.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_corridor",
+        "name": "F Deck alleyway",
+        "type": "corridor",
+        "vertices": [
+          [
+            16.0,
+            8.5
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            16.0,
+            11.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_port_fwd",
+        "name": "F Deck port stores",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            3.0
+          ],
+          [
+            40.0,
+            3.0
+          ],
+          [
+            40.0,
+            8.5
+          ],
+          [
+            16.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_stbd_fwd",
+        "name": "F Deck starboard stores",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            11.5
+          ],
+          [
+            40.0,
+            11.5
+          ],
+          [
+            40.0,
+            17.0
+          ],
+          [
+            16.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_port_mid",
+        "name": "F Deck port boiler flats",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            3.0
+          ],
+          [
+            70.0,
+            3.0
+          ],
+          [
+            70.0,
+            8.5
+          ],
+          [
+            40.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_stbd_mid",
+        "name": "F Deck starboard boiler flats",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            11.5
+          ],
+          [
+            70.0,
+            11.5
+          ],
+          [
+            70.0,
+            17.0
+          ],
+          [
+            40.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_port_aft",
+        "name": "F Deck port third-class",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            3.0
+          ],
+          [
+            94.0,
+            3.0
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            70.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_stbd_aft",
+        "name": "F Deck starboard third-class",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            11.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            94.0,
+            17.0
+          ],
+          [
+            70.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d0_stern",
+        "name": "F Deck stern hold",
+        "type": "room",
+        "vertices": [
+          [
+            94.0,
+            3.0
+          ],
+          [
+            108.0,
+            4.5
+          ],
+          [
+            108.0,
+            15.5
+          ],
+          [
+            94.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "d1_bow",
+        "name": "E Deck bow cabins",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            10.0
+          ],
+          [
+            8.0,
+            4.5
+          ],
+          [
+            16.0,
+            3.0
+          ],
+          [
+            16.0,
+            17.0
+          ],
+          [
+            8.0,
+            15.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_corridor",
+        "name": "Scotland Road",
+        "type": "corridor",
+        "vertices": [
+          [
+            16.0,
+            8.5
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            16.0,
+            11.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_port_fwd",
+        "name": "E Deck port cabins",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            3.0
+          ],
+          [
+            40.0,
+            3.0
+          ],
+          [
+            40.0,
+            8.5
+          ],
+          [
+            16.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_stbd_fwd",
+        "name": "E Deck starboard cabins",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            11.5
+          ],
+          [
+            40.0,
+            11.5
+          ],
+          [
+            40.0,
+            17.0
+          ],
+          [
+            16.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_port_mid",
+        "name": "E Deck port cabins mid",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            3.0
+          ],
+          [
+            70.0,
+            3.0
+          ],
+          [
+            70.0,
+            8.5
+          ],
+          [
+            40.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_stbd_mid",
+        "name": "E Deck starboard cabins mid",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            11.5
+          ],
+          [
+            70.0,
+            11.5
+          ],
+          [
+            70.0,
+            17.0
+          ],
+          [
+            40.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_port_aft",
+        "name": "E Deck port aft cabins",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            3.0
+          ],
+          [
+            94.0,
+            3.0
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            70.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_stbd_aft",
+        "name": "E Deck starboard aft cabins",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            11.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            94.0,
+            17.0
+          ],
+          [
+            70.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d1_stern",
+        "name": "E Deck stern cabins",
+        "type": "room",
+        "vertices": [
+          [
+            94.0,
+            3.0
+          ],
+          [
+            108.0,
+            4.5
+          ],
+          [
+            108.0,
+            15.5
+          ],
+          [
+            94.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "d2_bow",
+        "name": "D Deck bow",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            10.0
+          ],
+          [
+            8.0,
+            4.5
+          ],
+          [
+            16.0,
+            3.0
+          ],
+          [
+            16.0,
+            17.0
+          ],
+          [
+            8.0,
+            15.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_corridor",
+        "name": "D Deck reception corridor",
+        "type": "corridor",
+        "vertices": [
+          [
+            16.0,
+            8.5
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            16.0,
+            11.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_port_fwd",
+        "name": "D Deck port dining",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            3.0
+          ],
+          [
+            40.0,
+            3.0
+          ],
+          [
+            40.0,
+            8.5
+          ],
+          [
+            16.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_stbd_fwd",
+        "name": "D Deck starboard dining",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            11.5
+          ],
+          [
+            40.0,
+            11.5
+          ],
+          [
+            40.0,
+            17.0
+          ],
+          [
+            16.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_port_mid",
+        "name": "First-class dining saloon (port)",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            3.0
+          ],
+          [
+            70.0,
+            3.0
+          ],
+          [
+            70.0,
+            8.5
+          ],
+          [
+            40.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_stbd_mid",
+        "name": "First-class dining saloon (stbd)",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            11.5
+          ],
+          [
+            70.0,
+            11.5
+          ],
+          [
+            70.0,
+            17.0
+          ],
+          [
+            40.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_port_aft",
+        "name": "D Deck port reception",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            3.0
+          ],
+          [
+            94.0,
+            3.0
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            70.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_stbd_aft",
+        "name": "D Deck starboard reception",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            11.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            94.0,
+            17.0
+          ],
+          [
+            70.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d2_stern",
+        "name": "D Deck second-class dining",
+        "type": "room",
+        "vertices": [
+          [
+            94.0,
+            3.0
+          ],
+          [
+            108.0,
+            4.5
+          ],
+          [
+            108.0,
+            15.5
+          ],
+          [
+            94.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "d3_bow",
+        "name": "B Deck bow suites",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            10.0
+          ],
+          [
+            8.0,
+            4.5
+          ],
+          [
+            16.0,
+            3.0
+          ],
+          [
+            16.0,
+            17.0
+          ],
+          [
+            8.0,
+            15.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_corridor",
+        "name": "B Deck corridor",
+        "type": "corridor",
+        "vertices": [
+          [
+            16.0,
+            8.5
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            16.0,
+            11.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_port_fwd",
+        "name": "B Deck port suites",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            3.0
+          ],
+          [
+            40.0,
+            3.0
+          ],
+          [
+            40.0,
+            8.5
+          ],
+          [
+            16.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_stbd_fwd",
+        "name": "B Deck starboard suites",
+        "type": "room",
+        "vertices": [
+          [
+            16.0,
+            11.5
+          ],
+          [
+            40.0,
+            11.5
+          ],
+          [
+            40.0,
+            17.0
+          ],
+          [
+            16.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_port_mid",
+        "name": "B Deck port cabins",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            3.0
+          ],
+          [
+            70.0,
+            3.0
+          ],
+          [
+            70.0,
+            8.5
+          ],
+          [
+            40.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_stbd_mid",
+        "name": "B Deck starboard cabins",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            11.5
+          ],
+          [
+            70.0,
+            11.5
+          ],
+          [
+            70.0,
+            17.0
+          ],
+          [
+            40.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_port_aft",
+        "name": "B Deck port aft",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            3.0
+          ],
+          [
+            94.0,
+            3.0
+          ],
+          [
+            94.0,
+            8.5
+          ],
+          [
+            70.0,
+            8.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_stbd_aft",
+        "name": "B Deck starboard aft",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            11.5
+          ],
+          [
+            94.0,
+            11.5
+          ],
+          [
+            94.0,
+            17.0
+          ],
+          [
+            70.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "d3_stern",
+        "name": "B Deck second-class",
+        "type": "room",
+        "vertices": [
+          [
+            94.0,
+            3.0
+          ],
+          [
+            108.0,
+            4.5
+          ],
+          [
+            108.0,
+            15.5
+          ],
+          [
+            94.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "boat_bow",
+        "name": "Boat Deck forward promenade",
+        "type": "room",
+        "vertices": [
+          [
+            2.0,
+            10.0
+          ],
+          [
+            8.0,
+            4.5
+          ],
+          [
+            40.0,
+            3.0
+          ],
+          [
+            40.0,
+            17.0
+          ],
+          [
+            8.0,
+            15.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "boat_mid",
+        "name": "Boat Deck midships promenade",
+        "type": "room",
+        "vertices": [
+          [
+            40.0,
+            3.0
+          ],
+          [
+            70.0,
+            3.0
+          ],
+          [
+            70.0,
+            17.0
+          ],
+          [
+            40.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "boat_stern",
+        "name": "Boat Deck aft promenade",
+        "type": "room",
+        "vertices": [
+          [
+            70.0,
+            3.0
+          ],
+          [
+            108.0,
+            4.5
+          ],
+          [
+            108.0,
+            15.5
+          ],
+          [
+            70.0,
+            17.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "poop_mid",
+        "name": "Poop Deck midships landing",
+        "type": "room",
+        "vertices": [
+          [
+            44.0,
+            4.0
+          ],
+          [
+            60.0,
+            4.0
+          ],
+          [
+            60.0,
+            16.0
+          ],
+          [
+            44.0,
+            16.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "poop_walk",
+        "name": "Poop Deck aft walkway",
+        "type": "corridor",
+        "vertices": [
+          [
+            60.0,
+            8.5
+          ],
+          [
+            86.0,
+            8.5
+          ],
+          [
+            86.0,
+            11.5
+          ],
+          [
+            60.0,
+            11.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "poop_deck",
+        "name": "Poop Deck",
+        "type": "room",
+        "vertices": [
+          [
+            86.0,
+            4.0
+          ],
+          [
+            108.0,
+            4.5
+          ],
+          [
+            108.0,
+            15.5
+          ],
+          [
+            86.0,
+            16.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "fwd_stair_down_0",
+        "name": "Forward down (F Deck (Orlop))",
+        "type": "stairs",
+        "vertices": [
+          [
+            22.0,
+            8.75
+          ],
+          [
+            25.2,
+            8.75
+          ],
+          [
+            25.2,
+            11.25
+          ],
+          [
+            22.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "fwd_stair_up_0",
+        "name": "Forward up (F Deck (Orlop))",
+        "type": "stairs",
+        "vertices": [
+          [
+            25.5,
+            8.75
+          ],
+          [
+            28.7,
+            8.75
+          ],
+          [
+            28.7,
+            11.25
+          ],
+          [
+            25.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "fwd_stair_down_1",
+        "name": "Forward down (E Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            22.0,
+            8.75
+          ],
+          [
+            25.2,
+            8.75
+          ],
+          [
+            25.2,
+            11.25
+          ],
+          [
+            22.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "fwd_stair_up_1",
+        "name": "Forward up (E Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            25.5,
+            8.75
+          ],
+          [
+            28.7,
+            8.75
+          ],
+          [
+            28.7,
+            11.25
+          ],
+          [
+            25.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "fwd_stair_down_2",
+        "name": "Forward down (D Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            22.0,
+            8.75
+          ],
+          [
+            25.2,
+            8.75
+          ],
+          [
+            25.2,
+            11.25
+          ],
+          [
+            22.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "fwd_stair_up_2",
+        "name": "Forward up (D Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            25.5,
+            8.75
+          ],
+          [
+            28.7,
+            8.75
+          ],
+          [
+            28.7,
+            11.25
+          ],
+          [
+            25.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "fwd_stair_down_3",
+        "name": "Forward down (B Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            22.0,
+            8.75
+          ],
+          [
+            25.2,
+            8.75
+          ],
+          [
+            25.2,
+            11.25
+          ],
+          [
+            22.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "fwd_stair_up_3",
+        "name": "Forward up (B Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            25.5,
+            8.75
+          ],
+          [
+            28.7,
+            8.75
+          ],
+          [
+            28.7,
+            11.25
+          ],
+          [
+            25.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_down_4",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "fwd_stair_down_4",
+        "name": "Forward down (Boat Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            22.0,
+            8.0
+          ],
+          [
+            25.2,
+            8.0
+          ],
+          [
+            25.2,
+            12.0
+          ],
+          [
+            22.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "fwd_stair_up_3",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "fwd_stair_up_4",
+        "name": "Forward up (Boat Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            25.5,
+            8.0
+          ],
+          [
+            28.7,
+            8.0
+          ],
+          [
+            28.7,
+            12.0
+          ],
+          [
+            25.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "grand_stair_down_0",
+        "name": "Grand staircase down (F Deck (Orlop))",
+        "type": "stairs",
+        "vertices": [
+          [
+            52.0,
+            8.75
+          ],
+          [
+            55.2,
+            8.75
+          ],
+          [
+            55.2,
+            11.25
+          ],
+          [
+            52.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "grand_stair_up_0",
+        "name": "Grand staircase up (F Deck (Orlop))",
+        "type": "stairs",
+        "vertices": [
+          [
+            55.5,
+            8.75
+          ],
+          [
+            58.7,
+            8.75
+          ],
+          [
+            58.7,
+            11.25
+          ],
+          [
+            55.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "grand_stair_down_1",
+        "name": "Grand staircase down (E Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            52.0,
+            8.75
+          ],
+          [
+            55.2,
+            8.75
+          ],
+          [
+            55.2,
+            11.25
+          ],
+          [
+            52.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "grand_stair_up_1",
+        "name": "Grand staircase up (E Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            55.5,
+            8.75
+          ],
+          [
+            58.7,
+            8.75
+          ],
+          [
+            58.7,
+            11.25
+          ],
+          [
+            55.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "grand_stair_down_2",
+        "name": "Grand staircase down (D Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            52.0,
+            8.75
+          ],
+          [
+            55.2,
+            8.75
+          ],
+          [
+            55.2,
+            11.25
+          ],
+          [
+            52.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "grand_stair_up_2",
+        "name": "Grand staircase up (D Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            55.5,
+            8.75
+          ],
+          [
+            58.7,
+            8.75
+          ],
+          [
+            58.7,
+            11.25
+          ],
+          [
+            55.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "grand_stair_down_3",
+        "name": "Grand staircase down (B Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            52.0,
+            8.75
+          ],
+          [
+            55.2,
+            8.75
+          ],
+          [
+            55.2,
+            11.25
+          ],
+          [
+            52.0,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "grand_stair_up_3",
+        "name": "Grand staircase up (B Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            55.5,
+            8.75
+          ],
+          [
+            58.7,
+            8.75
+          ],
+          [
+            58.7,
+            11.25
+          ],
+          [
+            55.5,
+            11.25
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_down_4",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "grand_stair_down_4",
+        "name": "Grand staircase down (Boat Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            52.0,
+            8.0
+          ],
+          [
+            55.2,
+            8.0
+          ],
+          [
+            55.2,
+            12.0
+          ],
+          [
+            52.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_up_3",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "grand_stair_up_4",
+        "name": "Grand staircase up (Boat Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            55.5,
+            8.0
+          ],
+          [
+            58.7,
+            8.0
+          ],
+          [
+            58.7,
+            12.0
+          ],
+          [
+            55.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_down_5",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "grand_stair_down_5",
+        "name": "Grand staircase down (Poop Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            52.0,
+            8.0
+          ],
+          [
+            55.2,
+            8.0
+          ],
+          [
+            55.2,
+            12.0
+          ],
+          [
+            52.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "grand_stair_up_4",
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "grand_stair_up_5",
+        "name": "Grand staircase up (Poop Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            55.5,
+            8.0
+          ],
+          [
+            58.7,
+            8.0
+          ],
+          [
+            58.7,
+            12.0
+          ],
+          [
+            55.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "aft_stair_down_0",
+        "name": "Aft down (F Deck (Orlop))",
+        "type": "stairs",
+        "vertices": [
+          [
+            97.0,
+            8.0
+          ],
+          [
+            100.2,
+            8.0
+          ],
+          [
+            100.2,
+            12.0
+          ],
+          [
+            97.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "aft_stair_up_0",
+        "name": "Aft up (F Deck (Orlop))",
+        "type": "stairs",
+        "vertices": [
+          [
+            100.5,
+            8.0
+          ],
+          [
+            103.7,
+            8.0
+          ],
+          [
+            103.7,
+            12.0
+          ],
+          [
+            100.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "aft_stair_down_1",
+        "name": "Aft down (E Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            97.0,
+            8.0
+          ],
+          [
+            100.2,
+            8.0
+          ],
+          [
+            100.2,
+            12.0
+          ],
+          [
+            97.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "aft_stair_up_1",
+        "name": "Aft up (E Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            100.5,
+            8.0
+          ],
+          [
+            103.7,
+            8.0
+          ],
+          [
+            103.7,
+            12.0
+          ],
+          [
+            100.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "aft_stair_down_2",
+        "name": "Aft down (D Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            97.0,
+            8.0
+          ],
+          [
+            100.2,
+            8.0
+          ],
+          [
+            100.2,
+            12.0
+          ],
+          [
+            97.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "aft_stair_up_2",
+        "name": "Aft up (D Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            100.5,
+            8.0
+          ],
+          [
+            103.7,
+            8.0
+          ],
+          [
+            103.7,
+            12.0
+          ],
+          [
+            100.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "aft_stair_down_3",
+        "name": "Aft down (B Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            97.0,
+            8.0
+          ],
+          [
+            100.2,
+            8.0
+          ],
+          [
+            100.2,
+            12.0
+          ],
+          [
+            97.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "aft_stair_up_3",
+        "name": "Aft up (B Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            100.5,
+            8.0
+          ],
+          [
+            103.7,
+            8.0
+          ],
+          [
+            103.7,
+            12.0
+          ],
+          [
+            100.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_down_4",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "aft_stair_down_4",
+        "name": "Aft down (Boat Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            97.0,
+            8.0
+          ],
+          [
+            100.2,
+            8.0
+          ],
+          [
+            100.2,
+            12.0
+          ],
+          [
+            97.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_up_3",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "aft_stair_up_4",
+        "name": "Aft up (Boat Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            100.5,
+            8.0
+          ],
+          [
+            103.7,
+            8.0
+          ],
+          [
+            103.7,
+            12.0
+          ],
+          [
+            100.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_down_5",
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "aft_stair_down_5",
+        "name": "Aft down (Poop Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            97.0,
+            8.0
+          ],
+          [
+            100.2,
+            8.0
+          ],
+          [
+            100.2,
+            12.0
+          ],
+          [
+            97.0,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "aft_stair_up_4",
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "aft_stair_up_5",
+        "name": "Aft up (Poop Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            100.5,
+            8.0
+          ],
+          [
+            103.7,
+            8.0
+          ],
+          [
+            103.7,
+            12.0
+          ],
+          [
+            100.5,
+            12.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-5"
+      }
+    ],
+    "obstacles": [],
+    "doors": [
+      {
+        "id": "door_d0_bow",
+        "name": "door d0 bow",
+        "x": 16.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d0_bow",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_stern",
+        "name": "door d0 stern",
+        "x": 94.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d0_corridor",
+          "d0_stern"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_port_fwd",
+        "name": "door d0 port fwd",
+        "x": 28.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d0_port_fwd",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_stbd_fwd",
+        "name": "door d0 stbd fwd",
+        "x": 28.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d0_stbd_fwd",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_port_mid",
+        "name": "door d0 port mid",
+        "x": 55.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d0_port_mid",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_stbd_mid",
+        "name": "door d0 stbd mid",
+        "x": 55.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d0_stbd_mid",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_port_aft",
+        "name": "door d0 port aft",
+        "x": 82.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d0_port_aft",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d0_stbd_aft",
+        "name": "door d0 stbd aft",
+        "x": 82.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d0_stbd_aft",
+          "d0_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_d1_bow",
+        "name": "door d1 bow",
+        "x": 16.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d1_bow",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_stern",
+        "name": "door d1 stern",
+        "x": 94.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d1_corridor",
+          "d1_stern"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_port_fwd",
+        "name": "door d1 port fwd",
+        "x": 28.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d1_port_fwd",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_stbd_fwd",
+        "name": "door d1 stbd fwd",
+        "x": 28.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d1_stbd_fwd",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_port_mid",
+        "name": "door d1 port mid",
+        "x": 55.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d1_port_mid",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_stbd_mid",
+        "name": "door d1 stbd mid",
+        "x": 55.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d1_stbd_mid",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_port_aft",
+        "name": "door d1 port aft",
+        "x": 82.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d1_port_aft",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d1_stbd_aft",
+        "name": "door d1 stbd aft",
+        "x": 82.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d1_stbd_aft",
+          "d1_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_d2_bow",
+        "name": "door d2 bow",
+        "x": 16.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d2_bow",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_stern",
+        "name": "door d2 stern",
+        "x": 94.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d2_corridor",
+          "d2_stern"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_port_fwd",
+        "name": "door d2 port fwd",
+        "x": 28.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d2_port_fwd",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_stbd_fwd",
+        "name": "door d2 stbd fwd",
+        "x": 28.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d2_stbd_fwd",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_port_mid",
+        "name": "door d2 port mid",
+        "x": 55.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d2_port_mid",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_stbd_mid",
+        "name": "door d2 stbd mid",
+        "x": 55.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d2_stbd_mid",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_port_aft",
+        "name": "door d2 port aft",
+        "x": 82.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d2_port_aft",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d2_stbd_aft",
+        "name": "door d2 stbd aft",
+        "x": 82.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d2_stbd_aft",
+          "d2_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_d3_bow",
+        "name": "door d3 bow",
+        "x": 16.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d3_bow",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_stern",
+        "name": "door d3 stern",
+        "x": 94.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d3_corridor",
+          "d3_stern"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_port_fwd",
+        "name": "door d3 port fwd",
+        "x": 28.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d3_port_fwd",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_stbd_fwd",
+        "name": "door d3 stbd fwd",
+        "x": 28.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d3_stbd_fwd",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_port_mid",
+        "name": "door d3 port mid",
+        "x": 55.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d3_port_mid",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_stbd_mid",
+        "name": "door d3 stbd mid",
+        "x": 55.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d3_stbd_mid",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_port_aft",
+        "name": "door d3 port aft",
+        "x": 82.0,
+        "y": 8.5,
+        "width": 1.2,
+        "connects": [
+          "d3_port_aft",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_d3_stbd_aft",
+        "name": "door d3 stbd aft",
+        "x": 82.0,
+        "y": 11.5,
+        "width": 1.2,
+        "connects": [
+          "d3_stbd_aft",
+          "d3_corridor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_boat_bow_mid",
+        "name": "Boat Deck forward\u2013mid",
+        "x": 40.0,
+        "y": 10.0,
+        "width": 2.0,
+        "connects": [
+          "boat_bow",
+          "boat_mid"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_boat_mid_stern",
+        "name": "Boat Deck mid\u2013aft",
+        "x": 70.0,
+        "y": 10.0,
+        "width": 2.0,
+        "connects": [
+          "boat_mid",
+          "boat_stern"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_poop_mid_walk",
+        "name": "Poop midships\u2013walkway",
+        "x": 60.0,
+        "y": 10.0,
+        "width": 1.6,
+        "connects": [
+          "poop_mid",
+          "poop_walk"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_poop_walk_stern",
+        "name": "Poop walkway\u2013stern",
+        "x": 86.0,
+        "y": 10.0,
+        "width": 1.6,
+        "connects": [
+          "poop_walk",
+          "poop_deck"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_fwd_landing_0",
+        "name": "Forward landing 0",
+        "x": 25.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "fwd_stair_down_0",
+          "fwd_stair_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_fwd_host_0",
+        "name": "Forward entry 0",
+        "x": 22.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d0_corridor",
+          "fwd_stair_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_fwd_landing_1",
+        "name": "Forward landing 1",
+        "x": 25.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "fwd_stair_down_1",
+          "fwd_stair_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_fwd_host_1",
+        "name": "Forward entry 1",
+        "x": 22.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d1_corridor",
+          "fwd_stair_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_fwd_landing_2",
+        "name": "Forward landing 2",
+        "x": 25.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "fwd_stair_down_2",
+          "fwd_stair_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_fwd_host_2",
+        "name": "Forward entry 2",
+        "x": 22.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d2_corridor",
+          "fwd_stair_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_fwd_landing_3",
+        "name": "Forward landing 3",
+        "x": 25.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "fwd_stair_down_3",
+          "fwd_stair_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_fwd_host_3",
+        "name": "Forward entry 3",
+        "x": 22.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d3_corridor",
+          "fwd_stair_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_fwd_landing_4",
+        "name": "Forward landing 4",
+        "x": 25.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "fwd_stair_down_4",
+          "fwd_stair_up_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_fwd_host_4",
+        "name": "Forward entry 4",
+        "x": 22.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "boat_bow",
+          "fwd_stair_down_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_grand_landing_0",
+        "name": "Grand staircase landing 0",
+        "x": 55.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "grand_stair_down_0",
+          "grand_stair_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_grand_host_0",
+        "name": "Grand staircase entry 0",
+        "x": 52.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d0_corridor",
+          "grand_stair_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_grand_landing_1",
+        "name": "Grand staircase landing 1",
+        "x": 55.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "grand_stair_down_1",
+          "grand_stair_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_grand_host_1",
+        "name": "Grand staircase entry 1",
+        "x": 52.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d1_corridor",
+          "grand_stair_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_grand_landing_2",
+        "name": "Grand staircase landing 2",
+        "x": 55.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "grand_stair_down_2",
+          "grand_stair_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_grand_host_2",
+        "name": "Grand staircase entry 2",
+        "x": 52.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d2_corridor",
+          "grand_stair_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_grand_landing_3",
+        "name": "Grand staircase landing 3",
+        "x": 55.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "grand_stair_down_3",
+          "grand_stair_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_grand_host_3",
+        "name": "Grand staircase entry 3",
+        "x": 52.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d3_corridor",
+          "grand_stair_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_grand_landing_4",
+        "name": "Grand staircase landing 4",
+        "x": 55.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "grand_stair_down_4",
+          "grand_stair_up_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_grand_host_4",
+        "name": "Grand staircase entry 4",
+        "x": 52.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "boat_mid",
+          "grand_stair_down_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_grand_landing_5",
+        "name": "Grand staircase landing 5",
+        "x": 55.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "grand_stair_down_5",
+          "grand_stair_up_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_grand_host_5",
+        "name": "Grand staircase entry 5",
+        "x": 52.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "poop_mid",
+          "grand_stair_down_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_aft_landing_0",
+        "name": "Aft landing 0",
+        "x": 100.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "aft_stair_down_0",
+          "aft_stair_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_aft_host_0",
+        "name": "Aft entry 0",
+        "x": 97.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d0_stern",
+          "aft_stair_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_aft_landing_1",
+        "name": "Aft landing 1",
+        "x": 100.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "aft_stair_down_1",
+          "aft_stair_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_aft_host_1",
+        "name": "Aft entry 1",
+        "x": 97.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d1_stern",
+          "aft_stair_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "door_aft_landing_2",
+        "name": "Aft landing 2",
+        "x": 100.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "aft_stair_down_2",
+          "aft_stair_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_aft_host_2",
+        "name": "Aft entry 2",
+        "x": 97.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d2_stern",
+          "aft_stair_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "door_aft_landing_3",
+        "name": "Aft landing 3",
+        "x": 100.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "aft_stair_down_3",
+          "aft_stair_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_aft_host_3",
+        "name": "Aft entry 3",
+        "x": 97.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "d3_stern",
+          "aft_stair_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "door_aft_landing_4",
+        "name": "Aft landing 4",
+        "x": 100.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "aft_stair_down_4",
+          "aft_stair_up_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_aft_host_4",
+        "name": "Aft entry 4",
+        "x": 97.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "boat_stern",
+          "aft_stair_down_4"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-4"
+      },
+      {
+        "id": "door_aft_landing_5",
+        "name": "Aft landing 5",
+        "x": 100.35,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "aft_stair_down_5",
+          "aft_stair_up_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "door_aft_host_5",
+        "name": "Aft entry 5",
+        "x": 97.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connects": [
+          "poop_deck",
+          "aft_stair_down_5"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-5"
+      }
+    ],
+    "exits": [
+      {
+        "id": "exit_poop_port",
+        "name": "Poop Deck port lifeboat station",
+        "x": 108.0,
+        "y": 6.5,
+        "width": 1.8,
+        "connected_space_id": "poop_deck",
+        "flow_rate_per_s": 1.2,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "exit_poop_centre",
+        "name": "Poop Deck centre embarkation",
+        "x": 108.0,
+        "y": 10.0,
+        "width": 2.0,
+        "connected_space_id": "poop_deck",
+        "flow_rate_per_s": 1.4,
+        "floor_id": "floor-5"
+      },
+      {
+        "id": "exit_poop_stbd",
+        "name": "Poop Deck starboard lifeboat station",
+        "x": 108.0,
+        "y": 13.5,
+        "width": 1.8,
+        "connected_space_id": "poop_deck",
+        "flow_rate_per_s": 1.2,
+        "floor_id": "floor-5"
+      }
+    ],
+    "occupant_groups": [
+      {
+        "id": "occ_d0_bow",
+        "name": "F Deck bow crew",
+        "count": 6,
+        "space_id": "d0_bow",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.15,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occ_d0_port_aft",
+        "name": "F Deck third-class port",
+        "count": 8,
+        "space_id": "d0_port_aft",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.1,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occ_d0_stbd_aft",
+        "name": "F Deck third-class stbd",
+        "count": 8,
+        "space_id": "d0_stbd_aft",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.1,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "occ_d1_port_fwd",
+        "name": "E Deck third-class port",
+        "count": 10,
+        "space_id": "d1_port_fwd",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.15,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occ_d1_stbd_fwd",
+        "name": "E Deck third-class stbd",
+        "count": 10,
+        "space_id": "d1_stbd_fwd",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.15,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occ_d1_port_aft",
+        "name": "E Deck aft port",
+        "count": 8,
+        "space_id": "d1_port_aft",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.15,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occ_d1_stbd_aft",
+        "name": "E Deck aft stbd",
+        "count": 8,
+        "space_id": "d1_stbd_aft",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.15,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "occ_d2_port_mid",
+        "name": "D Deck diners port",
+        "count": 12,
+        "space_id": "d2_port_mid",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occ_d2_stbd_mid",
+        "name": "D Deck diners stbd",
+        "count": 12,
+        "space_id": "d2_stbd_mid",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occ_d2_stern",
+        "name": "D Deck second-class diners",
+        "count": 8,
+        "space_id": "d2_stern",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "occ_d3_port_fwd",
+        "name": "B Deck first-class port",
+        "count": 6,
+        "space_id": "d3_port_fwd",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occ_d3_stbd_fwd",
+        "name": "B Deck first-class stbd",
+        "count": 6,
+        "space_id": "d3_stbd_fwd",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occ_d3_port_mid",
+        "name": "B Deck cabins port",
+        "count": 4,
+        "space_id": "d3_port_mid",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occ_d3_stbd_mid",
+        "name": "B Deck cabins stbd",
+        "count": 4,
+        "space_id": "d3_stbd_mid",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occ_d3_stern",
+        "name": "B Deck second-class",
+        "count": 6,
+        "space_id": "d3_stern",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "occ_boat_mid",
+        "name": "Boat Deck promenaders",
+        "count": 6,
+        "space_id": "boat_mid",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-4"
+      }
+    ],
+    "floods": [
+      {
+        "enabled": true,
+        "x": 8.0,
+        "y": 10.0,
+        "radius_m": 2.0,
+        "spread_speed_mps": 0.15,
+        "intensity": 60.0,
+        "floor_id": "floor-0",
+        "id": "flood-bow"
+      }
+    ],
+    "fires": [],
+    "smoke": null,
+    "obstacle_map": null
+  }
+}

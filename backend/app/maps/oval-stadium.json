@@ -1,0 +1,3159 @@
+{
+  "format": "evacuation-simulation-layout",
+  "version": 1,
+  "layout": {
+    "name": "Oval Stadium",
+    "width": 96.0,
+    "height": 64.0,
+    "meters_per_cell": 1.0,
+    "floors": [
+      {
+        "id": "floor-0",
+        "name": "Basement",
+        "elevation_m": -4.0,
+        "order": 0
+      },
+      {
+        "id": "floor-1",
+        "name": "Ground",
+        "elevation_m": 0.0,
+        "order": 1
+      },
+      {
+        "id": "floor-2",
+        "name": "Upper Concourse",
+        "elevation_m": 5.0,
+        "order": 2
+      },
+      {
+        "id": "floor-3",
+        "name": "Upper Deck",
+        "elevation_m": 10.0,
+        "order": 3
+      }
+    ],
+    "spaces": [
+      {
+        "id": "stadium_0_east",
+        "name": "Basement East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_north_east",
+        "name": "Basement North-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_north",
+        "name": "Basement North stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_north_west",
+        "name": "Basement North-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_west",
+        "name": "Basement West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_south_west",
+        "name": "Basement South-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_south",
+        "name": "Basement South stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_0_south_east",
+        "name": "Basement South-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_1_east",
+        "name": "Ground East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_north_east",
+        "name": "Ground North-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_north",
+        "name": "Ground North stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_north_west",
+        "name": "Ground North-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_west",
+        "name": "Ground West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_south_west",
+        "name": "Ground South-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_south",
+        "name": "Ground South stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_1_south_east",
+        "name": "Ground South-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_arena_floor",
+        "name": "Oval playing field",
+        "type": "room",
+        "vertices": [
+          [
+            69.34161720101072,
+            37.89332485842238
+          ],
+          [
+            71.1,
+            32.0
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ],
+          [
+            64.33416664540925,
+            21.11055556972717
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ],
+          [
+            48.0,
+            16.599999999999998
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ],
+          [
+            31.665833354590752,
+            21.11055556972717
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ],
+          [
+            24.9,
+            31.999999999999996
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ],
+          [
+            31.665833354590742,
+            42.88944443027283
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ],
+          [
+            47.99999999999999,
+            47.400000000000006
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ],
+          [
+            64.33416664540923,
+            42.889444430272846
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_2_east",
+        "name": "Upper Concourse East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_north_east",
+        "name": "Upper Concourse North-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_north",
+        "name": "Upper Concourse North stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_north_west",
+        "name": "Upper Concourse North-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_west",
+        "name": "Upper Concourse West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_south_west",
+        "name": "Upper Concourse South-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_south",
+        "name": "Upper Concourse South stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_2_south_east",
+        "name": "Upper Concourse South-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_3_east",
+        "name": "Upper Deck East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_north_east",
+        "name": "Upper Deck North-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            86.80294036547404,
+            21.284863893777484
+          ],
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ],
+          [
+            69.34161720101072,
+            26.106675141577618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_north",
+        "name": "Upper Deck North stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933377,
+            6.131373089683972
+          ],
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ],
+          [
+            56.839987287633576,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_north_west",
+        "name": "Upper Deck North-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666233,
+            6.131373089683972
+          ],
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ],
+          [
+            39.160012712366424,
+            17.77225519932618
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_west",
+        "name": "Upper Deck West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.197059634525957,
+            21.284863893777484
+          ],
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ],
+          [
+            26.658382798989276,
+            26.106675141577615
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_south_west",
+        "name": "Upper Deck South-West stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            9.19705963452595,
+            42.71513610622251
+          ],
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ],
+          [
+            26.658382798989273,
+            37.89332485842238
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_south",
+        "name": "Upper Deck South stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            31.927295840666204,
+            57.868626910316024
+          ],
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ],
+          [
+            39.16001271236641,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_3_south_east",
+        "name": "Upper Deck South-East stands and concourse",
+        "type": "room",
+        "vertices": [
+          [
+            64.07270415933378,
+            57.868626910316024
+          ],
+          [
+            86.80294036547404,
+            42.715136106222516
+          ],
+          [
+            69.34161720101072,
+            37.89332485842238
+          ],
+          [
+            56.839987287633576,
+            46.22774480067382
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_east_down_0",
+        "name": "East stair down (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            77.72,
+            30.3
+          ],
+          [
+            79.92,
+            30.3
+          ],
+          [
+            79.92,
+            33.7
+          ],
+          [
+            77.72,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_east_up_0",
+        "name": "East stair up (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            79.92,
+            30.3
+          ],
+          [
+            82.12,
+            30.3
+          ],
+          [
+            82.12,
+            33.7
+          ],
+          [
+            79.92,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_east_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_north_down_0",
+        "name": "North stair down (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.8,
+            9.02
+          ],
+          [
+            48.0,
+            9.02
+          ],
+          [
+            48.0,
+            12.42
+          ],
+          [
+            45.8,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_north_up_0",
+        "name": "North stair up (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            48.0,
+            9.02
+          ],
+          [
+            50.2,
+            9.02
+          ],
+          [
+            50.2,
+            12.42
+          ],
+          [
+            48.0,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_north_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_west_down_0",
+        "name": "West stair down (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            13.879999999999999,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ],
+          [
+            13.879999999999999,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_west_up_0",
+        "name": "West stair up (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            33.699999999999996
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_west_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_south_down_0",
+        "name": "South stair down (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.79999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ],
+          [
+            45.79999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_south_up_0",
+        "name": "South stair up (Basement)",
+        "type": "stairs",
+        "vertices": [
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            54.98
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_south_down_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_east_down_1",
+        "name": "East stair down (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            77.72,
+            30.3
+          ],
+          [
+            79.92,
+            30.3
+          ],
+          [
+            79.92,
+            33.7
+          ],
+          [
+            77.72,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_east_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_east_up_1",
+        "name": "East stair up (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            79.92,
+            30.3
+          ],
+          [
+            82.12,
+            30.3
+          ],
+          [
+            82.12,
+            33.7
+          ],
+          [
+            79.92,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_east_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_north_down_1",
+        "name": "North stair down (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.8,
+            9.02
+          ],
+          [
+            48.0,
+            9.02
+          ],
+          [
+            48.0,
+            12.42
+          ],
+          [
+            45.8,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_north_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_north_up_1",
+        "name": "North stair up (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            48.0,
+            9.02
+          ],
+          [
+            50.2,
+            9.02
+          ],
+          [
+            50.2,
+            12.42
+          ],
+          [
+            48.0,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_north_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_west_down_1",
+        "name": "West stair down (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            13.879999999999999,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ],
+          [
+            13.879999999999999,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_west_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_west_up_1",
+        "name": "West stair up (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            33.699999999999996
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_west_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_south_down_1",
+        "name": "South stair down (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.79999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ],
+          [
+            45.79999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_south_up_0",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_south_up_1",
+        "name": "South stair up (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            54.98
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_south_down_2",
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_east_down_2",
+        "name": "East stair down (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            77.72,
+            30.3
+          ],
+          [
+            79.92,
+            30.3
+          ],
+          [
+            79.92,
+            33.7
+          ],
+          [
+            77.72,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_east_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_east_up_2",
+        "name": "East stair up (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            79.92,
+            30.3
+          ],
+          [
+            82.12,
+            30.3
+          ],
+          [
+            82.12,
+            33.7
+          ],
+          [
+            79.92,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_east_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_north_down_2",
+        "name": "North stair down (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.8,
+            9.02
+          ],
+          [
+            48.0,
+            9.02
+          ],
+          [
+            48.0,
+            12.42
+          ],
+          [
+            45.8,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_north_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_north_up_2",
+        "name": "North stair up (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            48.0,
+            9.02
+          ],
+          [
+            50.2,
+            9.02
+          ],
+          [
+            50.2,
+            12.42
+          ],
+          [
+            48.0,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_north_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_west_down_2",
+        "name": "West stair down (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            13.879999999999999,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ],
+          [
+            13.879999999999999,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_west_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_west_up_2",
+        "name": "West stair up (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            33.699999999999996
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_west_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_south_down_2",
+        "name": "South stair down (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.79999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ],
+          [
+            45.79999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_south_up_1",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_south_up_2",
+        "name": "South stair up (Upper Concourse)",
+        "type": "stairs",
+        "vertices": [
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            54.98
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_south_down_3",
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_east_down_3",
+        "name": "East stair down (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            77.72,
+            30.3
+          ],
+          [
+            79.92,
+            30.3
+          ],
+          [
+            79.92,
+            33.7
+          ],
+          [
+            77.72,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_east_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_east_up_3",
+        "name": "East stair up (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            79.92,
+            30.3
+          ],
+          [
+            82.12,
+            30.3
+          ],
+          [
+            82.12,
+            33.7
+          ],
+          [
+            79.92,
+            33.7
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_north_down_3",
+        "name": "North stair down (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.8,
+            9.02
+          ],
+          [
+            48.0,
+            9.02
+          ],
+          [
+            48.0,
+            12.42
+          ],
+          [
+            45.8,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_north_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_north_up_3",
+        "name": "North stair up (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            48.0,
+            9.02
+          ],
+          [
+            50.2,
+            9.02
+          ],
+          [
+            50.2,
+            12.42
+          ],
+          [
+            48.0,
+            12.42
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_west_down_3",
+        "name": "West stair down (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            13.879999999999999,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ],
+          [
+            13.879999999999999,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_west_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_west_up_3",
+        "name": "West stair up (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            16.08,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            30.299999999999997
+          ],
+          [
+            18.279999999999998,
+            33.699999999999996
+          ],
+          [
+            16.08,
+            33.699999999999996
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_south_down_3",
+        "name": "South stair down (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            45.79999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ],
+          [
+            45.79999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stadium_stair_south_up_2",
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_south_up_3",
+        "name": "South stair up (Upper Deck)",
+        "type": "stairs",
+        "vertices": [
+          [
+            47.99999999999999,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            51.58
+          ],
+          [
+            50.199999999999996,
+            54.98
+          ],
+          [
+            47.99999999999999,
+            54.98
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-3"
+      }
+    ],
+    "obstacles": [],
+    "doors": [
+      {
+        "id": "stadium_ring_door_0_0",
+        "name": "Basement concourse connection 1",
+        "x": 78.07227878324238,
+        "y": 40.30423048232245,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_south_east",
+          "stadium_0_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_1",
+        "name": "Basement concourse connection 2",
+        "x": 78.07227878324238,
+        "y": 23.69576951767755,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_east",
+          "stadium_0_north_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_2",
+        "name": "Basement concourse connection 3",
+        "x": 60.45634572348367,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_north_east",
+          "stadium_0_north"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_3",
+        "name": "Basement concourse connection 4",
+        "x": 35.54365427651633,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_north",
+          "stadium_0_north_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_4",
+        "name": "Basement concourse connection 5",
+        "x": 17.927721216757618,
+        "y": 23.695769517677547,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_north_west",
+          "stadium_0_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_5",
+        "name": "Basement concourse connection 6",
+        "x": 17.92772121675761,
+        "y": 40.304230482322446,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_west",
+          "stadium_0_south_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_6",
+        "name": "Basement concourse connection 7",
+        "x": 35.54365427651631,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_south_west",
+          "stadium_0_south"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_0_7",
+        "name": "Basement concourse connection 8",
+        "x": 60.45634572348368,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_south",
+          "stadium_0_south_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_ring_door_1_0",
+        "name": "Ground concourse connection 1",
+        "x": 78.07227878324238,
+        "y": 40.30423048232245,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south_east",
+          "stadium_1_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_1",
+        "name": "Ground concourse connection 2",
+        "x": 78.07227878324238,
+        "y": 23.69576951767755,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_east",
+          "stadium_1_north_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_2",
+        "name": "Ground concourse connection 3",
+        "x": 60.45634572348367,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north_east",
+          "stadium_1_north"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_3",
+        "name": "Ground concourse connection 4",
+        "x": 35.54365427651633,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north",
+          "stadium_1_north_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_4",
+        "name": "Ground concourse connection 5",
+        "x": 17.927721216757618,
+        "y": 23.695769517677547,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north_west",
+          "stadium_1_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_5",
+        "name": "Ground concourse connection 6",
+        "x": 17.92772121675761,
+        "y": 40.304230482322446,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_west",
+          "stadium_1_south_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_6",
+        "name": "Ground concourse connection 7",
+        "x": 35.54365427651631,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south_west",
+          "stadium_1_south"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_1_7",
+        "name": "Ground concourse connection 8",
+        "x": 60.45634572348368,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south",
+          "stadium_1_south_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_0",
+        "name": "Playing field gate 1",
+        "x": 69.34161720101072,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_east",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_1",
+        "name": "Playing field gate 2",
+        "x": 63.09080224432215,
+        "y": 21.9394651704519,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north_east",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_2",
+        "name": "Playing field gate 3",
+        "x": 48.0,
+        "y": 17.77225519932618,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_3",
+        "name": "Playing field gate 4",
+        "x": 32.90919775567785,
+        "y": 21.939465170451896,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north_west",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_4",
+        "name": "Playing field gate 5",
+        "x": 26.658382798989273,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_west",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_5",
+        "name": "Playing field gate 6",
+        "x": 32.90919775567784,
+        "y": 42.060534829548104,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south_west",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_6",
+        "name": "Playing field gate 7",
+        "x": 47.99999999999999,
+        "y": 46.22774480067382,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_field_door_7",
+        "name": "Playing field gate 8",
+        "x": 63.09080224432215,
+        "y": 42.060534829548104,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south_east",
+          "stadium_arena_floor"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_ring_door_2_0",
+        "name": "Upper Concourse concourse connection 1",
+        "x": 78.07227878324238,
+        "y": 40.30423048232245,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_south_east",
+          "stadium_2_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_1",
+        "name": "Upper Concourse concourse connection 2",
+        "x": 78.07227878324238,
+        "y": 23.69576951767755,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_east",
+          "stadium_2_north_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_2",
+        "name": "Upper Concourse concourse connection 3",
+        "x": 60.45634572348367,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_north_east",
+          "stadium_2_north"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_3",
+        "name": "Upper Concourse concourse connection 4",
+        "x": 35.54365427651633,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_north",
+          "stadium_2_north_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_4",
+        "name": "Upper Concourse concourse connection 5",
+        "x": 17.927721216757618,
+        "y": 23.695769517677547,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_north_west",
+          "stadium_2_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_5",
+        "name": "Upper Concourse concourse connection 6",
+        "x": 17.92772121675761,
+        "y": 40.304230482322446,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_west",
+          "stadium_2_south_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_6",
+        "name": "Upper Concourse concourse connection 7",
+        "x": 35.54365427651631,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_south_west",
+          "stadium_2_south"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_2_7",
+        "name": "Upper Concourse concourse connection 8",
+        "x": 60.45634572348368,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_south",
+          "stadium_2_south_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_ring_door_3_0",
+        "name": "Upper Deck concourse connection 1",
+        "x": 78.07227878324238,
+        "y": 40.30423048232245,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_south_east",
+          "stadium_3_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_1",
+        "name": "Upper Deck concourse connection 2",
+        "x": 78.07227878324238,
+        "y": 23.69576951767755,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_east",
+          "stadium_3_north_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_2",
+        "name": "Upper Deck concourse connection 3",
+        "x": 60.45634572348367,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_north_east",
+          "stadium_3_north"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_3",
+        "name": "Upper Deck concourse connection 4",
+        "x": 35.54365427651633,
+        "y": 11.951814144505077,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_north",
+          "stadium_3_north_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_4",
+        "name": "Upper Deck concourse connection 5",
+        "x": 17.927721216757618,
+        "y": 23.695769517677547,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_north_west",
+          "stadium_3_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_5",
+        "name": "Upper Deck concourse connection 6",
+        "x": 17.92772121675761,
+        "y": 40.304230482322446,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_west",
+          "stadium_3_south_west"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_6",
+        "name": "Upper Deck concourse connection 7",
+        "x": 35.54365427651631,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_south_west",
+          "stadium_3_south"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_ring_door_3_7",
+        "name": "Upper Deck concourse connection 8",
+        "x": 60.45634572348368,
+        "y": 52.04818585549492,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_south",
+          "stadium_3_south_east"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_landing_east_0",
+        "name": "East stair landing",
+        "x": 79.92,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_east_down_0",
+          "stadium_stair_east_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_entry_east_0",
+        "name": "East stair entry",
+        "x": 77.72,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_east",
+          "stadium_stair_east_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_landing_north_0",
+        "name": "North stair landing",
+        "x": 48.0,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_north_down_0",
+          "stadium_stair_north_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_entry_north_0",
+        "name": "North stair entry",
+        "x": 45.8,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_north",
+          "stadium_stair_north_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_landing_west_0",
+        "name": "West stair landing",
+        "x": 16.08,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_west_down_0",
+          "stadium_stair_west_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_entry_west_0",
+        "name": "West stair entry",
+        "x": 13.879999999999999,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_west",
+          "stadium_stair_west_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_landing_south_0",
+        "name": "South stair landing",
+        "x": 47.99999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_south_down_0",
+          "stadium_stair_south_up_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_entry_south_0",
+        "name": "South stair entry",
+        "x": 45.79999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_0_south",
+          "stadium_stair_south_down_0"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_stair_landing_east_1",
+        "name": "East stair landing",
+        "x": 79.92,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_east_down_1",
+          "stadium_stair_east_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_entry_east_1",
+        "name": "East stair entry",
+        "x": 77.72,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_east",
+          "stadium_stair_east_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_landing_north_1",
+        "name": "North stair landing",
+        "x": 48.0,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_north_down_1",
+          "stadium_stair_north_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_entry_north_1",
+        "name": "North stair entry",
+        "x": 45.8,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_north",
+          "stadium_stair_north_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_landing_west_1",
+        "name": "West stair landing",
+        "x": 16.08,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_west_down_1",
+          "stadium_stair_west_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_entry_west_1",
+        "name": "West stair entry",
+        "x": 13.879999999999999,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_west",
+          "stadium_stair_west_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_landing_south_1",
+        "name": "South stair landing",
+        "x": 47.99999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_south_down_1",
+          "stadium_stair_south_up_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_entry_south_1",
+        "name": "South stair entry",
+        "x": 45.79999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_1_south",
+          "stadium_stair_south_down_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_stair_landing_east_2",
+        "name": "East stair landing",
+        "x": 79.92,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_east_down_2",
+          "stadium_stair_east_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_entry_east_2",
+        "name": "East stair entry",
+        "x": 77.72,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_east",
+          "stadium_stair_east_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_landing_north_2",
+        "name": "North stair landing",
+        "x": 48.0,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_north_down_2",
+          "stadium_stair_north_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_entry_north_2",
+        "name": "North stair entry",
+        "x": 45.8,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_north",
+          "stadium_stair_north_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_landing_west_2",
+        "name": "West stair landing",
+        "x": 16.08,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_west_down_2",
+          "stadium_stair_west_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_entry_west_2",
+        "name": "West stair entry",
+        "x": 13.879999999999999,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_west",
+          "stadium_stair_west_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_landing_south_2",
+        "name": "South stair landing",
+        "x": 47.99999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_south_down_2",
+          "stadium_stair_south_up_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_entry_south_2",
+        "name": "South stair entry",
+        "x": 45.79999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_2_south",
+          "stadium_stair_south_down_2"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_stair_landing_east_3",
+        "name": "East stair landing",
+        "x": 79.92,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_east_down_3",
+          "stadium_stair_east_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_entry_east_3",
+        "name": "East stair entry",
+        "x": 77.72,
+        "y": 32.0,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_east",
+          "stadium_stair_east_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_landing_north_3",
+        "name": "North stair landing",
+        "x": 48.0,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_north_down_3",
+          "stadium_stair_north_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_entry_north_3",
+        "name": "North stair entry",
+        "x": 45.8,
+        "y": 10.719999999999999,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_north",
+          "stadium_stair_north_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_landing_west_3",
+        "name": "West stair landing",
+        "x": 16.08,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_west_down_3",
+          "stadium_stair_west_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_entry_west_3",
+        "name": "West stair entry",
+        "x": 13.879999999999999,
+        "y": 31.999999999999996,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_west",
+          "stadium_stair_west_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_landing_south_3",
+        "name": "South stair landing",
+        "x": 47.99999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_stair_south_down_3",
+          "stadium_stair_south_up_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_stair_entry_south_3",
+        "name": "South stair entry",
+        "x": 45.79999999999999,
+        "y": 53.28,
+        "width": 0.9,
+        "connects": [
+          "stadium_3_south",
+          "stadium_stair_south_down_3"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-3"
+      }
+    ],
+    "exits": [
+      {
+        "id": "stadium_exit_0_east",
+        "name": "Basement East exit",
+        "x": 86.80294036547404,
+        "y": 32.0,
+        "width": 2.4,
+        "connected_space_id": "stadium_0_east",
+        "flow_rate_per_s": 1.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_exit_0_west",
+        "name": "Basement West exit",
+        "x": 9.197059634525953,
+        "y": 31.999999999999996,
+        "width": 2.4,
+        "connected_space_id": "stadium_0_west",
+        "flow_rate_per_s": 1.8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_exit_1_east",
+        "name": "Ground East exit",
+        "x": 86.80294036547404,
+        "y": 32.0,
+        "width": 2.4,
+        "connected_space_id": "stadium_1_east",
+        "flow_rate_per_s": 1.8,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_exit_1_west",
+        "name": "Ground West exit",
+        "x": 9.197059634525953,
+        "y": 31.999999999999996,
+        "width": 2.4,
+        "connected_space_id": "stadium_1_west",
+        "flow_rate_per_s": 1.8,
+        "floor_id": "floor-1"
+      }
+    ],
+    "occupant_groups": [
+      {
+        "id": "stadium_crowd_0_0",
+        "name": "Basement East crowd",
+        "count": 2,
+        "space_id": "stadium_0_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_1",
+        "name": "Basement North-East crowd",
+        "count": 2,
+        "space_id": "stadium_0_north_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_2",
+        "name": "Basement North crowd",
+        "count": 2,
+        "space_id": "stadium_0_north",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_3",
+        "name": "Basement North-West crowd",
+        "count": 2,
+        "space_id": "stadium_0_north_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_4",
+        "name": "Basement West crowd",
+        "count": 2,
+        "space_id": "stadium_0_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_5",
+        "name": "Basement South-West crowd",
+        "count": 2,
+        "space_id": "stadium_0_south_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_6",
+        "name": "Basement South crowd",
+        "count": 2,
+        "space_id": "stadium_0_south",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_0_7",
+        "name": "Basement South-East crowd",
+        "count": 2,
+        "space_id": "stadium_0_south_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stadium_crowd_1_0",
+        "name": "Ground East crowd",
+        "count": 3,
+        "space_id": "stadium_1_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_1",
+        "name": "Ground North-East crowd",
+        "count": 3,
+        "space_id": "stadium_1_north_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_2",
+        "name": "Ground North crowd",
+        "count": 3,
+        "space_id": "stadium_1_north",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_3",
+        "name": "Ground North-West crowd",
+        "count": 3,
+        "space_id": "stadium_1_north_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_4",
+        "name": "Ground West crowd",
+        "count": 3,
+        "space_id": "stadium_1_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_5",
+        "name": "Ground South-West crowd",
+        "count": 3,
+        "space_id": "stadium_1_south_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_6",
+        "name": "Ground South crowd",
+        "count": 3,
+        "space_id": "stadium_1_south",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_1_7",
+        "name": "Ground South-East crowd",
+        "count": 3,
+        "space_id": "stadium_1_south_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_arena_crowd",
+        "name": "Playing field crowd",
+        "count": 20,
+        "space_id": "stadium_arena_floor",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.3,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stadium_crowd_2_0",
+        "name": "Upper Concourse East crowd",
+        "count": 4,
+        "space_id": "stadium_2_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_1",
+        "name": "Upper Concourse North-East crowd",
+        "count": 4,
+        "space_id": "stadium_2_north_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_2",
+        "name": "Upper Concourse North crowd",
+        "count": 4,
+        "space_id": "stadium_2_north",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_3",
+        "name": "Upper Concourse North-West crowd",
+        "count": 4,
+        "space_id": "stadium_2_north_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_4",
+        "name": "Upper Concourse West crowd",
+        "count": 4,
+        "space_id": "stadium_2_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_5",
+        "name": "Upper Concourse South-West crowd",
+        "count": 4,
+        "space_id": "stadium_2_south_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_6",
+        "name": "Upper Concourse South crowd",
+        "count": 4,
+        "space_id": "stadium_2_south",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_2_7",
+        "name": "Upper Concourse South-East crowd",
+        "count": 4,
+        "space_id": "stadium_2_south_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-2"
+      },
+      {
+        "id": "stadium_crowd_3_0",
+        "name": "Upper Deck East crowd",
+        "count": 5,
+        "space_id": "stadium_3_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_1",
+        "name": "Upper Deck North-East crowd",
+        "count": 5,
+        "space_id": "stadium_3_north_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_2",
+        "name": "Upper Deck North crowd",
+        "count": 5,
+        "space_id": "stadium_3_north",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_3",
+        "name": "Upper Deck North-West crowd",
+        "count": 5,
+        "space_id": "stadium_3_north_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_4",
+        "name": "Upper Deck West crowd",
+        "count": 5,
+        "space_id": "stadium_3_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_5",
+        "name": "Upper Deck South-West crowd",
+        "count": 5,
+        "space_id": "stadium_3_south_west",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_6",
+        "name": "Upper Deck South crowd",
+        "count": 5,
+        "space_id": "stadium_3_south",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      },
+      {
+        "id": "stadium_crowd_3_7",
+        "name": "Upper Deck South-East crowd",
+        "count": 5,
+        "space_id": "stadium_3_south_east",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.25,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-3"
+      }
+    ],
+    "floods": [],
+    "fires": [],
+    "smoke": null,
+    "obstacle_map": null
+  }
+}

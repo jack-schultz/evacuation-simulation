@@ -40,7 +40,7 @@ API routers → services → domain / simulation engine
 | Polygon geometry helpers | `backend/app/domain/geometry.py` |
 | API request/response schemas | `backend/app/schemas/api.py` |
 | Building / simulation HTTP routes | `backend/app/api/buildings.py`, `simulations.py` |
-| Persistence + seed | `backend/app/services/`, `backend/app/services/seed.py` |
+| Persistence + seed | `backend/app/services/`, `backend/app/services/seed.py`, default maps in `backend/app/maps/*.json` |
 | Discrete-time loop | `backend/app/simulation/engine.py` (spawn: `spawn.py`, timestep: `step.py`) |
 | Nav graph | `backend/app/simulation/graph.py` (types: `graph_types.py`, builder: `graph_builder.py`) |
 | Route choice (Dijkstra) | `backend/app/simulation/routing.py` |
@@ -85,7 +85,7 @@ API routers → services → domain / simulation engine
 
 - Run uvicorn with CWD = `backend/` (or set `DATABASE_URL` / env paths accordingly). Root `.env` may not load if CWD is wrong.
 - Large occupant counts + fine timesteps → large `frames_json` payloads.
-- Seed (`ensure_seed`) runs once on empty DB; deleting buildings does not re-seed until the DB is reset.
+- Seed (`ensure_seed`) imports every `backend/app/maps/*.json` whose layout name is not already in the DB. Drop maps from that folder (or delete buildings + reset DB) to change defaults.
 - Editor scale: `SCALE = 20` px/m in `frontend/src/utils.ts`; snap 0.5 m.
 - Frontend hardcodes some run parameters; there is no full params UI yet.
 - No auth, multi-user, or WebSockets. Backend tests live under `backend/tests/`.

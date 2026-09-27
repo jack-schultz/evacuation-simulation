@@ -1,0 +1,201 @@
+{
+  "format": "evacuation-simulation-layout",
+  "version": 1,
+  "layout": {
+    "name": "Two-Floor Office",
+    "width": 30.0,
+    "height": 24.0,
+    "meters_per_cell": 1.0,
+    "floors": [
+      {
+        "id": "floor-0",
+        "name": "Ground",
+        "elevation_m": 0.0,
+        "order": 0
+      },
+      {
+        "id": "floor-1",
+        "name": "Level 1",
+        "elevation_m": 3.2,
+        "order": 1
+      }
+    ],
+    "spaces": [
+      {
+        "id": "lobby",
+        "name": "Lobby",
+        "type": "room",
+        "vertices": [
+          [
+            4.0,
+            4.0
+          ],
+          [
+            20.0,
+            4.0
+          ],
+          [
+            20.0,
+            16.0
+          ],
+          [
+            4.0,
+            16.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "stairs_g",
+        "name": "Stairs (Ground)",
+        "type": "stairs",
+        "vertices": [
+          [
+            20.0,
+            6.0
+          ],
+          [
+            24.0,
+            6.0
+          ],
+          [
+            24.0,
+            14.0
+          ],
+          [
+            20.0,
+            14.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stairs_1",
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "office_1",
+        "name": "Office Level 1",
+        "type": "room",
+        "vertices": [
+          [
+            4.0,
+            4.0
+          ],
+          [
+            20.0,
+            4.0
+          ],
+          [
+            20.0,
+            16.0
+          ],
+          [
+            4.0,
+            16.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "stairs_1",
+        "name": "Stairs (Level 1)",
+        "type": "stairs",
+        "vertices": [
+          [
+            20.0,
+            6.0
+          ],
+          [
+            24.0,
+            6.0
+          ],
+          [
+            24.0,
+            14.0
+          ],
+          [
+            20.0,
+            14.0
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": "stairs_g",
+        "floor_id": "floor-1"
+      }
+    ],
+    "obstacles": [],
+    "doors": [
+      {
+        "id": "door_lobby_stairs",
+        "name": "Lobby\u2013Stairs",
+        "x": 20.0,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "lobby",
+          "stairs_g"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "door_office_stairs",
+        "name": "Office\u2013Stairs",
+        "x": 20.0,
+        "y": 10.0,
+        "width": 1.2,
+        "connects": [
+          "office_1",
+          "stairs_1"
+        ],
+        "flow_rate_per_s": null,
+        "floor_id": "floor-1"
+      }
+    ],
+    "exits": [
+      {
+        "id": "exit_street",
+        "name": "Street Exit",
+        "x": 4.0,
+        "y": 10.0,
+        "width": 1.4,
+        "connected_space_id": "lobby",
+        "flow_rate_per_s": 1.2,
+        "floor_id": "floor-0"
+      }
+    ],
+    "occupant_groups": [
+      {
+        "id": "group_l1",
+        "name": "Level 1 occupants",
+        "count": 28,
+        "space_id": "office_1",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "group_lobby",
+        "name": "Lobby occupants",
+        "count": 12,
+        "space_id": "lobby",
+        "spawn_x": null,
+        "spawn_y": null,
+        "walking_speed_mps": 1.15,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      }
+    ],
+    "floods": [],
+    "fires": [],
+    "smoke": null,
+    "obstacle_map": null
+  }
+}
