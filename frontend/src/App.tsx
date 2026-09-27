@@ -114,7 +114,6 @@ export default function App() {
         onReset={session.onReset}
         running={busy}
         simulating={session.simulating}
-        streaming={session.streaming}
         results={playbackResults}
         evacuatedCount={liveEvacuated}
         deathCount={liveDeaths}

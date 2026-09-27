@@ -3,18 +3,11 @@ import type {
   BuildingResponse,
   BuildingSummary,
   FloorPlanImageSummary,
-  SimulationFrame,
   SimulationParameters,
-  SimulationResults,
   SimulationRunResponse,
 } from '../types/building';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
-
-type SimulationStreamEvent =
-  | { type: 'frame'; frame: SimulationFrame }
-  | { type: 'complete'; results: SimulationResults }
-  | { type: 'error'; message: string };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -88,54 +81,6 @@ export const api = {
     }),
   runSimulation: (id: string) =>
     request<SimulationRunResponse>(`/api/simulations/${id}/run`, { method: 'POST' }),
-  streamSimulation: async (
-    id: string,
-    onFrame: (frame: SimulationFrame) => void,
-    onComplete: (results: SimulationResults) => void,
-    signal: AbortSignal,
-  ) => {
-    const response = await fetch(`${API_BASE}/api/simulations/${id}/run/stream`, {
-      method: 'POST',
-      signal,
-      headers: { Accept: 'application/x-ndjson' },
-    });
-    if (!response.ok) {
-      throw new Error(response.statusText || 'Could not run simulation');
-    }
-    if (!response.body) throw new Error('Streaming is not supported by this browser');
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let pending = '';
-    let completed = false;
-    const processLine = (line: string) => {
-      if (!line.trim()) return;
-      const event = JSON.parse(line) as SimulationStreamEvent;
-      if (event.type === 'frame') onFrame(event.frame);
-      else if (event.type === 'complete') {
-        completed = true;
-        onComplete(event.results);
-      } else {
-        throw new Error(event.message);
-      }
-    };
-
-    try {
-      while (true) {
-        const { value, done } = await reader.read();
-        pending += decoder.decode(value, { stream: !done });
-        const lines = pending.split('\n');
-        pending = lines.pop() ?? '';
-        lines.forEach(processLine);
-        if (done) break;
-      }
-      if (pending.trim()) processLine(pending);
-      if (!completed) throw new Error('Simulation stream ended before completion');
-    } finally {
-      if (!completed) await reader.cancel().catch(() => undefined);
-      reader.releaseLock();
-    }
-  },
   resetSimulation: (id: string) =>
     request<{ id: string; status: string }>(`/api/simulations/${id}/reset`, { method: 'POST' }),
 };

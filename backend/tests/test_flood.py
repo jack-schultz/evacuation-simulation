@@ -1,4 +1,3 @@
-import json
 import unittest
 
 from pydantic import ValidationError
@@ -139,41 +138,6 @@ class FloodTests(unittest.TestCase):
             result = simulations.run(snapshot.id)
             self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:far')
             self.assertEqual(buildings.get_layout(saved.id).floods, [])
-        engine.dispose()
-
-    def test_stream_emits_initial_frame_before_persisting_completion(self):
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import Session
-        from app.models.building import BuildingRecord, SimulationRecord
-        from app.services.building_service import BuildingService
-        from app.services.simulation_service import SimulationService
-
-        engine = create_engine('sqlite:///:memory:')
-        BuildingRecord.metadata.create_all(engine)
-        with Session(engine) as db:
-            buildings = BuildingService(db)
-            simulations = SimulationService(db)
-            saved = buildings.create_building(layout())
-            snapshot = simulations.create(
-                saved.id, SimulationParameters(max_time_s=30)
-            )
-            from fastapi import HTTPException
-            with self.assertRaises(HTTPException):
-                simulations.stream('missing-simulation')
-
-            stream = iter(simulations.stream(snapshot.id))
-            first = json.loads(next(stream))
-            self.assertEqual(first['type'], 'frame')
-            self.assertEqual(first['frame']['t'], 0)
-
-            row = db.get(SimulationRecord, snapshot.id)
-            self.assertEqual(row.status, 'running')
-            self.assertIsNone(row.frames_json)
-
-            remaining = [json.loads(event) for event in stream]
-            self.assertEqual(remaining[-1]['type'], 'complete')
-            self.assertEqual(row.status, 'completed')
-            self.assertTrue(row.frames_json)
         engine.dispose()
 
     def test_invalid_flood_values(self):

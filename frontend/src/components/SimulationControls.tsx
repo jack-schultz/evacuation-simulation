@@ -12,7 +12,6 @@ interface Props {
   onReset: () => void;
   running: boolean;
   simulating: boolean;
-  streaming: boolean;
   results: SimulationResults | null;
   /** Live count from the current playback frame; falls back to final results. */
   evacuatedCount?: number | null;
@@ -33,7 +32,6 @@ export function SimulationControls({
   onReset,
   running,
   simulating,
-  streaming,
   results,
   evacuatedCount,
   deathCount,
@@ -57,7 +55,7 @@ export function SimulationControls({
             Pause
           </button>
         ) : (
-          <button type="button" onClick={onPlay} disabled={!results && !streaming}>
+          <button type="button" onClick={onPlay} disabled={!results}>
             Play
           </button>
         )}

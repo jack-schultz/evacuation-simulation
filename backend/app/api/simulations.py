@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -24,15 +23,6 @@ def get_simulation(simulation_id: str, db: Session = Depends(get_db)) -> Simulat
 @router.post("/{simulation_id}/run", response_model=SimulationRunResponse)
 def run_simulation(simulation_id: str, db: Session = Depends(get_db)) -> SimulationRunResponse:
     return SimulationService(db).run(simulation_id)
-
-
-@router.post("/{simulation_id}/run/stream")
-def stream_simulation(simulation_id: str, db: Session = Depends(get_db)) -> StreamingResponse:
-    return StreamingResponse(
-        SimulationService(db).stream(simulation_id),
-        media_type="application/x-ndjson",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
 
 
 @router.post("/{simulation_id}/reset", response_model=SimulationSummary)

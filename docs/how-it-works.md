@@ -46,15 +46,15 @@ other and with space-edge segments, and squeeze through openings.
 
 1. **Save** — If the layout is dirty, the app saves the building first.
 2. **Create simulation** — The API copies (snapshots) the current layout and parameters into a new simulation record (`ready`).
-3. **Run engine** (server, streamed as it runs):
+3. **Run engine** (server, all at once):
    - Build the navigation graph.
    - Expand each occupant group into individuals.
    - Assign each person a route to a viable exit. Without a preferred exit, the initial assignment weighs walking time from the spawn point against projected queues at every door and exit on viable routes. Alternate doors from the starting room are considered even when they lead to the same exit. A reachable preferred exit remains binding. Routes stay fixed for the run.
    - Step through time (default 0.25 s). At each step, everyone tries to move
      toward their next waypoint at once; body collisions, space edges, and door/exit widths
      create jams — excess demand means waiting outside the opening.
-  - Record animation frames on an interval, streaming each frame to the browser as soon as it is captured; aggregate statistics (evac times, waits, hotspots) when the run ends.
-4. **Playback** — The browser starts animating as frames arrive. If it catches up with the calculation, it waits at the latest frame and resumes when more arrive. Final results appear when the run completes; the complete timeline and results are retained in SQLite.
+   - Record animation frames on an interval, then aggregate statistics (evac times, waits, hotspots).
+4. **Playback** — The browser loads the returned frames and results, then animates locally (play / pause / speed / reset). Nothing streams live over the network.
 
 ## How to read results
 
