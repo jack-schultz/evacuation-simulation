@@ -4,28 +4,7 @@ Web application for building planners to model simplified evacuation paths and
 estimate evacuation times. **Estimation only — not a safety certification or
 regulatory compliance calculation.**
 
-## Project structure
-
-```text
-evacuation-simulation/
-├── backend/                 # FastAPI app + simulation engine
-├── frontend/                # React + Vite + Konva editor
-├── docs/
-│   ├── how-it-works.md      # How the system works (humans)
-│   └── ASSUMPTIONS.md       # Simulation assumptions
-├── .env.example
-└── README.md
-```
-
-## Documentation
-
-* [docs/how-it-works.md](docs/how-it-works.md) — how the system works
-* [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) — model assumptions
-
-## Prerequisites
-
-* Python **3.11–3.13** (3.13 recommended; avoid 3.14 until pydantic wheels catch up)
-* Node.js 20+
+![img.png](img.png)
 
 ## Setup
 
@@ -66,6 +45,30 @@ Open http://localhost:5173
 
 API docs: http://localhost:8000/docs  
 Health: http://localhost:8000/api/health
+
+## Project structure
+
+```text
+evacuation-simulation/
+├── backend/                 # FastAPI app + simulation engine
+├── frontend/                # React + Vite + Konva editor
+├── docs/
+│   ├── how-it-works.md      # How the system works (humans)
+│   └── ASSUMPTIONS.md       # Simulation assumptions
+├── .env.example
+└── README.md
+```
+
+## Documentation
+
+* [docs/how-it-works.md](docs/how-it-works.md) — how the system works
+* [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) — model assumptions
+
+## Prerequisites
+
+* Python **3.11–3.13** (3.13 recommended; avoid 3.14 until pydantic wheels catch up)
+* Node.js 20+
+
 
 ## Typical workflow
 
