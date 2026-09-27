@@ -320,7 +320,14 @@ export function BuildingCanvas({
             onObjectContextMenu={openObjectContextMenu}
           />
 
-          {showPaths && <PathsLayer occupants={routeOccupants} />}
+          {showPaths && (
+            <PathsLayer
+              occupants={routeOccupants}
+              layout={layout}
+              activeFloorId={activeFloorId}
+              showAllFloors={showAllFloors}
+            />
+          )}
 
           <OccupantsLayer
             layout={layout}
