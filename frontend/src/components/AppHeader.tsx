@@ -34,6 +34,14 @@ export function AppHeader({
           disabled={busy || simulating}
         />
       </div>
+      <div className="occupant-legend top-occupant-legend" aria-label="Occupant color key">
+        <strong>Occupants</strong>
+        <span className="occupant-legend-item"><i className="occupant-swatch moving" />Moving</span>
+        <span className="occupant-legend-item"><i className="occupant-swatch waiting" />Waiting</span>
+        <span className="occupant-legend-item"><i className="occupant-swatch trapped" />Trapped</span>
+        <span className="occupant-legend-item"><i className="occupant-swatch climbing" />On stairs</span>
+        <span className="occupant-legend-item"><i className="occupant-swatch deceased" />Deceased</span>
+      </div>
       <div className="top-actions">
         <select
           value={buildingId ?? ''}
