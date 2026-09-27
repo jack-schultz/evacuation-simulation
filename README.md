@@ -22,7 +22,6 @@ evacuation-simulation/
 ├── docs/
 │   ├── how-it-works.md      # How the system works (humans)
 │   └── ASSUMPTIONS.md       # Simulation assumptions
-├── AGENTS.md                # Context for coding agents
 ├── .env.example
 └── README.md
 ```
@@ -31,7 +30,6 @@ evacuation-simulation/
 
 * [docs/how-it-works.md](docs/how-it-works.md) — how the system works
 * [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) — model assumptions
-* [AGENTS.md](AGENTS.md) — context for coding agents
 
 ## Prerequisites
 
