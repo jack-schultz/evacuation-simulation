@@ -145,6 +145,7 @@ export default function App() {
         onPlay={session.playback.play}
         onReset={session.onReset}
         running={busy}
+        simulating={session.simulating}
         results={session.playback.results}
         evacuatedCount={liveEvacuated}
         showPaths={showPaths}
@@ -217,6 +218,7 @@ export default function App() {
             interactive={!disabled}
             occupantRadiusM={session.occupantRadiusM}
             floodRadiusM={session.playback.currentFrame?.flood_radius_m}
+            floodRooms={session.playback.currentFrame?.flood_rooms ?? []}
             fireRadiusM={session.playback.currentFrame?.fire_radius_m}
             fireFloors={session.playback.currentFrame?.fire_floors ?? []}
             smokeFloors={session.playback.currentFrame?.smoke_floors ?? []}

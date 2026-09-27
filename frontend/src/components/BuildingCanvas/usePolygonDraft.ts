@@ -46,6 +46,7 @@ export function usePolygonDraft({
 
   const commitSpace = (vertices: Point[]) => {
     if (tool !== 'room' && tool !== 'stairs') return;
+    if (vertices.some(([x, y]) => x < 0 || x > layout.width || y < 0 || y > layout.height)) return;
     if (vertices.length < 3 || polygonArea(vertices) < 1e-6) return;
     const id = uid(tool);
     onChange({

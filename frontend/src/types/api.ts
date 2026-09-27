@@ -50,8 +50,17 @@ export interface SmokeFloorState {
   intensity: number;
 }
 
+export interface FloodRoomState {
+  space_id: string;
+  radius_m: number;
+  x: number;
+  y: number;
+  intensity: number;
+}
+
 export interface SimulationFrame {
   flood_radius_m?: number | null;
+  flood_rooms?: FloodRoomState[];
   fire_radius_m?: number | null;
   fire_floors?: SmokeFloorState[];
   smoke_floors?: SmokeFloorState[];

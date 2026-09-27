@@ -11,6 +11,7 @@ interface Props {
   onPlay: () => void;
   onReset: () => void;
   running: boolean;
+  simulating: boolean;
   results: SimulationResults | null;
   /** Live count from the current playback frame; falls back to final results. */
   evacuatedCount?: number | null;
@@ -29,6 +30,7 @@ export function SimulationControls({
   onPlay,
   onReset,
   running,
+  simulating,
   results,
   evacuatedCount,
   showPaths,
@@ -43,7 +45,7 @@ export function SimulationControls({
     <div className="controls-bar">
       <div className="controls-left">
         <button type="button" onClick={onRun} disabled={running}>
-          {running ? 'Loading...' : 'Run'}
+          {running ? 'Loading...' : simulating ? 'Restart' : 'Run'}
         </button>
         {status === 'playing' ? (
           <button type="button" onClick={onPause}>

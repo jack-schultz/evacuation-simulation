@@ -28,6 +28,7 @@ from app.domain.building.layout import (
 from app.domain.building.parameters import SimulationParameters
 from app.domain.building.results import (
     CongestionHotspot,
+    FloodRoomState,
     OccupantFrameState,
     OccupantResult,
     OccupantStatus,
@@ -44,6 +45,7 @@ __all__ = [
     "Exit",
     "FireEmergency",
     "FloodEmergency",
+    "FloodRoomState",
     "Floor",
     "OccupantFrameState",
     "OccupantGroup",

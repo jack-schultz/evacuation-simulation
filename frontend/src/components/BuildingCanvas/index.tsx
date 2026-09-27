@@ -22,7 +22,7 @@ import { OpeningsLayer } from './layers/OpeningsLayer';
 import { PathsLayer } from './layers/PathsLayer';
 import { OccupantsLayer } from './layers/OccupantsLayer';
 import { StairArrowLayer } from './layers/StairArrowLayer';
-import type { SmokeFloorState } from '../../types/api';
+import type { SmokeFloorState, FloodRoomState } from '../../types/api';
 
 interface Props {
   layout: BuildingLayout;
@@ -48,6 +48,7 @@ interface Props {
   /** Body radius in metres for playback dots (defaults to 0.25). */
   occupantRadiusM?: number;
   floodRadiusM?: number | null;
+  floodRooms?: FloodRoomState[];
   fireRadiusM?: number | null;
   fireFloors?: SmokeFloorState[];
   smokeFloors?: SmokeFloorState[];
@@ -78,6 +79,7 @@ export function BuildingCanvas({
   interactive = true,
   occupantRadiusM = 0.25,
   floodRadiusM,
+  floodRooms = [],
   fireRadiusM,
   fireFloors = [],
   smokeFloors = [],
@@ -306,6 +308,7 @@ export function BuildingCanvas({
             activeFloorId={activeFloorId}
             showAllFloors={showAllFloors}
             floodRadiusM={floodRadiusM}
+            floodRooms={floodRooms}
             fireRadiusM={fireRadiusM}
             fireFloors={fireFloors}
             smokeFloors={smokeFloors}

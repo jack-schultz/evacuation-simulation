@@ -38,6 +38,8 @@ class SimulatedOccupant:
     climb_progress: float | None = None
     climb_from_space_id: str | None = None
     climb_to_space_id: str | None = None
+    # Full-intensity-equivalent seconds spent in flood water (dose).
+    flood_exposure_s: float = 0.0
 
     @property
     def current_node_id(self) -> str:

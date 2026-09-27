@@ -42,12 +42,13 @@ class ExitAssignmentTests(unittest.TestCase):
         self.assertEqual({o.route_node_ids[-1] for o in output.results.occupants},
                          {'exit:left'})
 
-    def test_blocked_preferred_exit_falls_back_to_viable_exit(self):
+    def test_preferred_exit_stays_binding_through_soft_flood(self):
+        # Soft flood slows a preferred exit but does not make it inaccessible.
         output = run(building(count=6, preferred='left',
                               flood={"x": 0, "y": 5, "radius_m": 1,
                                      "spread_speed_mps": 0, "intensity": 50}))
         self.assertEqual({o.route_node_ids[-1] for o in output.results.occupants},
-                         {'exit:right'})
+                         {'exit:left'})
         self.assertEqual(output.results.evacuated_count, 6)
 
     def test_wider_exit_takes_more_of_an_equally_distant_crowd(self):

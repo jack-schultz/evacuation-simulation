@@ -37,8 +37,19 @@ class SmokeFloorState(BaseModel):
     intensity: float = 50.0
 
 
+class FloodRoomState(BaseModel):
+    """Flood plume scoped to one space (origin or doorway restart)."""
+
+    space_id: str
+    radius_m: float
+    x: float
+    y: float
+    intensity: float = 50.0
+
+
 class SimulationFrame(BaseModel):
     flood_radius_m: float | None = None
+    flood_rooms: list[FloodRoomState] = Field(default_factory=list)
     fire_radius_m: float | None = None
     fire_floors: list[SmokeFloorState] = Field(default_factory=list)
     smoke_floors: list[SmokeFloorState] = Field(default_factory=list)
