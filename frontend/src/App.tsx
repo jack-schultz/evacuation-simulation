@@ -4,7 +4,6 @@ import { ColumnResizer } from './components/ColumnResizer';
 import { FloorPlanLibrary } from './components/FloorPlanLibrary';
 import { FloorStrip } from './components/FloorStrip';
 import { AppHeader } from './components/AppHeader';
-import { PanelRail, type PanelId } from './components/PanelRail';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { ResultsPanel } from './components/ResultsPanel';
 import { SimulationControls } from './components/SimulationControls';
@@ -17,11 +16,10 @@ import { activeFloorId as resolveActiveFloorId } from './layout/emptyLayout';
 
 export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
-  const [columnWidths, setColumnWidths] = useState({ tools: 260, properties: 260 });
+  const [sidebarWidth, setSidebarWidth] = useState(300);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaths, setShowPaths] = useState(false);
-  const [activePanel, setActivePanel] = useState<PanelId | null>('tools');
   const [activeFloorId, setActiveFloorId] = useState('floor-0');
 
   const session = useSimulationSession({ setBusy, setError });
@@ -55,26 +53,9 @@ export default function App() {
     ? session.playback.currentFrame.occupants.filter((occupant) => occupant.deceased).length
     : null;
 
-  const selectPanel = (id: PanelId) => {
-    setActivePanel((current) => (current === id ? null : id));
-  };
-
-  const resizeColumn = (column: keyof typeof columnWidths, delta: number) => {
+  const resizeSidebar = (delta: number) => {
     const available = mainRef.current?.clientWidth ?? 1100;
-    const inspectorVisible = editor.selected.length > 0;
-    const sidePanelVisible = activePanel != null;
-    setColumnWidths((current) => {
-      const otherWidths =
-        (column !== 'tools' && sidePanelVisible ? 44 + current.tools : 0)
-        + (column !== 'properties' && inspectorVisible ? current.properties : 0);
-      const railWidth = column === 'tools' ? 44 : 0;
-      const minWidth = 180;
-      const maxWidth = Math.max(minWidth, available - otherWidths - railWidth - 280);
-      return {
-        ...current,
-        [column]: Math.min(maxWidth, Math.max(minWidth, current[column] + delta)),
-      };
-    });
+    setSidebarWidth((current) => Math.min(Math.max(220, available - 420), Math.max(220, current + delta)));
   };
 
   const onImportLayoutFile = async (file?: File) => {
@@ -98,12 +79,6 @@ export default function App() {
         buildingId={persistence.buildingId}
         buildings={persistence.buildings}
         onLoadBuilding={persistence.loadBuilding}
-        onNew={persistence.onNew}
-        onUndo={editor.onUndo}
-        canUndo={editor.undoHistory.length > 0}
-        onSave={persistence.onSave}
-        dirty={editor.dirty}
-        onImportFloorPlan={persistence.onImportFloorPlan}
         onImportLayout={onImportLayoutFile}
         onExportLayout={() => downloadLayoutFile(editor.layout)}
         busy={busy}
@@ -113,10 +88,6 @@ export default function App() {
       {persistence.floorPlanStatus && (
         <div className="import-status" role="status">{persistence.floorPlanStatus}</div>
       )}
-
-      <div className="disclaimer">
-        Estimation tool only — not a safety certification or regulatory compliance calculation.
-      </div>
 
       <SimulationControls
         simTime={session.playback.simTime}
@@ -152,33 +123,34 @@ export default function App() {
         className="main"
         ref={mainRef}
         style={{
-          gridTemplateColumns: `${activePanel != null ? 44 + columnWidths.tools : 44}px minmax(280px, 1fr) ${editor.selected.length > 0 ? columnWidths.properties : 0}px`,
+          gridTemplateColumns: `${sidebarWidth}px minmax(280px, 1fr) 230px`,
         }}
       >
-        <PanelRail
-          activePanel={activePanel}
-          onSelect={selectPanel}
-          panelWidth={columnWidths.tools}
-          onResize={(delta) => resizeColumn('tools', delta)}
-          panels={{
-            tools: (
-              <ToolPalette
-                tool={editor.tool}
-                onToolChange={editor.setTool}
-                disabled={disabled}
-              />
-            ),
-            library: (
-              <FloorPlanLibrary
-                images={persistence.floorPlans}
-                selectedId={persistence.selectedFloorPlanId}
-                opacity={persistence.floorPlanOpacity}
-                onSelect={persistence.setSelectedFloorPlanId}
-                onOpacityChange={persistence.setFloorPlanOpacity}
-              />
-            ),
-          }}
-        />
+        <aside className="left-editor-sidebar" aria-label="Building tools and properties">
+          <section className="sidebar-panel tools-panel">
+            <ToolPalette
+              tool={editor.tool}
+              onToolChange={editor.setTool}
+              disabled={disabled}
+            />
+          </section>
+          <section className="sidebar-panel properties-panel">
+            <PropertiesPanel
+              layout={editor.layout}
+              selected={editor.selected}
+              onChange={editor.updateLayout}
+              onSelect={editor.setSelected}
+              onDeleteSelected={editor.onDeleteSelected}
+              disabled={disabled}
+            />
+          </section>
+          <ColumnResizer
+            label="Resize tools and properties panel"
+            side="right"
+            direction={1}
+            onResize={resizeSidebar}
+          />
+        </aside>
 
         <main className="canvas-area">
           <FloorStrip
@@ -218,25 +190,29 @@ export default function App() {
           />
         </main>
 
-        {editor.selected.length > 0 && (
-          <aside className="inspector-sidebar" aria-label="Properties" style={{ width: columnWidths.properties }}>
-            <ColumnResizer
-              label="Resize properties panel"
-              side="left"
-              direction={-1}
-              onResize={(delta) => resizeColumn('properties', delta)}
-            />
-            <PropertiesPanel
-              layout={editor.layout}
-              selected={editor.selected}
-              onChange={editor.updateLayout}
-              onSelect={editor.setSelected}
-              onDeleteSelected={editor.onDeleteSelected}
-              disabled={disabled}
-            />
-          </aside>
-        )}
-
+        <div className="right-utility-column">
+          <section className="panel editor-actions-panel" aria-label="Building actions">
+            <div className="editor-action-grid">
+              <button type="button" onClick={persistence.onNew} disabled={busy}>New</button>
+              <button type="button" onClick={persistence.onSave} disabled={busy}>Save{editor.dirty ? ' *' : ''}</button>
+              <button type="button" onClick={editor.onUndo} disabled={busy || session.simulating || editor.undoHistory.length === 0} title="Undo last building edit (Ctrl+Z / Cmd+Z)">Undo</button>
+              <label className="file-import">
+                Import PNG
+                <input type="file" accept="image/png,.png" disabled={busy} onChange={(event) => {
+                  void persistence.onImportFloorPlan(event.currentTarget.files?.[0]);
+                  event.currentTarget.value = '';
+                }} />
+              </label>
+            </div>
+          </section>
+          <FloorPlanLibrary
+            images={persistence.floorPlans}
+            selectedId={persistence.selectedFloorPlanId}
+            opacity={persistence.floorPlanOpacity}
+            onSelect={persistence.setSelectedFloorPlanId}
+            onOpacityChange={persistence.setFloorPlanOpacity}
+          />
+        </div>
       </div>
 
       <ResultsPanel
