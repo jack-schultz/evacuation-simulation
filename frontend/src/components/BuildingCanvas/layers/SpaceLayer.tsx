@@ -7,7 +7,12 @@ import type {
 } from '../../../types/building';
 import { isRefSelected } from '../../../types/editor';
 import { SCALE, snap, polygonBBox, type Point } from '../../../utils';
-import { SPACE_COLORS, spaceCentroid } from '../geometryHelpers';
+import {
+  OVERLAP_FILL,
+  SPACE_COLORS,
+  findOverlappingSpaceIds,
+  spaceCentroid,
+} from '../geometryHelpers';
 import type {
   DragPropsFn,
   HandleObjectClickFn,
@@ -63,11 +68,13 @@ export function SpaceLayer({
     : layout.spaces.filter((s) => (s.floor_id ?? 'floor-0') === activeFloorId);
   const rooms = floorSpaces.filter((s) => s.type !== 'stairs');
   const stairs = floorSpaces.filter((s) => s.type === 'stairs');
+  const overlappingIds = findOverlappingSpaceIds(layout);
 
   const renderSpace = (s: (typeof layout.spaces)[number]) => {
     const box = polygonBBox(s.vertices);
     const [cx, cy] = spaceCentroid(s.vertices);
     const active = selectedSpace(s.id);
+    const overlapping = overlappingIds.has(s.id);
     const ref: ObjectRef = { kind: 'space', id: s.id };
     const onActiveFloor = (s.floor_id ?? 'floor-0') === activeFloorId;
     const ghost = showAllFloors && !onActiveFloor;
@@ -125,16 +132,16 @@ export function SpaceLayer({
             (vy - box.y) * SCALE,
           ])}
           closed
-          fill={SPACE_COLORS[s.type]}
+          fill={overlapping ? OVERLAP_FILL : SPACE_COLORS[s.type]}
           opacity={floorPlanImage ? 0.3 : 1}
           stroke={
-            congestedIds?.has(s.id)
+            overlapping || congestedIds?.has(s.id)
               ? '#dc2626'
               : active
                 ? '#2563eb'
                 : '#64748b'
           }
-          strokeWidth={congestedIds?.has(s.id) || active ? 3 : 1}
+          strokeWidth={overlapping || congestedIds?.has(s.id) || active ? 3 : 1}
         />
         <Text
           text={s.name}

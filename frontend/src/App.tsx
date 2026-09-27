@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BuildingCanvas } from './components/BuildingCanvas';
 import { ColumnResizer } from './components/ColumnResizer';
 import { FloorPlanLibrary } from './components/FloorPlanLibrary';
@@ -8,6 +8,7 @@ import { PropertiesPanel } from './components/PropertiesPanel';
 import { ResultsPanel } from './components/ResultsPanel';
 import { SimulationControls } from './components/SimulationControls';
 import { ToolPalette } from './components/ToolPalette';
+import { findOverlappingSpaceIds } from './components/BuildingCanvas/geometryHelpers';
 import { downloadLayoutFile, readLayoutFile } from './layout/layoutFile';
 import { useBuildingEditor } from './hooks/useBuildingEditor';
 import { useBuildingPersistence } from './hooks/useBuildingPersistence';
@@ -45,6 +46,10 @@ export default function App() {
   const playbackMatchesBuilding = session.playbackBuildingId === persistence.buildingId;
   const playbackFrame = playbackMatchesBuilding ? session.playback.currentFrame : null;
   const playbackResults = playbackMatchesBuilding ? session.playback.results : null;
+  const hasOverlappingRooms = useMemo(
+    () => findOverlappingSpaceIds(editor.layout).size > 0,
+    [editor.layout],
+  );
 
   useEffect(() => {
     setActiveFloorId((current) => resolveActiveFloorId(editor.layout, current));
@@ -91,6 +96,12 @@ export default function App() {
 
       {persistence.floorPlanStatus && (
         <div className="import-status" role="status">{persistence.floorPlanStatus}</div>
+      )}
+
+      {hasOverlappingRooms && (
+        <div className="layout-warning" role="alert">
+          Rooms must not overlap. Move or resize the highlighted rooms so they only share walls.
+        </div>
       )}
 
       <SimulationControls
