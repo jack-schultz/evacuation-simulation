@@ -64,9 +64,6 @@ export function useBuildingPersistence({
 
   const refreshList = useCallback(async () => {
     const list = await api.listBuildings();
-    // #region agent log
-    fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:refreshList',message:'refreshList result',data:{count:list.length,names:list.map((b)=>b.name),ids:list.map((b)=>b.id)},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     setBuildings(list);
     return list;
   }, []);
@@ -100,31 +97,20 @@ export function useBuildingPersistence({
   const onSave = async () => {
     setBusy(true);
     setError(null);
-    // #region agent log
-    fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:onSave',message:'onSave start',data:{buildingId,name:layout.name,dirty},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     try {
+      const payload = normalizeHazards(layout);
       if (buildingId) {
-        const b = await api.updateBuilding(buildingId, layout);
+        const b = await api.updateBuilding(buildingId, payload);
         setLayout(normalizeHazards(b.layout));
         setBuildingId(b.id);
-        // #region agent log
-        fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:onSave',message:'update ok',data:{id:b.id,name:b.name},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
       } else {
-        const b = await api.createBuilding(layout);
+        const b = await api.createBuilding(payload);
         setBuildingId(b.id);
         setLayout(normalizeHazards(b.layout));
-        // #region agent log
-        fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:onSave',message:'create ok',data:{id:b.id,name:b.name},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
       }
       setDirty(false);
       await refreshList();
     } catch (e) {
-      // #region agent log
-      fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:onSave',message:'onSave error',data:{error:e instanceof Error ? e.message : String(e)},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);

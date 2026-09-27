@@ -20,14 +20,6 @@ class BuildingService:
 
     def list_buildings(self) -> list[BuildingSummary]:
         rows = self.db.query(BuildingRecord).order_by(BuildingRecord.created_at.asc()).all()
-        # #region agent log
-        try:
-            import json, time
-            with open("/Users/jackschultz/PycharmProjects/evacuation-simulation/.cursor/debug-8a2919.log", "a") as _f:
-                _f.write(json.dumps({"sessionId": "8a2919", "hypothesisId": "A", "location": "building_service.py:list_buildings", "message": "list_buildings", "data": {"count": len(rows), "names": [r.name for r in rows], "ids": [r.id for r in rows]}, "timestamp": int(time.time() * 1000)}) + "\n")
-        except Exception:
-            pass
-        # #endregion
         return [
             BuildingSummary(
                 id=r.id,
@@ -52,14 +44,6 @@ class BuildingService:
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
-        # #region agent log
-        try:
-            import json, time
-            with open("/Users/jackschultz/PycharmProjects/evacuation-simulation/.cursor/debug-8a2919.log", "a") as _f:
-                _f.write(json.dumps({"sessionId": "8a2919", "hypothesisId": "B", "location": "building_service.py:create_building", "message": "create_building ok", "data": {"id": row.id, "name": row.name}, "timestamp": int(time.time() * 1000)}) + "\n")
-        except Exception:
-            pass
-        # #endregion
         return self._to_response(row)
 
     def update_building(self, building_id: str, layout: BuildingLayout) -> BuildingResponse:
