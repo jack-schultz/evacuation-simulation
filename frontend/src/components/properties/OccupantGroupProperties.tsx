@@ -61,14 +61,22 @@ export function OccupantGroupProperties({
         <select
           disabled={disabled}
           value={group.space_id}
-          onChange={(e) =>
+          onChange={(e) => {
+            const spaceId = e.target.value;
+            const host = layout.spaces.find((s) => s.id === spaceId);
             onChange({
               ...layout,
               occupant_groups: layout.occupant_groups.map((g) =>
-                g.id === group.id ? { ...g, space_id: e.target.value } : g,
+                g.id === group.id
+                  ? {
+                      ...g,
+                      space_id: spaceId,
+                      floor_id: host?.floor_id ?? g.floor_id,
+                    }
+                  : g,
               ),
-            })
-          }
+            });
+          }}
         >
           {layout.spaces.map((s) => (
             <option key={s.id} value={s.id}>

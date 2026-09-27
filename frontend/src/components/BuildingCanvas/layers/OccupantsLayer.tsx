@@ -6,6 +6,7 @@ import type {
   Selection,
 } from '../../../types/building';
 import { isRefSelected } from '../../../types/editor';
+import { filterLayoutByFloor } from '../../../layout/emptyLayout';
 import { SCALE } from '../../../utils';
 import { spaceCentroid, spaceContaining } from '../geometryHelpers';
 import type {
@@ -52,6 +53,8 @@ export function OccupantsLayer({
             showAllFloors || (g.floor_id ?? 'floor-0') === activeFloorId,
         )
         .map((g) => {
+        const groupFloorId = g.floor_id ?? activeFloorId;
+        const floorLayout = filterLayoutByFloor(layout, groupFloorId);
         const space = layout.spaces.find((s) => s.id === g.space_id);
         if (!space) return null;
         const [centerX, centerY] = spaceCentroid(space.vertices);
@@ -67,13 +70,20 @@ export function OccupantsLayer({
             {...dragProps(
               ref,
               (x, y) => {
-                const spaceId = spaceContaining(layout, x, y);
+                const spaceId = spaceContaining(floorLayout, x, y);
                 if (!spaceId) return;
+                const host = layout.spaces.find((s) => s.id === spaceId);
                 onChange({
                   ...layout,
                   occupant_groups: layout.occupant_groups.map((group) =>
                     group.id === g.id
-                      ? { ...group, space_id: spaceId, spawn_x: x, spawn_y: y }
+                      ? {
+                          ...group,
+                          space_id: spaceId,
+                          floor_id: host?.floor_id ?? group.floor_id,
+                          spawn_x: x,
+                          spawn_y: y,
+                        }
                       : group,
                   ),
                 });
@@ -82,7 +92,7 @@ export function OccupantsLayer({
               0,
               { x: sx, y: sy },
               {
-                validate: (x, y) => spaceContaining(layout, x, y) != null,
+                validate: (x, y) => spaceContaining(floorLayout, x, y) != null,
               },
             )}
             onClick={(e) => onObjectClick(ref, e)}

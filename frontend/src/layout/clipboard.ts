@@ -337,6 +337,7 @@ export function translateSelection(
       const spawn_y =
         group.spawn_y != null ? snap(group.spawn_y + dy) : group.spawn_y;
       let space_id = group.space_id;
+      let floor_id = group.floor_id;
       if (spawn_x != null && spawn_y != null) {
         const translatedSpaces = layout.spaces.map((space) => {
           if (!spaceIds.has(space.id)) return space;
@@ -350,9 +351,12 @@ export function translateSelection(
         const host = translatedSpaces.find((s) =>
           pointInPolygon(spawn_x, spawn_y, s.vertices),
         );
-        if (host) space_id = host.id;
+        if (host) {
+          space_id = host.id;
+          floor_id = host.floor_id;
+        }
       }
-      return { ...group, spawn_x, spawn_y, space_id };
+      return { ...group, spawn_x, spawn_y, space_id, floor_id };
     }),
     floods: (layout.floods ?? []).map((flood) => {
       if (!selection.some((r) => r.kind === 'flood' && r.id === flood.id)) return flood;
