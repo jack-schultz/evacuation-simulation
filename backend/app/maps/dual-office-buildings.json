@@ -2,7 +2,7 @@
   "format": "evacuation-simulation-layout",
   "version": 1,
   "layout": {
-    "name": "Twin Towers 20m",
+    "name": "Dual Office Buildings",
     "width": 54.0,
     "height": 24.0,
     "meters_per_cell": 1.0,

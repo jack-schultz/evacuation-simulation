@@ -3,14 +3,14 @@
   "version": 1,
   "layout": {
     "name": "Two-Floor Office",
-    "width": 30.0,
-    "height": 24.0,
-    "meters_per_cell": 1.0,
+    "width": 21,
+    "height": 15,
+    "meters_per_cell": 1,
     "floors": [
       {
         "id": "floor-0",
         "name": "Ground",
-        "elevation_m": 0.0,
+        "elevation_m": 0,
         "order": 0
       },
       {
@@ -27,20 +27,20 @@
         "type": "room",
         "vertices": [
           [
-            4.0,
-            4.0
+            1,
+            1
           ],
           [
-            20.0,
-            4.0
+            17,
+            1
           ],
           [
-            20.0,
-            16.0
+            17,
+            13
           ],
           [
-            4.0,
-            16.0
+            1,
+            13
           ]
         ],
         "capacity_density_per_m2": null,
@@ -53,20 +53,20 @@
         "type": "stairs",
         "vertices": [
           [
-            20.0,
-            6.0
+            17,
+            2
           ],
           [
-            24.0,
-            6.0
+            19,
+            2
           ],
           [
-            24.0,
-            14.0
+            19,
+            8
           ],
           [
-            20.0,
-            14.0
+            17,
+            8
           ]
         ],
         "capacity_density_per_m2": null,
@@ -79,20 +79,20 @@
         "type": "room",
         "vertices": [
           [
-            4.0,
-            4.0
+            1,
+            1
           ],
           [
-            20.0,
-            4.0
+            17,
+            1
           ],
           [
-            20.0,
-            16.0
+            17,
+            13
           ],
           [
-            4.0,
-            16.0
+            1,
+            13
           ]
         ],
         "capacity_density_per_m2": null,
@@ -105,20 +105,20 @@
         "type": "stairs",
         "vertices": [
           [
-            20.0,
-            6.0
+            17,
+            2
           ],
           [
-            24.0,
-            6.0
+            19,
+            2
           ],
           [
-            24.0,
-            14.0
+            19,
+            8
           ],
           [
-            20.0,
-            14.0
+            17,
+            8
           ]
         ],
         "capacity_density_per_m2": null,
@@ -126,26 +126,216 @@
         "floor_id": "floor-1"
       }
     ],
-    "obstacles": [],
+    "obstacles": [
+      {
+        "id": "obstacle_x4te91n",
+        "name": "Obstacle",
+        "x": 2,
+        "y": 2.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_bpgf666",
+        "name": "Obstacle",
+        "x": 2,
+        "y": 6,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_31k48pi",
+        "name": "Obstacle",
+        "x": 2,
+        "y": 9.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_p4o2qak",
+        "name": "Obstacle",
+        "x": 4.5,
+        "y": 2.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_hv7dndl",
+        "name": "Obstacle",
+        "x": 4.5,
+        "y": 6,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_19xgd99",
+        "name": "Obstacle",
+        "x": 4.5,
+        "y": 9.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_1u2meml",
+        "name": "Obstacle",
+        "x": 7,
+        "y": 2.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_eul3o72",
+        "name": "Obstacle",
+        "x": 7,
+        "y": 6,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_hpqjwrx",
+        "name": "Obstacle",
+        "x": 7,
+        "y": 9.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_zpoxvcu",
+        "name": "Obstacle",
+        "x": 9.5,
+        "y": 2.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_0j09yo6",
+        "name": "Obstacle",
+        "x": 9.5,
+        "y": 6,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_7lrolzb",
+        "name": "Obstacle",
+        "x": 9.5,
+        "y": 9.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_8mwewus",
+        "name": "Obstacle",
+        "x": 12,
+        "y": 2.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_81aw5nj",
+        "name": "Obstacle",
+        "x": 12,
+        "y": 6,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_7mfw4n3",
+        "name": "Obstacle",
+        "x": 12,
+        "y": 9.5,
+        "width": 1,
+        "height": 2,
+        "floor_id": "floor-1"
+      },
+      {
+        "id": "obstacle_jpm2mba",
+        "name": "Obstacle",
+        "x": 3,
+        "y": 3.5,
+        "width": 1,
+        "height": 9.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_h0xrzen",
+        "name": "Obstacle",
+        "x": 6,
+        "y": 1,
+        "width": 6.5,
+        "height": 1.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_klbnto7",
+        "name": "Obstacle",
+        "x": 6.5,
+        "y": 6,
+        "width": 1,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_q8z3tjf",
+        "name": "Obstacle",
+        "x": 10.5,
+        "y": 6,
+        "width": 1,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_r1ccuyb",
+        "name": "Obstacle",
+        "x": 7,
+        "y": 4,
+        "width": 3,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_371l5mi",
+        "name": "Obstacle",
+        "x": 12.5,
+        "y": 1,
+        "width": 1.5,
+        "height": 3.5,
+        "floor_id": "floor-0"
+      }
+    ],
     "doors": [
       {
         "id": "door_lobby_stairs",
-        "name": "Lobby\u2013Stairs",
-        "x": 20.0,
-        "y": 10.0,
-        "width": 1.2,
+        "name": "Lobby–Stairs",
+        "x": 17,
+        "y": 3,
+        "width": 0.6,
         "connects": [
           "lobby",
           "stairs_g"
         ],
-        "flow_rate_per_s": null,
+        "flow_rate_per_s": 0.1,
         "floor_id": "floor-0"
       },
       {
         "id": "door_office_stairs",
-        "name": "Office\u2013Stairs",
-        "x": 20.0,
-        "y": 10.0,
+        "name": "Office–Stairs",
+        "x": 17,
+        "y": 3,
         "width": 1.2,
         "connects": [
           "office_1",
@@ -159,8 +349,8 @@
       {
         "id": "exit_street",
         "name": "Street Exit",
-        "x": 4.0,
-        "y": 10.0,
+        "x": 1,
+        "y": 11,
         "width": 1.4,
         "connected_space_id": "lobby",
         "flow_rate_per_s": 1.2,
@@ -169,32 +359,47 @@
     ],
     "occupant_groups": [
       {
-        "id": "group_l1",
-        "name": "Level 1 occupants",
-        "count": 28,
-        "space_id": "office_1",
-        "spawn_x": null,
-        "spawn_y": null,
-        "walking_speed_mps": 1.2,
-        "destination_exit_id": null,
-        "behaviour": {},
-        "floor_id": "floor-1"
-      },
-      {
         "id": "group_lobby",
         "name": "Lobby occupants",
         "count": 12,
         "space_id": "lobby",
-        "spawn_x": null,
-        "spawn_y": null,
+        "spawn_x": 14.5,
+        "spawn_y": 11,
         "walking_speed_mps": 1.15,
         "destination_exit_id": null,
         "behaviour": {},
         "floor_id": "floor-0"
+      },
+      {
+        "id": "group_cbv2cqw",
+        "name": "Group 2",
+        "count": 28,
+        "space_id": "office_1",
+        "spawn_x": 4,
+        "spawn_y": 6,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-1"
       }
     ],
     "floods": [],
-    "fires": [],
+    "fires": [
+      {
+        "enabled": true,
+        "x": 8.5,
+        "y": 10.5,
+        "radius_m": 3,
+        "spread_speed_mps": 0.1,
+        "intensity": 50,
+        "floor_id": "floor-1",
+        "id": "fire_yeoepkg",
+        "emit_smoke": true,
+        "smoke_visibility_m": 8,
+        "smoke_stair_spread_delay_s": 8,
+        "smoke_stair_intensity_factor": 0.85
+      }
+    ],
     "smoke": null,
     "obstacle_map": null
   }
