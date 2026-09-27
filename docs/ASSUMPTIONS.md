@@ -90,37 +90,55 @@ The sidebar configures a circular flood with a centre, initial radius (metres),
 spread speed (metres per second), and relative intensity (0-100). These settings
 are saved with the building and snapshotted for each simulation.
 
-The radius at simulation time `t` is `initial_radius + spread_speed_mps * t`.
-The default spread speed is 0.1 m/s (6 m/min), compared with default unobstructed
-walking speed of 1.2 m/s (72 m/min). This is an adjustable scenario assumption,
-not an empirically calibrated rate. It is independent of walking speed: changing
+Flood fills **one room at a time**. The origin space (the room whose polygon
+contains the flood centre) expands as a circle with radius
+`initial_radius + spread_speed_mps * t`. When that front reaches a same-floor
+door, a **new circle starts at the doorway** (radius 0 at arrival) and fills the
+adjacent room the same way. First arrival wins if multiple doors can reach a
+room.
+
+Linked stairs transfer flood between floors with gravity: when water reaches a
+stair that goes **down**, it dumps downstairs immediately and does **not**
+expand past that stair on the current floor until the lower floor is filled
+(every wet space on that floor covered by its plume). When a floor is filled,
+flood may then spread **up** through stairs. The default spread
+speed is 0.1 m/s (6 m/min), compared with default unobstructed walking speed of
+1.2 m/s (72 m/min). This is an adjustable scenario assumption, not an
+empirically calibrated rate. It is independent of walking speed: changing
 occupant speed or crowding can change who escapes before an exit floods. Set
 spread speed to zero to keep the original fixed-area scenario. Older layouts
 without a spread speed use 0.1 m/s on new runs.
 
-The flood and people use the same simulation clock. Each saved frame contains
-its flood radius, so pausing, scrubbing, and playback speed changes keep them
-synchronized. Old frames without a radius show their original fixed area.
+A point is wet only when it lies inside a room that has an active plume **and**
+within that plume's radius, so walls contain water between rooms. Exits flood
+when covered by their host-room plume.
 
-At spawn, routes avoid crossing the initial flood and flooded exits, falling
+The flood and people use the same simulation clock. Each saved frame contains
+the origin flood radius and per-room flood plumes, so pausing, scrubbing, and
+playback speed changes keep them synchronized. Old frames without room plumes
+show their original fixed area.
+
+At spawn, routes prefer drier paths because flooded edges are slower, falling
 back from an inaccessible preferred exit where possible. Routes remain fixed.
-Every movement step checks the person's current position and remaining segment
-against the expanded flood (at the end of that step). Newly flooded exits and
-remaining paths into water trap occupants; water behind someone does not block
-their remaining dry path. People already inside may move continuously outward,
-with speed multiplied by `max(0.1, 1 - intensity / 100)` until they are dry.
-Aperture steering targets are checked too. Zero intensity and disabled floods
-preserve dry behavior. Finite timesteps introduce timing uncertainty up to a
-step; smaller steps improve comparisons near flood arrival times.
+People may walk through water: movement speed is multiplied by
+`max(0.1, 1 - intensity / 100)` while standing in a wet plume. Immersion
+accumulates a dose of `(intensity / 100) * dt` seconds; after
+`FLOOD_LETHAL_EXPOSURE_S` (10) full-intensity-equivalent seconds the occupant
+becomes trapped (purple). Brief contact is not lethal. Local detours around
+water are preferred when available but are not required. Zero intensity and
+disabled floods preserve dry behavior. Finite timesteps introduce timing
+uncertainty up to a step; smaller steps improve comparisons near flood arrival
+and lethal-exposure times.
 
 Trapped occupants appear purple, count as remaining, and do not count as
 evacuated. Partial evacuation has no total completion time. There is no mid-run
-replanning or creation of new detours within rooms.
+replanning of exit routes (local detours around water within a room are allowed).
 
 This remains a simplified radial scenario, not a water-depth or hydraulic
-model. Walls do not contain water, and slopes, inflow, drainage, and water volume
-are not modeled. A physical flood rate cannot be inferred from the available
-layout alone. For context on terrain and hydraulic equation requirements, see
+model. Spread within a room is Euclidean from the room's plume centre (not a
+geodesic floor fill). Slopes, inflow, drainage, and water volume are not modeled.
+A physical flood rate cannot be inferred from the available layout alone. For
+context on terrain and hydraulic equation requirements, see
 [USACE HEC-RAS 2D hydrodynamics](https://www.hec.usace.army.mil/confluence/rasdocs/ras1dtechref/6.2/theoretical-basis-for-one-dimensional-and-two-dimensional-hydrodynamic-calculations/2d-unsteady-flow-hydrodynamics).
 
 

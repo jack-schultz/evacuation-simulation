@@ -18,8 +18,12 @@ from app.simulation.collision import (
     resolve_space_containment,
     resolve_wall_collisions,
 )
-from app.simulation.hazards import HazardRouteSelector, hazard_radius_at
-from app.simulation.graph import NodeKind
+from app.simulation.hazards import (
+    HazardRouteSelector, hazard_radius_at, apply_hazards, active_fire_plumes,
+    active_smoke_plumes, fire_emergencies_from_plumes, smoke_emergencies_from_plumes,
+)
+from app.simulation.graph import NodeKind, NavigationGraphBuilder, NavigationGraph
+from app.simulation.obstacles import free_position
 from app.simulation.movement import SimulatedOccupant
 from app.simulation.routing import DijkstraRouteSelector, edge_between, shortest_path_to_node
 
@@ -32,6 +36,7 @@ def spawn_occupants(
     spaces: dict | None = None,
     doors: dict | None = None,
     timestep_s: float = 0.25,
+    defaults: dict | None = None,
 ) -> list[SimulatedOccupant]:
     occupants: list[SimulatedOccupant] = []
     spaces = spaces if spaces is not None else {s.id: s for s in layout.spaces}
@@ -41,6 +46,15 @@ def spawn_occupants(
     solids = boundary_solids or []
     # Track projected availability at every door and exit aperture across groups.
     opening_slots: dict[str, list[float]] = {}
+    initial_hazards = (
+        layout.flood,
+        *fire_emergencies_from_plumes(active_fire_plumes(layout, 0)),
+        *smoke_emergencies_from_plumes(active_smoke_plumes(layout, 0)),
+    )
+    spawn_defaults = defaults or {
+        "occupant_radius_m": radius_m, "door_flow_per_s": 1.2,
+        "exit_flow_per_s": 1.5, "stairs_flow_per_s": 0.8,
+    }
 
     for group in layout.occupant_groups:
         start_node = graph.space_node_ids[group.space_id]
@@ -50,7 +64,10 @@ def spawn_occupants(
             and isinstance(route_selector, DijkstraRouteSelector)
             else route_selector
         )
-        if type(route_selector) is DijkstraRouteSelector:
+        obstacles = [o for o in layout.obstacles if o.floor_id == group.floor_id]
+        if obstacles:
+            routes = [[start_node]]
+        elif type(route_selector) is DijkstraRouteSelector:
             exit_ids = ([group.destination_exit_id] if group.destination_exit_id
                         else [e.id for e in layout.exits])
             routes = _candidate_routes(route_selector, graph, layout, group.space_id,
@@ -94,6 +111,38 @@ def spawn_occupants(
                     ox, oy = clamp_into_polygon(
                         ox, oy, space.vertices, inset_m=margin
                     )
+            if obstacles:
+                position = free_position((ox, oy), space, obstacles, radius_m,
+                    [o for o in occupants if o.floor_id == group.floor_id])
+                if position is None:
+                    raise ValueError(f"Space '{space.name}' has no free area for occupants")
+                ox, oy = position
+                individual_start = f"spawn:{group.id}:{i}"
+                NavigationGraphBuilder().add_spawn_node(
+                    graph, layout, space, position, individual_start,
+                    spawn_defaults,
+                )
+                # Apply the same initial hazards to the newly added spawn edges.
+                spawn_edges = {eid: graph.edges[eid] for eid in graph.adjacency[individual_start]}
+                apply_hazards(
+                    NavigationGraph(nodes=graph.nodes, edges=spawn_edges), initial_hazards,
+                )
+                if type(route_selector) is DijkstraRouteSelector:
+                    routes = _candidate_routes(route_selector, graph, layout, group.space_id,
+                        individual_start, [group.destination_exit_id] if group.destination_exit_id
+                        else [e.id for e in layout.exits])
+                    if not routes and group.destination_exit_id and selector is not route_selector:
+                        routes = _candidate_routes(
+                            route_selector, graph, layout, group.space_id,
+                            individual_start, [e.id for e in layout.exits],
+                        )
+                else:
+                    try:
+                        routes = [selector.select_route(graph, individual_start,
+                            preferred_exit_id=group.destination_exit_id)]
+                    except ValueError:
+                        routes = []
+                routes = routes or [[individual_start]]
             route = min(
                 routes,
                 key=lambda candidate: _projected_route_time(
@@ -124,6 +173,12 @@ def spawn_occupants(
     resolve_overlaps(occupants, radius_m, iterations=6)
     resolve_wall_collisions(occupants, solids, radius_m)
     resolve_space_containment(occupants, spaces, radius_m)
+    for o in occupants:
+        obstacles = [item for item in layout.obstacles if item.floor_id == o.floor_id]
+        if obstacles:
+            position = free_position((o.x, o.y), spaces[o.current_space_id], obstacles, radius_m)
+            if position is not None:
+                o.x, o.y = position
     return occupants
 
 

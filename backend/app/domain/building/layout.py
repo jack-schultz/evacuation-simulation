@@ -113,6 +113,17 @@ class Space(BaseModel):
         return polygon_bbox(self.vertices)
 
 
+class Obstacle(BaseModel):
+    """Axis-aligned solid rectangle in metres."""
+    id: str
+    name: str = "Obstacle"
+    x: float = Field(ge=0, allow_inf_nan=False)
+    y: float = Field(ge=0, allow_inf_nan=False)
+    width: float = Field(gt=0, allow_inf_nan=False)
+    height: float = Field(gt=0, allow_inf_nan=False)
+    floor_id: str = DEFAULT_FLOOR_ID
+
+
 class Door(BaseModel):
     id: str
     name: str = "Door"
@@ -169,6 +180,7 @@ class BuildingLayout(BaseModel):
     meters_per_cell: float = Field(default=1.0, gt=0)
     floors: list[Floor] = Field(default_factory=list)
     spaces: list[Space] = Field(default_factory=list)
+    obstacles: list[Obstacle] = Field(default_factory=list)
     doors: list[Door] = Field(default_factory=list)
     exits: list[Exit] = Field(default_factory=list)
     occupant_groups: list[OccupantGroup] = Field(default_factory=list)
@@ -226,6 +238,12 @@ class BuildingLayout(BaseModel):
                 raise ValueError(
                     f"Space '{space.id}' references unknown floor '{space.floor_id}'"
                 )
+
+        for obstacle in self.obstacles:
+            if obstacle.floor_id not in floor_ids:
+                raise ValueError(f"Obstacle '{obstacle.id}' references unknown floor")
+            if obstacle.x + obstacle.width > self.width or obstacle.y + obstacle.height > self.height:
+                raise ValueError(f"Obstacle '{obstacle.id}' must be inside the building bounds")
 
         for door in self.doors:
             if door.floor_id not in floor_ids:

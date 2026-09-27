@@ -69,10 +69,29 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 - Multi-floor tabs with stacked plans; linked stairs use a directed slowed climb between
   stair centers for multi-level pathing (not continuous vertical physics).
-- Illustrative circular fire/flood/smoke (smoke expands faster than fire; both
-  spread through stairs up and down); no panic or
+- Illustrative circular fire/smoke (smoke expands faster than fire; both
+  spread through stairs up and down); flood fills each room separately,
+  dumps down stairs before expanding past them, and rises only after a floor
+  is filled; no panic or
   disability-specific movement.
 - Space edges block movement except at door/exit widths; they do not carve the navigation graph.
 - Occupants do not replan or follow crowds mid-run.
 
 See [ASSUMPTIONS.md](ASSUMPTIONS.md) for the complete list.
+
+### Rectangular obstacles
+
+Choose **Obstacle** under Building tools, then click and drag to draw a rectangle.
+Release to place it; Escape or right-click cancels. Obstacles snap to the 0.5 m
+grid and belong to the active floor. Use Select to move them, or edit their
+position, width and height in Properties. Delete, Undo, copy/paste and floor
+duplication include obstacles.
+
+Obstacle rectangles are saved with the layout and copied into simulation
+snapshots. Routing adds clearance waypoints around their corners and connects
+each occupant's actual spawn position to the visibility graph. Movement checks
+the entire displacement against rectangles expanded by the occupant body
+radius, including crowd separation pushes. Occupants cannot pass through
+obstacles or gaps smaller than their body clearance. A completely blocked route
+leaves the occupant trapped; spawn positions covered by an obstacle are moved
+to nearby free space.

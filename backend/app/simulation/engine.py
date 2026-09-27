@@ -6,8 +6,6 @@ from dataclasses import dataclass
 
 from app.domain.building import (
     BuildingLayout,
-    FloodEmergency,
-    FireEmergency,
     OccupantFrameState,
     OccupantStatus,
     SimulationFrame,
@@ -15,6 +13,7 @@ from app.domain.building import (
     SimulationResults,
 )
 from app.simulation.collision import build_collision_solids
+from app.simulation.flood import active_flood_plumes, apply_flood_plumes
 from app.simulation.hazards import (
     active_fire_plumes,
     active_smoke_plumes,
@@ -84,14 +83,15 @@ class SimulationEngine:
         origin_smoke = resolve_origin_smoke(layout)
         plumes0 = active_smoke_plumes(layout, 0.0)
         fire_plumes0 = active_fire_plumes(layout, 0.0)
+        flood_plumes0 = active_flood_plumes(layout, 0.0)
         apply_hazards(
             graph,
             (
-                layout.flood,
                 *fire_emergencies_from_plumes(fire_plumes0),
                 *smoke_emergencies_from_plumes(plumes0),
             ),
         )
+        apply_flood_plumes(graph, flood_plumes0, layout)
 
         boundary_solids = build_collision_solids(
             layout.spaces, layout.doors, layout.exits
@@ -108,6 +108,7 @@ class SimulationEngine:
             spaces,
             doors,
             params.timestep_s,
+            defaults,
         )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
@@ -131,6 +132,7 @@ class SimulationEngine:
             t += params.timestep_s
             plumes = active_smoke_plumes(layout, t)
             fire_plumes = active_fire_plumes(layout, t)
+            flood_plumes = active_flood_plumes(layout, t)
             if not occupants_done:
                 advance_timestep(
                     self.flow_model,
@@ -152,6 +154,8 @@ class SimulationEngine:
                     floors,
                     plumes,
                     fire_plumes,
+                    layout.obstacles,
+                    flood_plumes,
                 )
 
             if t + 1e-9 >= next_frame_t:
@@ -173,6 +177,7 @@ class SimulationEngine:
         return SimulationFrame(
             t=round(t, 3),
             flood_radius_m=hazard_radius_at(layout.flood, t),
+            flood_rooms=active_flood_plumes(layout, t),
             fire_radius_m=hazard_radius_at(layout.fire, t),
             fire_floors=active_fire_plumes(layout, t),
             smoke_floors=active_smoke_plumes(layout, t),

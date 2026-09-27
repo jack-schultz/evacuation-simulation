@@ -1,6 +1,6 @@
 import { Circle, Group, Text } from 'react-konva';
 import type { BuildingLayout, EditorTool } from '../../../types/building';
-import type { SmokeFloorState } from '../../../types/api';
+import type { FloodRoomState, SmokeFloorState } from '../../../types/api';
 import { SCALE } from '../../../utils';
 import type { DragPropsFn } from '../useCanvasInteraction';
 
@@ -11,6 +11,7 @@ interface Props {
   activeFloorId: string;
   showAllFloors?: boolean;
   floodRadiusM?: number | null;
+  floodRooms?: FloodRoomState[];
   fireRadiusM?: number | null;
   fireFloors?: SmokeFloorState[];
   smokeFloors?: SmokeFloorState[];
@@ -25,6 +26,7 @@ export function HazardLayer({
   activeFloorId,
   showAllFloors = false,
   floodRadiusM,
+  floodRooms = [],
   fireRadiusM,
   fireFloors = [],
   smokeFloors = [],
@@ -34,24 +36,24 @@ export function HazardLayer({
   const onFloor = (floorId?: string | null) =>
     showAllFloors || (floorId ?? 'floor-0') === activeFloorId;
 
-  const connectedSpaceIds = (x: number, y: number, floorId: string) => {
-    const containsPoint = (vertices: [number, number][], x: number, y: number) => {
-      let inside = false;
-      for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i, i += 1) {
-        const [xi, yi] = vertices[i];
-        const [xj, yj] = vertices[j];
-        const cross = (x - xi) * (yj - yi) - (y - yi) * (xj - xi);
-        const onSegment = Math.abs(cross) < 1e-8
-          && x >= Math.min(xi, xj) - 1e-8 && x <= Math.max(xi, xj) + 1e-8
-          && y >= Math.min(yi, yj) - 1e-8 && y <= Math.max(yi, yj) + 1e-8;
-        if (onSegment) return true;
-        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
-          inside = !inside;
-        }
+  const containsPoint = (vertices: [number, number][], x: number, y: number) => {
+    let inside = false;
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i, i += 1) {
+      const [xi, yi] = vertices[i];
+      const [xj, yj] = vertices[j];
+      const cross = (x - xi) * (yj - yi) - (y - yi) * (xj - xi);
+      const onSegment = Math.abs(cross) < 1e-8
+        && x >= Math.min(xi, xj) - 1e-8 && x <= Math.max(xi, xj) + 1e-8
+        && y >= Math.min(yi, yj) - 1e-8 && y <= Math.max(yi, yj) + 1e-8;
+      if (onSegment) return true;
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+        inside = !inside;
       }
-      return inside;
-    };
+    }
+    return inside;
+  };
 
+  const connectedSpaceIds = (x: number, y: number, floorId: string) => {
     const floorSpaces = layout.spaces.filter(
       (space) => (space.floor_id ?? 'floor-0') === floorId,
     );
@@ -75,26 +77,22 @@ export function HazardLayer({
     return reachable;
   };
 
-  const clippedHazard = (
+  const clipSpace = (
+    spaceId: string,
     x: number,
     y: number,
     radius: number,
     fill: string,
     stroke: string,
-    floorId: string,
+    key: string,
   ) => {
-    const reachable = connectedSpaceIds(x, y, floorId);
-    return layout.spaces
-      .filter(
-        (space) =>
-          (space.floor_id ?? 'floor-0') === floorId && reachable.has(space.id),
-      )
-      .map((space) => (
+    const space = layout.spaces.find((s) => s.id === spaceId);
+    if (!space || space.vertices.length < 3) return null;
+    return (
       <Group
-        key={`${space.id}-${x}-${y}-${radius}-${fill}`}
+        key={key}
         clipFunc={(context) => {
           const vertices = space.vertices;
-          if (vertices.length < 3) return;
           context.beginPath();
           context.moveTo(vertices[0][0] * SCALE, vertices[0][1] * SCALE);
           for (let i = 1; i < vertices.length; i += 1) {
@@ -115,10 +113,42 @@ export function HazardLayer({
           listening={false}
         />
       </Group>
-    ));
+    );
   };
 
-  const floodOnFloor = layout.flood?.enabled && onFloor(layout.flood.floor_id);
+  const clippedHazard = (
+    x: number,
+    y: number,
+    radius: number,
+    fill: string,
+    stroke: string,
+    floorId: string,
+  ) => {
+    const reachable = connectedSpaceIds(x, y, floorId);
+    return layout.spaces
+      .filter(
+        (space) =>
+          (space.floor_id ?? 'floor-0') === floorId && reachable.has(space.id),
+      )
+      .map((space) =>
+        clipSpace(
+          space.id,
+          x,
+          y,
+          radius,
+          fill,
+          stroke,
+          `${space.id}-${x}-${y}-${radius}-${fill}`,
+        ),
+      );
+  };
+
+  const floodEnabled = Boolean(layout.flood?.enabled);
+  const floodOriginOnFloor = floodEnabled && onFloor(layout.flood?.floor_id);
+  const floodPlumesOnFloor = floodRooms.filter((plume) => {
+    const space = layout.spaces.find((s) => s.id === plume.space_id);
+    return space != null && onFloor(space.floor_id);
+  });
   const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
   const fireOnActive = fireFloors.filter((p) => onFloor(p.floor_id));
   const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
@@ -147,19 +177,50 @@ export function HazardLayer({
         }
       : null;
 
+  const floodFill = layout.flood
+    ? `rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`
+    : 'rgba(14, 165, 233, 0.2)';
+  const floodStroke = layout.flood && layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7';
+
+  const originFloodSpaceId =
+    floodOriginOnFloor && layout.flood
+      ? layout.spaces.find(
+          (space) =>
+            (space.floor_id ?? 'floor-0') === (layout.flood?.floor_id ?? 'floor-0')
+            && containsPoint(space.vertices, layout.flood!.x, layout.flood!.y),
+        )?.id
+      : undefined;
+
+  const playbackFlood =
+    floodPlumesOnFloor.length > 0
+      ? floodPlumesOnFloor.map((plume) =>
+          clipSpace(
+            plume.space_id,
+            plume.x,
+            plume.y,
+            plume.radius_m,
+            floodFill,
+            floodStroke,
+            `flood-${plume.space_id}-${plume.x}-${plume.y}-${plume.radius_m}`,
+          ),
+        )
+      : null;
+
   return (
     <>
-      {floodOnFloor && layout.flood && (
-        clippedHazard(
+      {floodEnabled && playbackFlood}
+      {floodOriginOnFloor && layout.flood && !playbackFlood && originFloodSpaceId && (
+        clipSpace(
+          originFloodSpaceId,
           layout.flood.x,
           layout.flood.y,
           floodRadiusM ?? layout.flood.radius_m,
-          `rgba(14, 165, 233, ${0.1 + layout.flood.intensity / 250})`,
-          layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7',
-          layout.flood.floor_id ?? 'floor-0',
+          floodFill,
+          floodStroke,
+          `flood-preview-${originFloodSpaceId}`,
         )
       )}
-      {floodOnFloor && layout.flood && (
+      {floodOriginOnFloor && layout.flood && (
         <Group
           x={layout.flood.x * SCALE}
           y={layout.flood.y * SCALE}

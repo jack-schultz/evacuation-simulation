@@ -23,7 +23,12 @@ class RadialEmergency(BaseModel):
 
 
 class FloodEmergency(RadialEmergency):
-    """Illustrative flood scenario."""
+    """Illustrative flood scenario.
+
+    Water slows people (soft) and accumulates immersion exposure. After enough
+    time in the water (scaled by intensity) occupants become trapped. Contact
+    alone is not lethal. Spread is room-scoped through same-floor doors.
+    """
 
 
 class FireEmergency(RadialEmergency):

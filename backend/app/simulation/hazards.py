@@ -265,12 +265,18 @@ def _active_stair_plumes(
 
 
 def hazard_stair_spread_pending(layout: BuildingLayout, t: float, horizon: float) -> bool:
-    """True when waiting until horizon would ignite more fire/smoke floors."""
+    """True when waiting until horizon would ignite more fire/smoke/flood via stairs."""
+    from app.simulation.flood import flood_stair_spread_pending
+
     fire_now = {p.floor_id for p in active_fire_plumes(layout, t)}
     fire_later = {p.floor_id for p in active_fire_plumes(layout, horizon)}
     smoke_now = {p.floor_id for p in active_smoke_plumes(layout, t)}
     smoke_later = {p.floor_id for p in active_smoke_plumes(layout, horizon)}
-    return bool(fire_later - fire_now or smoke_later - smoke_now)
+    return bool(
+        fire_later - fire_now
+        or smoke_later - smoke_now
+        or flood_stair_spread_pending(layout, t, horizon)
+    )
 
 
 def active_smoke_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorState]:

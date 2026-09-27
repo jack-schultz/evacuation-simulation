@@ -68,14 +68,14 @@ export function EmergencyPanel({ kind, layout, onChange, disabled, activeFloorId
           <p className="hint">At this rate the {kind} expands {((hazard.spread_speed_mps ?? 0.1) * 60).toFixed(1)} m per minute.
             Default walking speed is 1.2 m/s (72 m/min) before crowding and hazard slowdown. Set 0 for a fixed area.</p>
           <label>
-            Intensity: {hazard.intensity}% {hazard.intensity === 0 ? '(no effect)' : kind === 'fire' ? '(lethal on contact)' : `(avoid ${kind})`}
+            Intensity: {hazard.intensity}% {hazard.intensity === 0 ? '(no effect)' : kind === 'fire' ? '(lethal on contact)' : '(slows; lethal after long immersion)'}
             <input type="range" min="0" max="100" step="1" value={hazard.intensity}
               disabled={disabled} onChange={(e) => update({ intensity: Number(e.target.value) })} />
           </label>
           <p className="hint">
             {kind === 'fire'
               ? 'People avoid entering fire and never use exits inside it. Anyone the fire touches — including on stairs — is trapped (purple). Smoke only slows people; it does not kill. Routes stay fixed.'
-              : 'People avoid entering any active flood and never use affected exits, even preferred exits. People already inside move outward along available routes; higher intensity slows their escape. Routes stay fixed; people whose remaining path is affected become trapped (purple).'}
+              : 'People prefer drier routes but may wade through flood water. Higher intensity slows them more. Spending roughly 10 seconds at full intensity in water (longer at lower intensity) becomes lethal (purple). Brief contact does not kill. Water dumps down stairs before spreading past them, and rises only after a floor is filled. Routes stay fixed.'}
           </p>
           {kind === 'fire' && fire && (
             <>

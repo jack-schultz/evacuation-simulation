@@ -297,6 +297,7 @@ export function useCanvasInteraction({
     evt: Konva.KonvaEventObject<MouseEvent>,
   ) => {
     if (!interactive) return;
+    if (tool === 'obstacle') return;
     if (suppressNextClickRef.current) {
       suppressNextClickRef.current = false;
       return;

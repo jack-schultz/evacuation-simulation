@@ -6,7 +6,6 @@ from app.domain.building import BuildingLayout, Door, Exit, Space, SpaceType
 from app.domain.geometry import (
     interior_point,
     point_in_polygon,
-    segment_in_polygon,
     signed_area,
 )
 from app.simulation.graph_types import (
@@ -17,6 +16,8 @@ from app.simulation.graph_types import (
     NodeKind,
     edge_exists,
 )
+
+from app.simulation.obstacles import corner_points, free_position, visible
 
 def _dist(ax: float, ay: float, bx: float, by: float) -> float:
     return ((ax - bx) ** 2 + (ay - by) ** 2) ** 0.5
@@ -113,13 +114,17 @@ class NavigationGraphBuilder:
     """
 
     def build(self, layout: BuildingLayout, defaults: dict[str, float]) -> NavigationGraph:
-        graph = NavigationGraph()
+        graph = NavigationGraph(obstacles=layout.obstacles)
         spaces = {s.id: s for s in layout.spaces}
         doors = {d.id: d for d in layout.doors}
         exits = {e.id: e for e in layout.exits}
 
+        radius = float(defaults.get("occupant_radius_m", 0.25))
         for space in layout.spaces:
             cx, cy = interior_point(space.vertices)
+            obstacles = [o for o in layout.obstacles if o.floor_id == space.floor_id]
+            if obstacles:
+                cx, cy = free_position((cx, cy), space, obstacles, radius) or (cx, cy)
             node = GraphNode(
                 id=f"space:{space.id}", kind=NodeKind.SPACE, x=cx, y=cy, ref_id=space.id
             )
@@ -150,7 +155,7 @@ class NavigationGraphBuilder:
                 space_node_id = graph.space_node_ids[space_id]
                 sn = graph.nodes[space_node_id]
                 portal = _portal_point(door.x, door.y, space.vertices, (sn.x, sn.y))
-                if segment_in_polygon((sn.x, sn.y), portal, space.vertices):
+                if visible((sn.x, sn.y), portal, space, [o for o in layout.obstacles if o.floor_id == space.floor_id], radius):
                     distance = max(_dist(sn.x, sn.y, door.x, door.y), 0.5)
                     edge = GraphEdge(
                         id=f"edge:door:{door.id}:{space_id}",
@@ -208,7 +213,7 @@ class NavigationGraphBuilder:
                 else defaults["exit_flow_per_s"]
             )
             portal = _portal_point(exit_.x, exit_.y, space.vertices, (sn.x, sn.y))
-            if segment_in_polygon((sn.x, sn.y), portal, space.vertices):
+            if visible((sn.x, sn.y), portal, space, [o for o in layout.obstacles if o.floor_id == space.floor_id], radius):
                 distance = max(_dist(sn.x, sn.y, exit_.x, exit_.y), 0.5)
                 edge = GraphEdge(
                     id=f"edge:exit:{exit_.id}",
@@ -233,12 +238,48 @@ class NavigationGraphBuilder:
         for space_id, opening_ids in openings_by_space.items():
             space = spaces[space_id]
             self._add_visibility_edges(
-                graph, space, opening_ids, doors, exits, defaults
+                graph, space, opening_ids, doors, exits, defaults,
+                [o for o in layout.obstacles if o.floor_id == space.floor_id]
             )
+
+        if layout.obstacles:
+            from app.domain.geometry import edges
+            from app.simulation.walls import _point_to_segment_dist
+            for opening in [*layout.doors, *layout.exits]:
+                host_id = opening.connects[0] if isinstance(opening, Door) else opening.connected_space_id
+                segments = list(edges(spaces[host_id].vertices))
+                a, b = min(segments, key=lambda pair: _point_to_segment_dist(opening.x, opening.y, *pair[0], *pair[1]))
+                length = _dist(*a, *b)
+                if length > 1e-9 and _point_to_segment_dist(opening.x, opening.y, *a, *b) < 0.25:
+                    nid = f"door:{opening.id}" if isinstance(opening, Door) else f"exit:{opening.id}"
+                    graph.opening_axes[nid] = ((b[0]-a[0])/length, (b[1]-a[1])/length)
 
         self._add_stair_link_edges(graph, spaces, defaults, layout)
 
         return graph
+
+    def add_spawn_node(self, graph, layout, space, position, node_id, defaults):
+        radius = float(defaults.get("occupant_radius_m", 0.25))
+        obstacles = [o for o in layout.obstacles if o.floor_id == space.floor_id]
+        doors = {d.id: d for d in layout.doors}
+        exits = {e.id: e for e in layout.exits}
+        graph.add_node(GraphNode(node_id, NodeKind.WAYPOINT, *position, space.id))
+        for node in list(graph.nodes.values()):
+            if node.id.startswith("spawn:"):
+                continue
+            belongs = (
+                (node.kind in (NodeKind.SPACE, NodeKind.WAYPOINT) and node.ref_id == space.id)
+                or (node.kind == NodeKind.DOOR and space.id in doors[node.ref_id].connects)
+                or (node.kind == NodeKind.EXIT and exits[node.ref_id].connected_space_id == space.id)
+                or graph.stair_host_space_ids.get(node.ref_id) == space.id
+            )
+            if not belongs or not visible(position, (node.x, node.y), space, obstacles, radius):
+                continue
+            self._add_directed_visibility_edge(
+                graph, node_id, node.id, max(_dist(*position, node.x, node.y), 0.01),
+                space, _edge_kind_for_space(space.type), min(space.bbox[2:]),
+                doors, exits, defaults,
+            )
 
     def _register_stair_hosts(
         self,
@@ -343,6 +384,7 @@ class NavigationGraphBuilder:
         doors: dict[str, Door],
         exits: dict[str, Exit],
         defaults: dict[str, float],
+        obstacles=(),
     ) -> None:
         space_node_id = graph.space_node_ids[space.id]
         sn = graph.nodes[space_node_id]
@@ -374,6 +416,12 @@ class NavigationGraphBuilder:
                 )
                 waypoint_ids.append(wid)
 
+        radius = float(defaults.get("occupant_radius_m", 0.25))
+        for i, (wx, wy) in enumerate(corner_points(obstacles, radius, space)):
+            wid = f"waypoint:{space.id}:obstacle:{i}"
+            graph.add_node(GraphNode(id=wid, kind=NodeKind.WAYPOINT, x=wx, y=wy, ref_id=space.id))
+            waypoint_ids.append(wid)
+
         # Deduplicate opening ids (door listed once per space already)
         unique_openings = list(dict.fromkeys(opening_ids))
         candidates = [space_node_id] + unique_openings + waypoint_ids
@@ -394,7 +442,7 @@ class NavigationGraphBuilder:
             for to_id in candidates[i + 1 :]:
                 pa = portal_cache[from_id]
                 pb = portal_cache[to_id]
-                if not segment_in_polygon(pa, pb, verts):
+                if not visible(pa, pb, space, obstacles, radius):
                     continue
                 a = graph.nodes[from_id]
                 b = graph.nodes[to_id]

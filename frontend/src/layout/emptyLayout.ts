@@ -1,5 +1,5 @@
 import type { BuildingLayout, Floor } from '../types/building';
-import { DEFAULT_FLOOR_ID } from '../types/layout';
+import { DEFAULT_FLOOR_ID } from '../types/layout.ts';
 
 export const defaultFloors = (): Floor[] => [
   { id: DEFAULT_FLOOR_ID, name: 'Ground', elevation_m: 0, order: 0 },
@@ -41,6 +41,7 @@ export function filterLayoutByFloor(layout: BuildingLayout, floorId: string): Bu
   return {
     ...layout,
     spaces,
+    obstacles: (layout.obstacles ?? []).filter(o => entityFloorId(o) === floorId),
     doors: layout.doors.filter(
       (d) => entityFloorId(d) === floorId && d.connects.every((id) => spaceIds.has(id)),
     ),

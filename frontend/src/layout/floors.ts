@@ -1,6 +1,6 @@
 import type { BuildingLayout, Floor } from '../types/building';
-import { uid } from '../utils';
-import { entityFloorId, ensureFloors } from './emptyLayout';
+import { uid } from '../utils.ts';
+import { entityFloorId, ensureFloors } from './emptyLayout.ts';
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -112,6 +112,9 @@ export function duplicateFloor(
     layout: {
       ...layout,
       floors: [...floors, newFloor],
+      obstacles: [...(layout.obstacles ?? []), ...(layout.obstacles ?? [])
+        .filter(o => entityFloorId(o) === floorId)
+        .map(o => ({ ...o, id: uid('obstacle'), floor_id: newFloorId }))],
       spaces: [...layout.spaces, ...spaces],
       doors: [...layout.doors, ...doors],
       exits: [...layout.exits, ...exits],
@@ -144,6 +147,7 @@ export function deleteFloor(
   return {
     ...layout,
     floors: nextFloors,
+    obstacles: (layout.obstacles ?? []).filter(o => entityFloorId(o) !== floorId),
     spaces: layout.spaces
       .filter((s) => entityFloorId(s) !== floorId)
       .map((s) =>

@@ -10,6 +10,8 @@ import type {
 } from '../../types/building';
 import { SCALE } from '../../utils';
 import { ContextMenu, type ContextMenuState } from '../ContextMenu';
+import { useObstacleDraft } from './useObstacleDraft';
+import { ObstacleLayer } from './layers/ObstacleLayer';
 import { usePolygonDraft } from './usePolygonDraft';
 import { useCanvasInteraction } from './useCanvasInteraction';
 import { useCanvasViewport } from './useCanvasViewport';
@@ -20,7 +22,7 @@ import { OpeningsLayer } from './layers/OpeningsLayer';
 import { PathsLayer } from './layers/PathsLayer';
 import { OccupantsLayer } from './layers/OccupantsLayer';
 import { StairArrowLayer } from './layers/StairArrowLayer';
-import type { SmokeFloorState } from '../../types/api';
+import type { SmokeFloorState, FloodRoomState } from '../../types/api';
 
 interface Props {
   layout: BuildingLayout;
@@ -46,6 +48,7 @@ interface Props {
   /** Body radius in metres for playback dots (defaults to 0.25). */
   occupantRadiusM?: number;
   floodRadiusM?: number | null;
+  floodRooms?: FloodRoomState[];
   fireRadiusM?: number | null;
   fireFloors?: SmokeFloorState[];
   smokeFloors?: SmokeFloorState[];
@@ -76,6 +79,7 @@ export function BuildingCanvas({
   interactive = true,
   occupantRadiusM = 0.25,
   floodRadiusM,
+  floodRooms = [],
   fireRadiusM,
   fireFloors = [],
   smokeFloors = [],
@@ -160,6 +164,8 @@ export function BuildingCanvas({
     activeFloorId,
   });
 
+  const obstacleDraft = useObstacleDraft(layout, tool, interactive, activeFloorId, onChange, onSelect);
+
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
   const { onMouseDown, onMouseMove, onContextMenu, openObjectContextMenu, handleObjectClick, dragProps, resizeSpace } =
@@ -207,6 +213,7 @@ export function BuildingCanvas({
         onWheel={onWheel}
         onMouseDown={(evt) => {
           if (beginPan(evt, { allowEmpty: tool === 'select' || !interactive })) return;
+          if (obstacleDraft.onMouseDown(evt)) return;
           onMouseDown(evt);
         }}
         onMouseMove={(evt) => {
@@ -214,9 +221,11 @@ export function BuildingCanvas({
             onPanMove(evt);
             return;
           }
+          if (obstacleDraft.onMouseMove(evt)) return;
           onMouseMove(evt);
         }}
         onMouseUp={(evt) => {
+          obstacleDraft.onMouseUp(evt);
           if (!isPanning()) return;
           const moved = endPan(evt);
           if (!moved && evt.target === evt.target.getStage() && tool === 'select') {
@@ -224,10 +233,14 @@ export function BuildingCanvas({
           }
         }}
         onMouseLeave={() => {
+          obstacleDraft.cancel();
           if (isPanning()) endPan();
           setHoveredObject(null);
         }}
-        onContextMenu={onContextMenu}
+        onContextMenu={(evt) => {
+          if (tool === 'obstacle') { evt.evt.preventDefault(); obstacleDraft.cancel(); return; }
+          onContextMenu(evt);
+        }}
       >
         <Layer>
           <Rect x={0} y={0} width={widthPx} height={heightPx} fill="#f8fafc" listening={false} />
@@ -264,6 +277,10 @@ export function BuildingCanvas({
             onObjectContextMenu={openObjectContextMenu}
           />
 
+          <ObstacleLayer layout={layout} selected={selected} activeFloorId={activeFloorId}
+            showAllFloors={showAllFloors} onChange={onChange} onObjectClick={handleObjectClick}
+            onObjectContextMenu={openObjectContextMenu} onHover={setHoveredObject} dragProps={dragProps} />
+
           <StairArrowLayer
             layout={layout}
             activeFloorId={activeFloorId}
@@ -291,6 +308,7 @@ export function BuildingCanvas({
             activeFloorId={activeFloorId}
             showAllFloors={showAllFloors}
             floodRadiusM={floodRadiusM}
+            floodRooms={floodRooms}
             fireRadiusM={fireRadiusM}
             fireFloors={fireFloors}
             smokeFloors={smokeFloors}
@@ -329,6 +347,11 @@ export function BuildingCanvas({
             }}
           />
 
+          {obstacleDraft.preview && (
+            <Rect x={obstacleDraft.preview.x * SCALE} y={obstacleDraft.preview.y * SCALE}
+              width={obstacleDraft.preview.width * SCALE} height={obstacleDraft.preview.height * SCALE}
+              fill="#64748b" opacity={0.5} stroke="#2563eb" dash={[4, 4]} listening={false} />
+          )}
           {draft.draftLinePoints && (
             <Line
               points={draft.draftLinePoints}

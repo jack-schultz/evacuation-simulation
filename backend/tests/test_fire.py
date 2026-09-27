@@ -79,10 +79,11 @@ class FireTests(unittest.TestCase):
 
     def test_fire_and_flood_restrict_routes_independently(self):
         building = fire_layout(dict(x=0, y=5, radius_m=0.5),
-                               flood=dict(x=7, y=5, radius_m=0.5))
+                               flood=dict(x=7, y=5, radius_m=0.5, intensity=80))
         output = run(building)
-        self.assertEqual(output.results.evacuated_count, 0)
-        self.assertTrue(all(f.occupants[0].status == 'trapped' for f in output.frames))
+        # Fire hard-blocks the far exit; soft flood slows the near exit but it remains usable.
+        self.assertEqual(output.results.evacuated_count, 1)
+        self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
         self.assertIsNotNone(output.frames[-1].fire_radius_m)
         self.assertIsNotNone(output.frames[-1].flood_radius_m)
 

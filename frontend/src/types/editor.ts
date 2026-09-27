@@ -1,4 +1,5 @@
 export type EditorTool =
+  | 'obstacle'
   | 'select'
   | 'room'
   | 'stairs'
@@ -7,6 +8,7 @@ export type EditorTool =
   | 'occupants';
 
 export type ObjectRef =
+  | { kind: 'obstacle'; id: string }
   | { kind: 'space'; id: string }
   | { kind: 'door'; id: string }
   | { kind: 'exit'; id: string }
