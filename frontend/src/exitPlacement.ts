@@ -19,10 +19,15 @@ export function exitSpaceAt(
   x: number,
   y: number,
   currentSpaceId?: string,
+  floorId?: string | null,
 ): string | undefined {
   let bestId: string | undefined;
   let bestDistance = Infinity;
-  for (const space of layout.spaces) {
+  const spaces =
+    floorId != null
+      ? layout.spaces.filter((s) => (s.floor_id ?? 'floor-0') === floorId)
+      : layout.spaces;
+  for (const space of spaces) {
     if (pointInPolygon(x, y, space.vertices)) {
       const distance = 0;
       if (distance < bestDistance || (distance === bestDistance && space.id === currentSpaceId)) {
@@ -46,11 +51,20 @@ export function exitSpaceAt(
 export function moveExit(layout: BuildingLayout, exitId: string, x: number, y: number): BuildingLayout {
   return {
     ...layout,
-    exits: layout.exits.map((exit) => exit.id === exitId ? {
-      ...exit,
-      x,
-      y,
-      connected_space_id: exitSpaceAt(layout, x, y, exit.connected_space_id) ?? exit.connected_space_id,
-    } : exit),
+    exits: layout.exits.map((exit) => {
+      if (exit.id !== exitId) return exit;
+      const floorId = exit.floor_id ?? 'floor-0';
+      const spaceId =
+        exitSpaceAt(layout, x, y, exit.connected_space_id, floorId)
+        ?? exit.connected_space_id;
+      const host = layout.spaces.find((s) => s.id === spaceId);
+      return {
+        ...exit,
+        x,
+        y,
+        connected_space_id: spaceId,
+        floor_id: host?.floor_id ?? exit.floor_id,
+      };
+    }),
   };
 }

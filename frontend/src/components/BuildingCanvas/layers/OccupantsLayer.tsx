@@ -67,13 +67,22 @@ export function OccupantsLayer({
             {...dragProps(
               ref,
               (x, y) => {
-                const spaceId = spaceContaining(layout, x, y);
+                // Scope to the active floor — stacked floors share footprints, so an
+                // unscoped hit-test often returns a ground-floor space (e.g. lobby).
+                const spaceId = spaceContaining(layout, x, y, activeFloorId);
                 if (!spaceId) return;
+                const host = layout.spaces.find((s) => s.id === spaceId);
                 onChange({
                   ...layout,
                   occupant_groups: layout.occupant_groups.map((group) =>
                     group.id === g.id
-                      ? { ...group, space_id: spaceId, spawn_x: x, spawn_y: y }
+                      ? {
+                          ...group,
+                          space_id: spaceId,
+                          floor_id: host?.floor_id ?? activeFloorId,
+                          spawn_x: x,
+                          spawn_y: y,
+                        }
                       : group,
                   ),
                 });
@@ -82,7 +91,8 @@ export function OccupantsLayer({
               0,
               { x: sx, y: sy },
               {
-                validate: (x, y) => spaceContaining(layout, x, y) != null,
+                validate: (x, y) =>
+                  spaceContaining(layout, x, y, activeFloorId) != null,
               },
             )}
             onClick={(e) => onObjectClick(ref, e)}

@@ -28,8 +28,17 @@ export function findNearestSpaces(
     .map((s) => s.id);
 }
 
-export function spaceContaining(layout: BuildingLayout, x: number, y: number): string | null {
-  const hit = layout.spaces.find((s) => pointInPolygon(x, y, s.vertices));
+export function spaceContaining(
+  layout: BuildingLayout,
+  x: number,
+  y: number,
+  floorId?: string | null,
+): string | null {
+  const spaces =
+    floorId != null
+      ? layout.spaces.filter((s) => (s.floor_id ?? 'floor-0') === floorId)
+      : layout.spaces;
+  const hit = spaces.find((s) => pointInPolygon(x, y, s.vertices));
   return hit?.id ?? null;
 }
 

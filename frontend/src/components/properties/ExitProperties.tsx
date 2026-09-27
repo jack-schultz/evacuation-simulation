@@ -32,14 +32,22 @@ export function ExitProperties({ layout, exit, onChange, onDeleteSelected, disab
         <select
           disabled={disabled}
           value={exit.connected_space_id}
-          onChange={(e) =>
+          onChange={(e) => {
+            const spaceId = e.target.value;
+            const host = layout.spaces.find((s) => s.id === spaceId);
             onChange({
               ...layout,
               exits: layout.exits.map((x) =>
-                x.id === exit.id ? { ...x, connected_space_id: e.target.value } : x,
+                x.id === exit.id
+                  ? {
+                      ...x,
+                      connected_space_id: spaceId,
+                      floor_id: host?.floor_id ?? x.floor_id,
+                    }
+                  : x,
               ),
-            })
-          }
+            });
+          }}
         >
           {layout.spaces.map((s) => (
             <option key={s.id} value={s.id}>
