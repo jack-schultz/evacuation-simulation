@@ -36,14 +36,14 @@ class SimulationParameters(BaseModel):
         description="Seconds between stored animation frames (reduces payload size)",
     )
     stair_descent_speed_factor: float = Field(
-        default=0.55,
+        default=1.1,
         gt=0,
-        le=1.0,
-        description="Fraction of flat walking speed when descending stairs.",
+        le=2.0,
+        description="Multiplier on flat walking speed when descending stairs.",
     )
     stair_ascent_speed_factor: float = Field(
-        default=0.35,
+        default=0.7,
         gt=0,
-        le=1.0,
-        description="Fraction of flat walking speed when ascending stairs.",
+        le=2.0,
+        description="Multiplier on flat walking speed when ascending stairs.",
     )

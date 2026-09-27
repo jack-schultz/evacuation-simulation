@@ -346,8 +346,8 @@ class NavigationGraphBuilder:
             width = min(bw, bh) if bw > 0 and bh > 0 else 1.0
             elev_a = floor_elevation(floors, space.floor_id)
             elev_b = floor_elevation(floors, other.floor_id)
-            descent = float(defaults.get("stair_descent_speed_factor", 0.55))
-            ascent = float(defaults.get("stair_ascent_speed_factor", 0.35))
+            descent = float(defaults.get("stair_descent_speed_factor", 1.1))
+            ascent = float(defaults.get("stair_ascent_speed_factor", 0.7))
             a_to_b = descent if elev_a >= elev_b else ascent
             b_to_a = descent if elev_b >= elev_a else ascent
             graph.add_edge(
