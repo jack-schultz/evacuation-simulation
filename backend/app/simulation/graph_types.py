@@ -65,6 +65,8 @@ class NavigationGraph:
     stair_host_space_ids: dict[str, str] = field(default_factory=dict)
     # space id -> floor id
     space_floor_ids: dict[str, str] = field(default_factory=dict)
+    # exit id -> connected space id (ownership for door-crossing checks)
+    exit_space_ids: dict[str, str] = field(default_factory=dict)
 
     def add_node(self, node: GraphNode) -> None:
         self.nodes[node.id] = node

@@ -582,6 +582,105 @@ class SpaceContainmentTests(unittest.TestCase):
         )
         self.assertEqual(output.results.evacuated_count, 1)
 
+    def test_exit_nearer_origin_centroid_still_crosses_door(self):
+        """Door→exit with exit closer to the origin room centroid must still evacuate.
+
+        Space nodes are stripped from routes, so post-door ownership used to fall
+        back to centroid distance. That aimed at the exit while still origin-side,
+        and containment refused the destination — bodies jammed forever.
+        """
+        from app.simulation.containment import _forward_space_for_door, space_owning_door_side
+        from app.simulation.movement import SpatialMovementModel, SimulatedOccupant
+
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 40,
+                "height": 20,
+                "spaces": [
+                    {
+                        "id": "a",
+                        "name": "A",
+                        "type": "room",
+                        "vertices": [[0, 0], [8, 0], [8, 20], [0, 20]],
+                    },
+                    {
+                        "id": "b",
+                        "name": "B",
+                        "type": "room",
+                        "vertices": [[8, 8], [30, 8], [30, 12], [8, 12]],
+                    },
+                ],
+                "doors": [
+                    {
+                        "id": "d",
+                        "x": 8,
+                        "y": 10,
+                        "width": 1.0,
+                        "connects": ["a", "b"],
+                    }
+                ],
+                "exits": [
+                    {
+                        "id": "out",
+                        "x": 10,
+                        "y": 10,
+                        "width": 1.2,
+                        "connected_space_id": "b",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "G",
+                        "count": 1,
+                        "space_id": "a",
+                        "walking_speed_mps": 1.4,
+                        "spawn_x": 4,
+                        "spawn_y": 10,
+                    }
+                ],
+            }
+        )
+        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        doors = {d.id: d for d in layout.doors}
+        exit_node = graph.nodes["exit:out"]
+        self.assertEqual(
+            space_owning_door_side(exit_node, doors["d"], graph, doors),
+            "b",
+        )
+
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.4,
+            route=["space:a", "door:d", "exit:out"],
+            route_index=1,
+            current_space_id="a",
+            x=8.0,
+            y=10.0,
+        )
+        self.assertEqual(
+            _forward_space_for_door(occ, doors["d"], graph, doors),
+            "b",
+        )
+        movement = SpatialMovementModel()
+        target = movement.propose_target(occ, graph, 0.25, True, doors=doors)
+        # Through-door aim into B — not the exit coordinates while still in A.
+        self.assertNotEqual(target, (exit_node.x, exit_node.y))
+        self.assertGreater(target[0], 8.0)
+
+        movement.try_advance_route(
+            occ, graph, 0.25, t=1.0, admitted=True, doors=doors
+        )
+        self.assertEqual(occ.current_node_id, "door:d")
+        self.assertEqual(occ.current_space_id, "a")
+
+        output = SimulationEngine().run(
+            layout,
+            SimulationParameters(max_time_s=60, occupant_radius_m=0.25),
+        )
+        self.assertEqual(output.results.evacuated_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -208,6 +208,7 @@ class NavigationGraphBuilder:
             )
             graph.add_node(node)
             graph.exit_node_ids.append(node.id)
+            graph.exit_space_ids[exit_.id] = exit_.connected_space_id
             space = spaces[exit_.connected_space_id]
             space_node_id = graph.space_node_ids[exit_.connected_space_id]
             sn = graph.nodes[space_node_id]

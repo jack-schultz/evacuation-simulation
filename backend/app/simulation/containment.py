@@ -51,6 +51,39 @@ def door_other_space(door: Door, space_id: str) -> str | None:
     return None
 
 
+def space_owning_door_side(
+    waypoint,
+    door: Door,
+    graph: object,
+    doors: dict[str, Door] | None = None,
+) -> str | None:
+    """Which of door.connects owns the next route node, if known.
+
+    SPACE/WAYPOINT use ref_id. EXIT uses connected_space_id (via graph.exit_space_ids).
+    A following DOOR uses the unique shared space between the two openings.
+    Centroid distance is intentionally not used here — exits near the origin
+    room's center would otherwise be mis-attributed to the origin side.
+    """
+    connects = set(door.connects)
+    kind = getattr(waypoint, "kind", None)
+    ref_id = getattr(waypoint, "ref_id", None)
+    if kind in (NodeKind.SPACE, NodeKind.WAYPOINT):
+        return ref_id if ref_id in connects else None
+    if kind == NodeKind.EXIT:
+        exit_space_ids = getattr(graph, "exit_space_ids", None) or {}
+        space_id = exit_space_ids.get(ref_id)
+        return space_id if space_id in connects else None
+    if kind == NodeKind.DOOR:
+        other = (doors or {}).get(ref_id)
+        if other is None:
+            return None
+        shared = connects & set(other.connects)
+        if len(shared) == 1:
+            return next(iter(shared))
+        return None
+    return None
+
+
 class ContainedOccupant(Protocol):
     id: str
     x: float
@@ -94,6 +127,7 @@ def _forward_space_for_door(
     occupant: ContainedOccupant,
     door: Door,
     graph: object,
+    doors: dict[str, Door] | None = None,
 ) -> str | None:
     """Space the occupant is trying to enter through this door along their route."""
     nodes = graph.nodes  # type: ignore[attr-defined]
@@ -111,11 +145,10 @@ def _forward_space_for_door(
         # fails when a lobby obstacle waypoint sits closer to the stair center
         # than to the lobby center — forward looked like stairs, containment
         # refused the lobby, and bodies were yanked back through the door.
-        if (
-            waypoint.kind in (NodeKind.SPACE, NodeKind.WAYPOINT)
-            and waypoint.ref_id in door.connects
-        ):
-            return waypoint.ref_id
+        # EXIT ownership uses connected_space_id for the same reason.
+        owned = space_owning_door_side(waypoint, door, graph, doors)
+        if owned is not None:
+            return owned
         a_nid = space_node_ids.get(a)
         b_nid = space_node_ids.get(b)
         if a_nid is None or b_nid is None:
@@ -169,7 +202,7 @@ def update_space_membership_from_position(
         door = _crossing_door(o, graph, doors, admitted)
         if door is None:
             continue
-        forward_id = _forward_space_for_door(o, door, graph)
+        forward_id = _forward_space_for_door(o, door, graph, doors)
         if forward_id is None or forward_id not in spaces:
             continue
         if o.current_space_id == forward_id:
@@ -219,7 +252,7 @@ def resolve_space_containment(
         if graph is not None and doors:
             door = _crossing_door(o, graph, doors, admitted)
             if door is not None:
-                forward_id = _forward_space_for_door(o, door, graph)
+                forward_id = _forward_space_for_door(o, door, graph, doors)
                 if (
                     forward_id is not None
                     and forward_id in spaces

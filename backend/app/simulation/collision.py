@@ -27,6 +27,7 @@ from app.simulation.containment import (
     door_other_space,
     resolve_space_containment,
     resolve_wall_collisions,
+    space_owning_door_side,
     update_space_membership_from_position,
 )
 from app.simulation.walls import (
@@ -57,6 +58,7 @@ __all__ = [
     "resolve_wall_collisions",
     "space_boundary_rects",
     "space_boundary_segments",
+    "space_owning_door_side",
     "throat_radius",
     "update_space_membership_from_position",
 ]

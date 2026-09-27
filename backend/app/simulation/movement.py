@@ -14,6 +14,7 @@ from app.simulation.collision import (
     dist,
     door_other_space,
 )
+from app.simulation.containment import space_owning_door_side
 from app.simulation.graph import EdgeKind, GraphNode, NavigationGraph, NodeKind
 from app.simulation.routing import edge_between
 
@@ -70,10 +71,18 @@ def _next_waypoint_on_space_side(
     waypoint: GraphNode,
     space_id: str,
     other_space_id: str,
+    *,
+    door: Door | None = None,
+    doors: dict[str, Door] | None = None,
 ) -> bool:
     """True if waypoint belongs on space_id's side of a door (vs other_space_id)."""
     # Ownership beats centroid distance: obstacle waypoints can sit nearer the
-    # far room's center while still belonging to the near room.
+    # far room's center while still belonging to the near room. EXIT nodes use
+    # connected_space_id for the same reason (space nodes are often stripped).
+    if door is not None:
+        owned = space_owning_door_side(waypoint, door, graph, doors)
+        if owned is not None:
+            return owned == space_id
     if (
         waypoint.kind in (NodeKind.SPACE, NodeKind.WAYPOINT)
         and waypoint.ref_id in (space_id, other_space_id)
@@ -152,7 +161,12 @@ class SpatialMovementModel:
             return None
         # Already on the destination side of membership — use normal waypoint aiming.
         if _next_waypoint_on_space_side(
-            graph, waypoint, occupant.current_space_id, other
+            graph,
+            waypoint,
+            occupant.current_space_id,
+            other,
+            door=door,
+            doors=doors,
         ):
             return None
 
@@ -382,15 +396,26 @@ class SpatialMovementModel:
             return
 
         from_node = graph.nodes[occupant.current_node_id]
-        # Leaving a door requires physical membership on the destination side.
+        # Leaving a door requires physical membership in the space that owns
+        # the next route node (often an exit / waypoint; space nodes are stripped).
         if from_node.kind == NodeKind.DOOR and doors is not None:
             door = doors.get(from_node.ref_id)
             if door is not None and occupant.current_space_id:
-                other = door_other_space(door, occupant.current_space_id)
-                if other is not None and not _next_waypoint_on_space_side(
-                    graph, waypoint, occupant.current_space_id, other
-                ):
-                    return
+                owned = space_owning_door_side(waypoint, door, graph, doors)
+                if owned is not None:
+                    if occupant.current_space_id != owned:
+                        return
+                else:
+                    other = door_other_space(door, occupant.current_space_id)
+                    if other is not None and not _next_waypoint_on_space_side(
+                        graph,
+                        waypoint,
+                        occupant.current_space_id,
+                        other,
+                        door=door,
+                        doors=doors,
+                    ):
+                        return
 
         reach = max(radius_m * 1.2, 0.35)
         stair_transfer = (
