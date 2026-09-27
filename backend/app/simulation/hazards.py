@@ -16,8 +16,6 @@ from app.domain.building import (
     SpaceType,
 )
 from app.domain.geometry import closest_boundary_point, point_in_polygon
-from app.simulation.graph import NavigationGraph, NodeKind
-from app.simulation.routing import DijkstraRouteSelector
 from app.simulation.stair_geometry import floor_elevation
 
 # Smoke expands faster on the floor than the parent fire.
@@ -58,32 +56,6 @@ def max_hazard_radius_at(
     return max(active) if active else None
 
 
-def segment_speed_factor(hazard, radius, x, y, target_x, target_y, *, is_exit=False):
-    """Reject entry/crossing; allow slowed outward escape from the affected area.
-
-    Movement calls this with the person's current position, so a hazard behind
-    them cannot block or slow their remaining clear path.
-    """
-    if radius is None:
-        return 1.0
-    radius_sq = radius * radius
-    ax, ay = x - hazard.x, y - hazard.y
-    dx, dy = target_x - x, target_y - y
-    length_sq = dx * dx + dy * dy
-    start_sq = ax * ax + ay * ay
-    end_sq = (target_x - hazard.x) ** 2 + (target_y - hazard.y) ** 2
-    progress = ax * dx + ay * dy
-    fraction = max(0.0, min(1.0, -progress / length_sq)) if length_sq else 0.0
-    closest_sq = (ax + fraction * dx) ** 2 + (ay + fraction * dy) ** 2
-    if closest_sq > radius_sq:
-        return 1.0
-    if is_exit and end_sq <= radius_sq:
-        return 0.0
-    if start_sq <= radius_sq and progress >= 0 and end_sq > start_sq:
-        return max(0.1, 1.0 - hazard.intensity / 100)
-    return 0.0
-
-
 def smoke_speed_factor(hazard: SmokeEmergency | None, radius: float | None, x: float, y: float) -> float:
     """Soft slowdown inside smoke; never hard-blocks."""
     if hazard is None or radius is None:
@@ -92,63 +64,6 @@ def smoke_speed_factor(hazard: SmokeEmergency | None, radius: float | None, x: f
     if dx * dx + dy * dy > radius * radius:
         return 1.0
     return max(0.25, 1.0 - hazard.intensity / 100.0)
-
-
-def smoke_visibility_m(hazard: SmokeEmergency) -> float:
-    return hazard.visibility_m * (1.2 - hazard.intensity / 100.0)
-
-
-def hazards_speed_factor(hazards, t, x, y, target_x, target_y, *, is_exit=False):
-    """Use the strongest restriction; one hazard cannot cancel another."""
-    return min(
-        (
-            segment_speed_factor(
-                hazard,
-                hazard_radius_at(hazard, t),
-                x,
-                y,
-                target_x,
-                target_y,
-                is_exit=is_exit,
-            )
-            for hazard in hazards
-            if hazard is not None and not isinstance(hazard, SmokeEmergency)
-        ),
-        default=1.0,
-    )
-
-
-def apply_hazards(graph: NavigationGraph, hazards, t: float = 0.0) -> None:
-    hard = [h for h in hazards if h is not None and not isinstance(h, SmokeEmergency)]
-    smokes = [h for h in hazards if isinstance(h, SmokeEmergency)]
-    for edge in graph.edges.values():
-        a, b = graph.nodes[edge.from_id], graph.nodes[edge.to_id]
-        hard_factor = hazards_speed_factor(
-            hard, t, a.x, a.y, b.x, b.y, is_exit=b.kind == NodeKind.EXIT
-        )
-        smoke_factor = 1.0
-        for smoke in smokes:
-            radius = hazard_radius_at(smoke, t)
-            mid_x, mid_y = (a.x + b.x) * 0.5, (a.y + b.y) * 0.5
-            smoke_factor = min(smoke_factor, smoke_speed_factor(smoke, radius, mid_x, mid_y))
-            if radius is not None and edge.distance_m > smoke_visibility_m(smoke):
-                smoke_factor = min(smoke_factor, 0.15)
-        edge.speed_factor = edge.base_speed_factor * hard_factor * smoke_factor
-
-
-class HazardRouteSelector(DijkstraRouteSelector):
-    """Fall back from an inaccessible preferred exit; preserve stranded occupants."""
-
-    def select_route(self, graph, start_node_id, preferred_exit_id=None):
-        try:
-            return super().select_route(graph, start_node_id, preferred_exit_id)
-        except ValueError:
-            if preferred_exit_id:
-                try:
-                    return super().select_route(graph, start_node_id)
-                except ValueError:
-                    pass
-            return [start_node_id]
 
 
 def _synthetic_fire_smoke(fire: FireEmergency) -> SmokeEmergency | None:
@@ -607,121 +522,3 @@ def fire_touches(
         if dx * dx + dy * dy <= r * r:
             return True
     return False
-
-
-def hard_plume_factor(
-    plumes: list[SmokeFloorState],
-    floor_id: str,
-    x: float,
-    y: float,
-    target_x: float,
-    target_y: float,
-    *,
-    is_exit: bool = False,
-) -> float:
-    """Hard fire restriction: no entry/crossing; contact is lethal (handled separately)."""
-    factor = 1.0
-    for plume in plumes:
-        if plume.floor_id != floor_id:
-            continue
-        hazard = RadialEmergency(
-            enabled=True,
-            x=plume.x,
-            y=plume.y,
-            radius_m=plume.radius_m,
-            spread_speed_mps=0.0,
-            intensity=plume.intensity,
-            floor_id=plume.floor_id,
-        )
-        # Fire is lethal on contact: never allow the "escape outward" slowdown.
-        radius = plume.radius_m
-        radius_sq = radius * radius
-        ax, ay = x - hazard.x, y - hazard.y
-        start_sq = ax * ax + ay * ay
-        if start_sq <= radius_sq:
-            return 0.0
-        factor = min(
-            factor,
-            segment_speed_factor(
-                hazard,
-                radius,
-                x,
-                y,
-                target_x,
-                target_y,
-                is_exit=is_exit,
-            ),
-        )
-    return factor
-
-
-def _node_space_ids(node, doors: dict, exits: dict) -> set[str]:
-    if node.kind in (NodeKind.SPACE, NodeKind.WAYPOINT):
-        return {node.ref_id}
-    if node.kind == NodeKind.DOOR:
-        door = doors.get(node.ref_id)
-        return set(door.connects) if door is not None else set()
-    if node.kind == NodeKind.EXIT:
-        exit_ = exits.get(node.ref_id)
-        return {exit_.connected_space_id} if exit_ is not None else set()
-    return set()
-
-
-def apply_smoke_plumes(
-    graph: NavigationGraph,
-    plumes: list[SmokeRoomState],
-    layout: BuildingLayout,
-    *,
-    visibility_m: float = 8.0,
-) -> None:
-    """Multiply graph edge speed factors by soft smoke slowdown (never zero)."""
-    if not plumes:
-        return
-    doors = {d.id: d for d in layout.doors}
-    exits = {e.id: e for e in layout.exits}
-    for edge in graph.edges.values():
-        a, b = graph.nodes[edge.from_id], graph.nodes[edge.to_id]
-        edge_spaces = _node_space_ids(a, doors, exits) & _node_space_ids(b, doors, exits)
-        if not edge_spaces:
-            continue
-        mid_x, mid_y = (a.x + b.x) * 0.5, (a.y + b.y) * 0.5
-        factor = 1.0
-        for sid in edge_spaces:
-            factor = min(factor, smoke_factor_at(plumes, sid, mid_x, mid_y))
-            factor = min(factor, smoke_factor_at(plumes, sid, a.x, a.y))
-            factor = min(factor, smoke_factor_at(plumes, sid, b.x, b.y))
-        if factor < 1.0 - 1e-12 and edge.distance_m > visibility_m:
-            factor = min(factor, 0.15)
-        edge.speed_factor *= factor
-
-
-def smoke_emergencies_from_plumes(plumes: list[SmokeRoomState]) -> list[SmokeEmergency]:
-    """Adapt room plume snapshots into RadialEmergency-like objects for apply_hazards."""
-    return [
-        SmokeEmergency(
-            enabled=True,
-            x=p.x,
-            y=p.y,
-            radius_m=p.radius_m,
-            spread_speed_mps=0.0,
-            intensity=p.intensity,
-            floor_id=DEFAULT_FLOOR_ID,
-        )
-        for p in plumes
-    ]
-
-
-def fire_emergencies_from_plumes(plumes: list[SmokeFloorState]) -> list[FireEmergency]:
-    return [
-        FireEmergency(
-            enabled=True,
-            x=p.x,
-            y=p.y,
-            radius_m=p.radius_m,
-            spread_speed_mps=0.0,
-            intensity=p.intensity,
-            floor_id=p.floor_id,
-            emit_smoke=False,
-        )
-        for p in plumes
-    ]

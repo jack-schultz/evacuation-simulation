@@ -13,13 +13,10 @@ from app.domain.building import (
     SimulationResults,
 )
 from app.simulation.collision import build_collision_solids
-from app.simulation.flood import active_flood_plumes, apply_flood_plumes
+from app.simulation.flood import active_flood_plumes
 from app.simulation.hazards import (
     active_fire_plumes,
     active_smoke_plumes,
-    apply_hazards,
-    apply_smoke_plumes,
-    fire_emergencies_from_plumes,
     hazard_stair_spread_pending,
     max_hazard_radius_at,
     resolve_origin_smoke,
@@ -81,22 +78,6 @@ class SimulationEngine:
         }
         graph = self.graph_builder.build(layout, defaults)
         origin_smoke = resolve_origin_smoke(layout)
-        plumes0 = active_smoke_plumes(layout, 0.0)
-        fire_plumes0 = active_fire_plumes(layout, 0.0)
-        flood_plumes0 = active_flood_plumes(layout, 0.0)
-        apply_hazards(
-            graph,
-            fire_emergencies_from_plumes(fire_plumes0),
-        )
-        apply_smoke_plumes(
-            graph,
-            plumes0,
-            layout,
-            visibility_m=(
-                origin_smoke.visibility_m if origin_smoke is not None else 8.0
-            ),
-        )
-        apply_flood_plumes(graph, flood_plumes0, layout)
 
         boundary_solids = build_collision_solids(
             layout.spaces, layout.doors, layout.exits

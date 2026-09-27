@@ -14,12 +14,8 @@ from app.domain.building import (
     SpaceType,
 )
 from app.domain.geometry import point_in_polygon
-from app.simulation.graph import NavigationGraph, NodeKind
 from app.simulation.hazards import (
-    HazardRouteSelector as FloodRouteSelector,
-    apply_hazards,
     hazard_radius_at as flood_radius_at,
-    segment_speed_factor,
 )
 from app.simulation.stair_geometry import floor_elevation
 
@@ -335,19 +331,6 @@ def flood_stair_spread_pending(layout: BuildingLayout, t: float, horizon: float)
     later = {p.space_id for p in active_flood_plumes(layout, horizon)}
     return bool(later - now)
 
-
-def _node_space_ids(node, doors: dict, exits: dict) -> set[str]:
-    if node.kind in (NodeKind.SPACE, NodeKind.WAYPOINT):
-        return {node.ref_id}
-    if node.kind == NodeKind.DOOR:
-        door = doors.get(node.ref_id)
-        return set(door.connects) if door is not None else set()
-    if node.kind == NodeKind.EXIT:
-        exit_ = exits.get(node.ref_id)
-        return {exit_.connected_space_id} if exit_ is not None else set()
-    return set()
-
-
 def flood_intensity_at(
     plumes: list[FloodRoomState],
     space_id: str | None,
@@ -381,35 +364,6 @@ def flood_soft_speed_factor(
     return max(0.1, 1.0 - intensity / 100.0)
 
 
-def flood_plumes_speed_factor(
-    plumes: list[FloodRoomState],
-    space_ids: set[str] | None,
-    x: float,
-    y: float,
-    target_x: float | None = None,
-    target_y: float | None = None,
-    *,
-    is_exit: bool = False,
-) -> float:
-    """Soft slowdown for flood along a segment (strongest wet point wins).
-
-    ``is_exit`` is accepted for call-site compatibility; flood never hard-blocks.
-    """
-    del is_exit  # flood is soft-only
-    if not plumes:
-        return 1.0
-    spaces = space_ids if space_ids is not None else {p.space_id for p in plumes}
-    points = [(x, y)]
-    if target_x is not None and target_y is not None:
-        points.append((target_x, target_y))
-        points.append(((x + target_x) * 0.5, (y + target_y) * 0.5))
-    factor = 1.0
-    for sid in spaces:
-        for px, py in points:
-            factor = min(factor, flood_soft_speed_factor(plumes, sid, px, py))
-    return factor
-
-
 def apply_flood_exposure(
     occupants,
     plumes: list[FloodRoomState],
@@ -433,62 +387,13 @@ def apply_flood_exposure(
             occ.climb_to_space_id = None
 
 
-def apply_flood_plumes(
-    graph: NavigationGraph,
-    plumes: list[FloodRoomState],
-    layout: BuildingLayout,
-) -> None:
-    """Multiply graph edge speed factors by soft flood slowdown (never zero from flood)."""
-    if not plumes:
-        return
-    doors = {d.id: d for d in layout.doors}
-    exits = {e.id: e for e in layout.exits}
-    for edge in graph.edges.values():
-        a, b = graph.nodes[edge.from_id], graph.nodes[edge.to_id]
-        edge_spaces = _node_space_ids(a, doors, exits) & _node_space_ids(b, doors, exits)
-        if not edge_spaces:
-            continue
-        factor = flood_plumes_speed_factor(
-            plumes,
-            edge_spaces,
-            a.x,
-            a.y,
-            b.x,
-            b.y,
-        )
-        edge.speed_factor *= factor
-
-
-def apply_flood(graph, flood_or_layout, t=0.0, layout: BuildingLayout | None = None):
-    """Apply flood to the nav graph.
-
-    Preferred: ``apply_flood(graph, layout, t)``.
-    Legacy: ``apply_flood(graph, flood, layout=layout)``.
-    """
-    if isinstance(flood_or_layout, BuildingLayout):
-        building = flood_or_layout
-        plumes = active_flood_plumes(building, t)
-        apply_flood_plumes(graph, plumes, building)
-        return
-    if layout is not None:
-        plumes = active_flood_plumes(layout, t)
-        apply_flood_plumes(graph, plumes, layout)
-        return
-    # Fallback: unscoped single circle (tests without a layout).
-    apply_hazards(graph, (flood_or_layout,), t)
-
 
 __all__ = [
     "FLOOD_LETHAL_EXPOSURE_S",
-    "FloodRouteSelector",
     "active_flood_plumes",
-    "apply_flood",
     "apply_flood_exposure",
-    "apply_flood_plumes",
     "flood_intensity_at",
-    "flood_plumes_speed_factor",
     "flood_radius_at",
     "flood_soft_speed_factor",
     "flood_stair_spread_pending",
-    "segment_speed_factor",
 ]

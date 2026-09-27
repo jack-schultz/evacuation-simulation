@@ -112,9 +112,11 @@ class DoorAssignmentTests(unittest.TestCase):
         self.assertEqual({next(n for n in person.route_node_ids if n.startswith('door:'))
                           for person in output.results.occupants}, {'door:left'})
 
-    def test_fire_blocked_door_is_not_selected(self):
+    def test_fire_on_door_does_not_prevent_selection(self):
         layout = building(fire={"x": 9, "y": 10, "radius_m": 0.5,
                                 "spread_speed_mps": 0, "intensity": 50})
         output = run(layout)
-        self.assertEqual({next(n for n in person.route_node_ids if n.startswith('door:'))
-                          for person in output.results.occupants}, {'door:left'})
+        doors = {next(n for n in person.route_node_ids if n.startswith('door:'))
+                 for person in output.results.occupants}
+        # Fire no longer removes the right door from pathing.
+        self.assertIn('door:right', doors)

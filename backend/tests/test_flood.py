@@ -25,10 +25,11 @@ def flood(intensity=80, **kwargs):
 
 
 class FloodTests(unittest.TestCase):
-    def test_high_intensity_prefers_drier_exit(self):
+    def test_high_intensity_does_not_change_route(self):
+        # Flood no longer affects route choice; take the nearer exit even if wet.
         config = dict(x=7, y=5, radius_m=0.5, intensity=80)
         output = run(layout(config))
-        self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:far')
+        self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
         self.assertEqual(output.results.evacuated_count, 1)
 
     def test_preferred_exit_stays_binding_when_only_slowed(self):
@@ -98,10 +99,10 @@ class FloodTests(unittest.TestCase):
             self.assertEqual(actual.results, baseline.results)
             self.assertEqual(actual.frames, baseline.frames)
 
-    def test_flooded_near_exit_prefers_far_when_intensity_is_high(self):
+    def test_flooded_near_exit_still_chosen_when_intensity_is_high(self):
         result = run(layout(flood())).results
         self.assertEqual(result.evacuated_count, 1)
-        self.assertEqual(result.occupants[0].route_node_ids[-1], 'exit:far')
+        self.assertEqual(result.occupants[0].route_node_ids[-1], 'exit:near')
 
     def test_flood_slows_movement_without_inflating_distance(self):
         baseline = run(layout(two_exits=False)).results
@@ -136,7 +137,7 @@ class FloodTests(unittest.TestCase):
             snapshot = simulations.create(saved.id, SimulationParameters(max_time_s=30))
             buildings.update_building(saved.id, layout())
             result = simulations.run(snapshot.id)
-            self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:far')
+            self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:near')
             self.assertEqual(buildings.get_layout(saved.id).floods, [])
         engine.dispose()
 
@@ -291,24 +292,17 @@ class RoomScopedFloodTests(unittest.TestCase):
         self.assertEqual({p.space_id for p in plumes}, {'a', 'b'})
         self.assertNotIn('isolated', {p.space_id for p in plumes})
 
-    def test_exit_in_neighbor_slows_only_after_doorway_spread(self):
-        from app.simulation.flood import active_flood_plumes, apply_flood
-        from app.simulation.graph import NavigationGraphBuilder
-        from app.simulation.routing import edge_between
+    def test_exit_in_neighbor_floods_only_after_doorway_spread(self):
+        from app.simulation.flood import active_flood_plumes
         config = dict(x=5, y=5, radius_m=0.5, intensity=50, spread_speed_mps=1)
         building = two_room_layout(config, occupant_space='b', exit_space='b')
-        graph = NavigationGraphBuilder().build(building, SimulationParameters().model_dump())
-        apply_flood(graph, building, t=4.5)
-        early = edge_between(graph, 'space:b', 'exit:exit-b').speed_factor
-        self.assertEqual(early, 1.0)
-        graph2 = NavigationGraphBuilder().build(building, SimulationParameters().model_dump())
-        apply_flood(graph2, building, t=14.5)
-        late = edge_between(graph2, 'space:b', 'exit:exit-b').speed_factor
-        self.assertAlmostEqual(late, 0.5)
-        self.assertGreater(late, 0)
-        plumes = active_flood_plumes(building, 14.5)
-        b_plume = next(p for p in plumes if p.space_id == 'b')
-        self.assertAlmostEqual(b_plume.radius_m, 10.0)
+        early = {p.space_id: p for p in active_flood_plumes(building, 4.5)}
+        self.assertIn('a', early)
+        early_b = early.get('b')
+        self.assertTrue(early_b is None or early_b.radius_m <= 0.0)
+        late = {p.space_id: p for p in active_flood_plumes(building, 14.5)}
+        self.assertIn('b', late)
+        self.assertAlmostEqual(late['b'].radius_m, 10.0)
 
     def test_frames_include_flood_rooms(self):
         building = two_room_layout(dict(x=5, y=5, radius_m=0.5, intensity=50, spread_speed_mps=1))

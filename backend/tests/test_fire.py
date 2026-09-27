@@ -37,11 +37,11 @@ class FireTests(unittest.TestCase):
             self.assertEqual(output.results, baseline.results)
             self.assertEqual(output.frames, baseline.frames)
 
-    def test_fire_blocks_preferred_exit_at_all_positive_intensities(self):
+    def test_fire_on_preferred_exit_does_not_reroute(self):
+        # Disasters do not change pathing; preferred exit stays binding.
         for intensity in (1, 50, 100):
             output = run(fire_layout(dict(x=7, y=5, radius_m=0.5, intensity=intensity), preferred='near'))
-            self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:far')
-            self.assertEqual(output.results.evacuated_count, 1)
+            self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
 
     def test_fire_contact_is_lethal(self):
         """Anyone inside the fire circle is trapped; no outward escape."""
@@ -57,7 +57,7 @@ class FireTests(unittest.TestCase):
                                          spread_speed_mps=0), two_exits=False)).results
             self.assertEqual(result.evacuated_count, 0)
 
-    def test_size_blocks_more_routes(self):
+    def test_size_kills_more_by_contact_not_reroute(self):
         small = run(fire_layout(dict(x=10, y=5, radius_m=1, spread_speed_mps=0), two_exits=False))
         large = run(fire_layout(dict(x=10, y=5, radius_m=4, spread_speed_mps=0), two_exits=False))
         self.assertEqual(small.results.evacuated_count, 1)
@@ -77,11 +77,11 @@ class FireTests(unittest.TestCase):
         self.assertEqual(fixed.results.evacuated_count, 1)
         self.assertTrue(all(frame.fire_radius_m == 0.5 for frame in fixed.frames))
 
-    def test_fire_and_flood_restrict_routes_independently(self):
+    def test_fire_and_flood_do_not_change_routes(self):
         building = fire_layout(dict(x=0, y=5, radius_m=0.5),
                                flood=dict(x=7, y=5, radius_m=0.5, intensity=80))
         output = run(building)
-        # Fire hard-blocks the far exit; soft flood slows the near exit but it remains usable.
+        # Shortest path is near; disasters no longer divert routing.
         self.assertEqual(output.results.evacuated_count, 1)
         self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
         self.assertIsNotNone(output.frames[-1].fire_radius_m)
@@ -103,7 +103,7 @@ class FireTests(unittest.TestCase):
             snapshot = simulations.create(saved.id, SimulationParameters(max_time_s=10))
             buildings.update_building(saved.id, layout())
             result = simulations.run(snapshot.id)
-            self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:far')
+            self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:near')
             self.assertEqual(result.frames[0].fire_radius_m, 0.5)
             self.assertEqual(simulations.get(snapshot.id).frames, result.frames)
             self.assertEqual(buildings.get_layout(saved.id).fires, [])

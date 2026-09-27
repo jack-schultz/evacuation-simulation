@@ -1,12 +1,14 @@
 import unittest
+from collections import Counter
+
 from app.domain.building import BuildingLayout, SimulationParameters
 from app.simulation.engine import SimulationEngine
 
 
 class FloodedAlternativeRouteTests(unittest.TestCase):
-    def test_spreading_flood_does_not_divert_queue_to_flooded_exit(self):
-        # The small obstacle lengthens the north path and its door queues.
-        # The south exit seems quicker until the flood forecast is considered.
+    def test_flood_does_not_divert_routes_away_from_shorter_exit(self):
+        # Without disaster pathing, the shorter south exit stays selectable
+        # even when flooded.
         building = BuildingLayout.model_validate({
             "width": 30, "height": 33,
             "spaces": [
@@ -39,10 +41,5 @@ class FloodedAlternativeRouteTests(unittest.TestCase):
         result = SimulationEngine().run(
             building, SimulationParameters(max_time_s=90)
         ).results
-        # Centreline door packing is slower than multi-slot; a late straggler may
-        # take a lethal flood dose, but nobody should divert to the flooded south exit.
-        self.assertGreaterEqual(result.evacuated_count, 44)
-        self.assertTrue(all(
-            occupant.route_node_ids[-1] == "exit:north"
-            for occupant in result.occupants
-        ))
+        exits = Counter(occupant.route_node_ids[-1] for occupant in result.occupants)
+        self.assertGreater(exits["exit:south"], 0)

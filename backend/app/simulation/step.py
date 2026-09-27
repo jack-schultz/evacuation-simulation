@@ -28,10 +28,8 @@ from app.simulation.collision import (
 from app.simulation.flood import apply_flood_exposure, flood_soft_speed_factor
 from app.simulation.hazards import (
     fire_touches,
-    hard_plume_factor,
     smoke_factor_at,
 )
-from app.simulation.hazard_avoidance import flood_detour_target
 from app.simulation.flow import ElementQueueState
 from app.simulation.graph import EdgeKind, NodeKind
 from app.simulation.movement import (
@@ -186,8 +184,6 @@ def advance_timestep(
     fire_plumes = fire_plumes or []
     flood_plumes = flood_plumes or []
     flood_active = bool(flood_plumes)
-    fire_active = bool(fire_plumes)
-    has_hazard = flood_active or fire_active
     speed_factors: dict[str, float] = {}
 
     _apply_fire_casualties(occupants, fire_plumes, radius)
@@ -219,40 +215,17 @@ def advance_timestep(
             movement_model.try_advance_route(occ, graph, radius, t, doors=doors)
             continue
         edge = edge_between(graph, occ.current_node_id, nxt)
-        waypoint = graph.nodes[nxt]
-        flood_target = flood_detour_target(
-            (occ.x, occ.y),
-            (waypoint.x, waypoint.y),
-            spaces.get(occ.current_space_id),
-            flood_plumes,
-            radius,
-        )
-        target_x, target_y = flood_target or (waypoint.x, waypoint.y)
         factor = 1.0
-        if has_hazard:
-            if flood_active:
-                factor = min(
-                    factor,
-                    flood_soft_speed_factor(
-                        flood_plumes,
-                        occ.current_space_id,
-                        occ.x,
-                        occ.y,
-                    ),
-                )
-            if fire_active:
-                factor = min(
-                    factor,
-                    hard_plume_factor(
-                        fire_plumes,
-                        occ.floor_id,
-                        occ.x,
-                        occ.y,
-                        target_x,
-                        target_y,
-                        is_exit=waypoint.kind == NodeKind.EXIT,
-                    ),
-                )
+        if flood_active:
+            factor = min(
+                factor,
+                flood_soft_speed_factor(
+                    flood_plumes,
+                    occ.current_space_id,
+                    occ.x,
+                    occ.y,
+                ),
+            )
         if edge is not None:
             factor *= edge.base_speed_factor
         factor *= smoke_factor_at(smoke_plumes, occ.current_space_id, occ.x, occ.y)
@@ -425,24 +398,9 @@ def advance_timestep(
         target_x, target_y = movement_model.propose_target(
             occ, graph, radius, admitted=is_admitted, doors=doors
         )
-        flood_target = flood_detour_target(
-            (occ.x, occ.y),
-            (target_x, target_y),
-            spaces.get(occ.current_space_id),
-            flood_plumes,
-            radius,
-        )
-        if flood_target is not None:
-            target_x, target_y = flood_target
 
         desired = occ.speed_mps * params.timestep_s
         desired *= speed_factors[occ.id]
-        # Aperture slots can deviate from the centreline checked above.
-        # Fire still hard-blocks entry; flood only slows (already in speed_factors).
-        if fire_active and hard_plume_factor(
-            fire_plumes, occ.floor_id, occ.x, occ.y, target_x, target_y
-        ) == 0:
-            desired = 0.0
 
         if edge is not None and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):  # type: ignore[union-attr]
             next_node = graph.nodes[occ.next_node_id]
