@@ -16,7 +16,7 @@ def building(count=30, preferred=None, two_exits=True, flood=None):
         + ([{"id": "right", "x": 12, "y": 5, "width": 1,
              "connected_space_id": "room"}] if two_exits else []),
         "occupant_groups": [{"id": "group", "name": "People", "count": count,
-                             "space_id": "room", "spawn_x": 4, "spawn_y": 5,
+                             "space_id": "room", "spawn_x": 6, "spawn_y": 5,
                              "destination_exit_id": preferred}],
         "flood": flood,
     })

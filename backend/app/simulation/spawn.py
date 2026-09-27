@@ -92,8 +92,9 @@ def spawn_occupants(
             )]
         space = spaces[group.space_id]
         min_x, min_y, width, height = space.bbox
-        usable_w = max(width - 2 * margin, spacing)
-        cols = max(1, int(usable_w / spacing) + 1)
+        # Compact roughly-square cluster around the spawn point, not a
+        # room-wide line that stretches across the full usable width.
+        cols = max(1, math.ceil(math.sqrt(group.count)))
         rows = math.ceil(group.count / cols)
         node = graph.nodes[start_node]
         spawn_x = group.spawn_x if group.spawn_x is not None else node.x

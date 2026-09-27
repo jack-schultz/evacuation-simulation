@@ -79,7 +79,7 @@ class DoorAssignmentTests(unittest.TestCase):
             "exits": [{"id": "out", "x": 17, "y": 31, "width": 1.2,
                        "connected_space_id": "office_b"}],
             "occupant_groups": [{"id": "g", "name": "People", "count": 45,
-                                 "space_id": "office_a", "spawn_x": 13.5,
+                                 "space_id": "office_a", "spawn_x": 15,
                                  "spawn_y": 9}],
         })
         output = SimulationEngine().run(layout, SimulationParameters(max_time_s=1))
