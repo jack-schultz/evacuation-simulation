@@ -152,7 +152,7 @@ class SpatialMovementModel:
         origin_n = graph.nodes[origin_nid]
         dest_n = graph.nodes[dest_nid]
 
-        axis_x, axis_y = aperture_axis(origin_n.x, origin_n.y, door_node.x, door_node.y)
+        axis_x, axis_y = graph.opening_axes.get(door_node.id, aperture_axis(origin_n.x, origin_n.y, door_node.x, door_node.y))
         slots = aperture_slots(door.width, radius_m)
         slot = occupant.aperture_slot % slots
         slot_x, slot_y = aperture_slot_point(
@@ -209,7 +209,7 @@ class SpatialMovementModel:
             return waypoint.x, waypoint.y
 
         # Next waypoint is an opening — approach / aperture / hold outside throat
-        axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
+        axis_x, axis_y = graph.opening_axes.get(waypoint.id, aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y))
         slots = aperture_slots(edge.width_m, radius_m)
         slot = occupant.aperture_slot % slots
         slot_x, slot_y = aperture_slot_point(
@@ -337,13 +337,20 @@ class SpatialMovementModel:
                 and waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT)
             ):
                 cur = graph.nodes[occupant.current_node_id]
-                axis_x, axis_y = aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y)
+                axis_x, axis_y = graph.opening_axes.get(waypoint.id, aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y))
                 slots = aperture_slots(edge.width_m, radius_m)
                 slot = occupant.aperture_slot % slots
                 sx, sy = aperture_slot_point(
                     waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
                 )
                 reached = dist(occupant.x, occupant.y, sx, sy) <= reach
+
+        if reached and ":obstacle:" in waypoint.id and occupant.route_index + 2 < len(occupant.route):
+            from app.simulation.obstacles import clear_segment
+            following = graph.nodes[occupant.route[occupant.route_index + 2]]
+            obstacles = [o for o in graph.obstacles if o.floor_id == occupant.floor_id]
+            if not clear_segment((occupant.x, occupant.y), (following.x, following.y), obstacles, radius_m):
+                reached = False
 
         if not reached:
             return

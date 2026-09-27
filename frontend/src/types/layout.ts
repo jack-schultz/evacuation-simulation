@@ -21,6 +21,16 @@ export interface Space {
   floor_id?: string;
 }
 
+export interface Obstacle {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  floor_id?: string;
+}
+
 export interface Door {
   id: string;
   name: string;
@@ -95,6 +105,7 @@ export interface BuildingLayout {
   meters_per_cell: number;
   floors?: Floor[];
   spaces: Space[];
+  obstacles?: Obstacle[];
   doors: Door[];
   exits: Exit[];
   occupant_groups: OccupantGroup[];

@@ -108,6 +108,7 @@ class SimulationEngine:
             spaces,
             doors,
             params.timestep_s,
+            defaults,
         )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
@@ -152,6 +153,7 @@ class SimulationEngine:
                     floors,
                     plumes,
                     fire_plumes,
+                    layout.obstacles,
                 )
 
             if t + 1e-9 >= next_frame_t:

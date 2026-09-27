@@ -21,6 +21,7 @@ from app.domain.building.layout import (
     Exit,
     Floor,
     OccupantGroup,
+    Obstacle,
     Space,
     SpaceType,
 )
@@ -46,6 +47,7 @@ __all__ = [
     "Floor",
     "OccupantFrameState",
     "OccupantGroup",
+    "Obstacle",
     "OccupantResult",
     "OccupantStatus",
     "PixelObstacleMap",

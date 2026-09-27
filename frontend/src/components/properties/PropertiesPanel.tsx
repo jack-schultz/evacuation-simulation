@@ -3,6 +3,7 @@ import { primarySelection } from '../../types/editor';
 import { DoorProperties } from './DoorProperties';
 import { ExitProperties } from './ExitProperties';
 import { OccupantGroupProperties } from './OccupantGroupProperties';
+import { ObstacleProperties } from './ObstacleProperties';
 import { SpaceProperties } from './SpaceProperties';
 
 interface Props {
@@ -50,6 +51,13 @@ export function PropertiesPanel({
 
   const primary = primarySelection(selected);
   if (!primary) return null;
+
+  if (primary.kind === 'obstacle') {
+    const obstacle = layout.obstacles?.find(o => o.id === primary.id);
+    if (!obstacle) return null;
+    return <ObstacleProperties layout={layout} obstacle={obstacle} onChange={onChange}
+      onDeleteSelected={onDeleteSelected} disabled={disabled} />;
+  }
 
   if (primary.kind === 'space') {
     const space = layout.spaces.find((s) => s.id === primary.id);

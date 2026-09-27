@@ -1,5 +1,5 @@
 import type { BuildingLayout } from '../../types/building';
-import { polygonBBox, snap } from '../../utils';
+import { polygonBBox, snap } from '../../utils.ts';
 
 export const BUILDING_MIN_M = 1;
 export const BUILDING_MAX_M = 200;
@@ -15,6 +15,10 @@ export function contentMinSize(layout: BuildingLayout): { width: number; height:
     const box = polygonBBox(space.vertices);
     maxX = Math.max(maxX, box.x + box.width);
     maxY = Math.max(maxY, box.y + box.height);
+  }
+  for (const obstacle of layout.obstacles ?? []) {
+    maxX = Math.max(maxX, obstacle.x + obstacle.width);
+    maxY = Math.max(maxY, obstacle.y + obstacle.height);
   }
   for (const door of layout.doors) {
     maxX = Math.max(maxX, door.x);

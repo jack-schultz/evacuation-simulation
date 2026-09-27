@@ -38,6 +38,7 @@ from app.simulation.graph import EdgeKind, NodeKind
 from app.simulation.movement import SimulatedOccupant
 from app.simulation.pixel_obstacles import position_is_walkable
 from app.simulation.routing import edge_between
+from app.simulation.obstacles import clear_segment
 from app.simulation.stair_geometry import climb_path_length_m, climb_position
 
 
@@ -166,6 +167,7 @@ def advance_timestep(
     floors: dict[str, Floor] | None = None,
     smoke_plumes=None,
     fire_plumes=None,
+    obstacles=(),
 ) -> None:
     radius = params.occupant_radius_m
     solids = boundary_solids or []
@@ -362,6 +364,12 @@ def advance_timestep(
                     q.total_wait_s += params.timestep_s
 
     moved_by: dict[str, float] = {}
+    obstacle_origins = {o.id: (o.x, o.y) for o in occupants}
+    floor_obstacles = {
+        floor_id: [item for item in obstacles if item.floor_id == floor_id]
+        for floor_id in {o.floor_id for o in occupants}
+    }
+
 
     def move_without_crossing_obstacles(
         occupant: SimulatedOccupant,
@@ -374,6 +382,11 @@ def advance_timestep(
         moved = movement_model.step_toward(
             occupant, target_x, target_y, distance
         )
+        if not clear_segment((old_x, old_y), (occupant.x, occupant.y),
+                             floor_obstacles[occupant.floor_id], radius):
+            occupant.x, occupant.y = old_x, old_y
+            occupant.progress_on_edge = old_progress
+            return 0.0
         if obstacle_map is None or moved <= 1e-9:
             return moved
         new_x, new_y = occupant.x, occupant.y
@@ -515,6 +528,16 @@ def advance_timestep(
                 obstacle_map, occ.x, occ.y, radius, world_width, world_height
             ) and occ.id in safe_positions:
                 occ.x, occ.y = safe_positions[occ.id]
+
+    # Crowd separation and containment may push a body through a thin rectangle.
+    # Reject the entire swept displacement, not only an overlapping endpoint.
+    for occ in occupants:
+        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.CLIMBING):
+            continue
+        origin = obstacle_origins[occ.id]
+        if not clear_segment(origin, (occ.x, occ.y), floor_obstacles[occ.floor_id], radius):
+            occ.x, occ.y = origin
+            moved_by[occ.id] = 0.0
 
     for occ in occupants:
         if occ.status in (

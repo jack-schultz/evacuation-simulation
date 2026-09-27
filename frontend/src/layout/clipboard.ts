@@ -3,12 +3,14 @@ import type {
   Door,
   Exit,
   OccupantGroup,
+  Obstacle,
   Selection,
   Space,
 } from '../types/building';
-import { pointInPolygon, snap, uid, type Point } from '../utils';
+import { pointInPolygon, snap, uid, type Point } from '../utils.ts';
 
 export interface ClipboardPayload {
+  obstacles?: Obstacle[];
   spaces: Space[];
   doors: Door[];
   exits: Exit[];
@@ -22,7 +24,8 @@ let clipboard: ClipboardPayload | null = null;
 export function hasClipboard(): boolean {
   if (!clipboard) return false;
   return (
-    clipboard.spaces.length > 0
+    (clipboard.obstacles?.length ?? 0) > 0
+    || clipboard.spaces.length > 0
     || clipboard.doors.length > 0
     || clipboard.exits.length > 0
     || clipboard.occupant_groups.length > 0
@@ -59,6 +62,8 @@ export function extractSelection(
   );
 
   return {
+    obstacles: (layout.obstacles ?? []).filter(o =>
+      selection.some(r => r.kind === 'obstacle' && r.id === o.id)).map(cloneJson),
     spaces: layout.spaces.filter((s) => spaceIds.has(s.id)).map(cloneJson),
     doors: layout.doors.filter((d) => doorIds.has(d.id)).map(cloneJson),
     exits: layout.exits.filter((e) => exitIds.has(e.id)).map(cloneJson),
@@ -88,6 +93,10 @@ function payloadBounds(payload: ClipboardPayload): {
     maxY = Math.max(maxY, y);
   };
 
+  for (const obstacle of payload.obstacles ?? []) {
+    include(obstacle.x, obstacle.y);
+    include(obstacle.x + obstacle.width, obstacle.y + obstacle.height);
+  }
   for (const space of payload.spaces) {
     for (const [x, y] of space.vertices) include(x, y);
   }
@@ -192,7 +201,12 @@ export function pastePayload(
     };
   });
 
+  const obstacles = (payload.obstacles ?? []).map(o => ({ ...o, id: uid('obstacle'),
+    x: Math.max(0, Math.min(layout.width - o.width, snap(o.x + offset.x))),
+    y: Math.max(0, Math.min(layout.height - o.height, snap(o.y + offset.y))),
+  }));
   const selection: Selection = [
+    ...obstacles.map(o => ({ kind: 'obstacle' as const, id: o.id })),
     ...spaces.map((s) => ({ kind: 'space' as const, id: s.id })),
     ...doors.map((d) => ({ kind: 'door' as const, id: d.id })),
     ...exits.map((e) => ({ kind: 'exit' as const, id: e.id })),
@@ -203,6 +217,7 @@ export function pastePayload(
     layout: {
       ...layout,
       spaces: [...layout.spaces, ...spaces],
+      obstacles: [...(layout.obstacles ?? []), ...obstacles],
       doors: [...layout.doors, ...doors],
       exits: [...layout.exits, ...exits],
       occupant_groups: [...layout.occupant_groups, ...occupant_groups],
@@ -232,6 +247,8 @@ export function deleteRefs(
 
   return {
     ...layout,
+    obstacles: (layout.obstacles ?? []).filter(o =>
+      !refs.some(r => r.kind === 'obstacle' && r.id === o.id)),
     spaces: layout.spaces
       .filter((s) => !spaceIds.has(s.id))
       .map((s) =>
@@ -278,6 +295,10 @@ export function translateSelection(
 
   return {
     ...layout,
+    obstacles: (layout.obstacles ?? []).map(o =>
+      selection.some(r => r.kind === 'obstacle' && r.id === o.id)
+        ? { ...o, x: Math.max(0, Math.min(layout.width - o.width, snap(o.x + dx))),
+          y: Math.max(0, Math.min(layout.height - o.height, snap(o.y + dy))) } : o),
     spaces: layout.spaces.map((space) => {
       if (!spaceIds.has(space.id)) return space;
       return {

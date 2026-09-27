@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from app.domain.building import Obstacle
+
 class NodeKind(str, Enum):
     SPACE = "space"
     DOOR = "door"
@@ -48,6 +50,8 @@ class GraphEdge:
 
 @dataclass
 class NavigationGraph:
+    obstacles: list[Obstacle] = field(default_factory=list)
+    opening_axes: dict[str, tuple[float, float]] = field(default_factory=dict)
     nodes: dict[str, GraphNode] = field(default_factory=dict)
     edges: dict[str, GraphEdge] = field(default_factory=dict)
     adjacency: dict[str, list[str]] = field(default_factory=dict)
