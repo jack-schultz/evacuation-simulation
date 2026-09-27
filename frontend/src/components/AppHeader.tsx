@@ -6,12 +6,6 @@ interface Props {
   buildingId: string | null;
   buildings: BuildingSummary[];
   onLoadBuilding: (id: string) => void;
-  onNew: () => void;
-  onUndo: () => void;
-  canUndo: boolean;
-  onSave: () => void;
-  dirty: boolean;
-  onImportFloorPlan: (file?: File) => void;
   onImportLayout: (file?: File) => void | Promise<void>;
   onExportLayout: () => void;
   busy: boolean;
@@ -24,12 +18,6 @@ export function AppHeader({
   buildingId,
   buildings,
   onLoadBuilding,
-  onNew,
-  onUndo,
-  canUndo,
-  onSave,
-  dirty,
-  onImportFloorPlan,
   onImportLayout,
   onExportLayout,
   busy,
@@ -61,20 +49,6 @@ export function AppHeader({
             </option>
           ))}
         </select>
-        <button type="button" onClick={onNew} disabled={busy}>
-          New
-        </button>
-        <button
-          type="button"
-          onClick={onUndo}
-          disabled={busy || simulating || !canUndo}
-          title="Undo last building edit (Ctrl+Z / Cmd+Z)"
-        >
-          Undo
-        </button>
-        <button type="button" onClick={onSave} disabled={busy}>
-          Save{dirty ? ' *' : ''}
-        </button>
         <label className="file-import">
           Import JSON
           <input
@@ -90,18 +64,6 @@ export function AppHeader({
         <button type="button" onClick={onExportLayout} disabled={busy}>
           Export JSON
         </button>
-        <label className="file-import">
-          Import PNG
-          <input
-            type="file"
-            accept="image/png,.png"
-            disabled={busy}
-            onChange={(e) => {
-              void onImportFloorPlan(e.currentTarget.files?.[0]);
-              e.currentTarget.value = '';
-            }}
-          />
-        </label>
       </div>
     </header>
   );

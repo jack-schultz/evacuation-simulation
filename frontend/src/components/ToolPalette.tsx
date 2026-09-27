@@ -1,6 +1,6 @@
 import type { EditorTool } from '../types/building';
 
-const TOOLS: { id: EditorTool; label: string }[] = [
+const BUILDING_TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'select', label: 'Select' },
   { id: 'room', label: 'Room' },
   { id: 'stairs', label: 'Stairs' },
@@ -8,8 +8,10 @@ const TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'door', label: 'Door' },
   { id: 'exit', label: 'Exit' },
   { id: 'occupants', label: 'Occupants' },
-  { id: 'flood', label: 'Flood' },
+];
+const HAZARD_TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'fire', label: 'Fire' },
+  { id: 'flood', label: 'Flood' },
 ];
 
 interface Props {
@@ -23,7 +25,21 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
     <div className="panel tool-palette">
       <h2>Building tools</h2>
       <div className="tool-list">
-        {TOOLS.map((t) => (
+        {BUILDING_TOOLS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={tool === t.id ? 'tool active' : 'tool'}
+            disabled={disabled}
+            onClick={() => onToolChange(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <h3 className="tool-category-title">Hazards</h3>
+      <div className="tool-list hazard-tool-list">
+        {HAZARD_TOOLS.map((t) => (
           <button
             key={t.id}
             type="button"
