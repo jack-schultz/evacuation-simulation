@@ -18,11 +18,11 @@ from app.simulation.hazards import (
     active_fire_plumes,
     active_smoke_plumes,
     apply_hazards,
+    apply_smoke_plumes,
     fire_emergencies_from_plumes,
     hazard_stair_spread_pending,
     max_hazard_radius_at,
     resolve_origin_smoke,
-    smoke_emergencies_from_plumes,
 )
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
 from app.simulation.graph import NavigationGraphBuilder
@@ -86,9 +86,14 @@ class SimulationEngine:
         flood_plumes0 = active_flood_plumes(layout, 0.0)
         apply_hazards(
             graph,
-            (
-                *fire_emergencies_from_plumes(fire_plumes0),
-                *smoke_emergencies_from_plumes(plumes0),
+            fire_emergencies_from_plumes(fire_plumes0),
+        )
+        apply_smoke_plumes(
+            graph,
+            plumes0,
+            layout,
+            visibility_m=(
+                origin_smoke.visibility_m if origin_smoke is not None else 8.0
             ),
         )
         apply_flood_plumes(graph, flood_plumes0, layout)
@@ -180,7 +185,7 @@ class SimulationEngine:
             flood_rooms=active_flood_plumes(layout, t),
             fire_radius_m=max_hazard_radius_at(layout.fires, t),
             fire_floors=active_fire_plumes(layout, t),
-            smoke_floors=active_smoke_plumes(layout, t),
+            smoke_rooms=active_smoke_plumes(layout, t),
             occupants=[
                 OccupantFrameState(
                     id=o.id,

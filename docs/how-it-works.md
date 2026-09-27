@@ -69,8 +69,9 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 - Multi-floor tabs with stacked plans; linked stairs use a directed slowed climb between
   stair centers for multi-level pathing (not continuous vertical physics).
-- Illustrative circular fire/smoke (smoke expands faster than fire; both
-  spread through stairs up and down); flood fills each room separately,
+- Illustrative circular fire (radial floor spread + stairs) and room-scoped
+  smoke (through doors like flood, faster than fire; fire seeds smoke in rooms
+  it reaches); flood fills each room separately,
   dumps down stairs before expanding past them, and rises only after a floor
   is filled; no panic or
   disability-specific movement.

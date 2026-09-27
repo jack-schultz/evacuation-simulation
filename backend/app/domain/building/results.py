@@ -30,6 +30,8 @@ class OccupantFrameState(BaseModel):
 
 
 class SmokeFloorState(BaseModel):
+    """Floor-scoped fire plume (and legacy smoke frames)."""
+
     floor_id: str
     radius_m: float
     x: float
@@ -47,12 +49,26 @@ class FloodRoomState(BaseModel):
     intensity: float = 50.0
 
 
+class SmokeRoomState(BaseModel):
+    """Smoke plume scoped to one space (origin, doorway, or fire-seeded)."""
+
+    space_id: str
+    radius_m: float
+    x: float
+    y: float
+    intensity: float = 50.0
+
+
 class SimulationFrame(BaseModel):
     flood_radius_m: float | None = None
     flood_rooms: list[FloodRoomState] = Field(default_factory=list)
     fire_radius_m: float | None = None
     fire_floors: list[SmokeFloorState] = Field(default_factory=list)
-    smoke_floors: list[SmokeFloorState] = Field(default_factory=list)
+    smoke_floors: list[SmokeFloorState] = Field(
+        default_factory=list,
+        description="Legacy floor-scoped smoke; prefer smoke_rooms.",
+    )
+    smoke_rooms: list[SmokeRoomState] = Field(default_factory=list)
     t: float
     occupants: list[OccupantFrameState]
 

@@ -35,6 +35,7 @@ from app.domain.building.results import (
     SimulationFrame,
     SimulationResults,
     SmokeFloorState,
+    SmokeRoomState,
 )
 
 __all__ = [
@@ -59,6 +60,7 @@ __all__ = [
     "SimulationResults",
     "SmokeEmergency",
     "SmokeFloorState",
+    "SmokeRoomState",
     "Space",
     "SpaceType",
 ]

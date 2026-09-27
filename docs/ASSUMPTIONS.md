@@ -72,9 +72,10 @@ regulatory compliance calculation.
 * Combustion, fuel, heat, toxicity, CFD smoke, and structural collapse are not
   simulated. Circular fire/flood/smoke are illustrative scenario overlays only.
 * Disability-specific movement and panic are not simulated.
-* Smoke reduces speed and usable sightline length, expands faster than fire, and
-  spreads through linked stairs in both directions; it does not model optical
-  density physics or incapacitation.
+* Smoke reduces speed and usable sightline length, expands faster than fire,
+  spreads room-to-room through doors (like flood), and transfers through linked
+  stairs in both directions; it does not model optical density physics or
+  incapacitation.
 
 ## Results interpretation
 
@@ -158,27 +159,35 @@ fire circle touches — including people climbing stairs — becomes trapped
 (casualty). Intensity still blocks routes and exits; it is not a physical
 temperature. Routes are chosen at spawn; spreading fire can cut people off or
 kill them on contact. Fire also spreads through linked stairs (up and down),
-slower than smoke. Smoke only slows movement and shortens sightlines. With both
-fire and flood enabled, the strongest restriction applies, including blocking
-by either hazard.
+slower than smoke. When fire reaches a room that does not yet have smoke, it
+seeds a new smoke origin there. Smoke only slows movement and shortens
+sightlines. With both fire and flood enabled, the strongest restriction applies,
+including blocking by either hazard.
 
 This illustrative model does not simulate combustion, fuel, heat,
-ventilation, injury, or wall-dependent spread. It is an evacuation estimate,
+ventilation, injury, or wall-dependent fire spread. It is an evacuation estimate,
 not a fire engineering or safety certification model.
 
 ## Smoke scenario
 
 Smoke is part of the **fire** disaster (`emit_smoke`, on by default). It expands
 horizontally **faster** than the fire (about 2.5× the fire spread speed) and
-starts from a larger initial radius. Inside the plume, walking speed is
-multiplied by `max(0.25, 1 - intensity/100)`. Long visibility-graph chords are
-heavily costed so people prefer shorter sightlines. Smoke does **not** hard-block
-exits.
+starts from a larger initial radius. Unlike fire, smoke is **room-scoped**: walls
+contain it until the front reaches a same-floor door (or a stair sitting inside a
+host room), then a new plume starts at that opening — the same doorway model as
+flood, but without gravity. Inside a plume, walking speed is multiplied by
+`max(0.25, 1 - intensity/100)`. Long visibility-graph chords are heavily costed
+so people prefer shorter sightlines. Smoke does **not** hard-block exits.
 
-Both smoke and fire spread through linked stairs in **both** directions (up and
+Fire keeps its radial floor spread. When the fire circle first reaches a room
+that does not yet have smoke (including rooms only touched through walls, or a
+new floor via stairs), it seeds a fresh smoke origin there so smoke continues
+to spread from the fire front.
+
+Smoke and fire both transfer through linked stairs in **both** directions (up and
 down). Stair links are treated as bidirectional for hazards even if only one
 side sets `linked_stair_id`. After `smoke_stair_spread_delay_s` (smoke) or that
 delay × 2.5 (fire), a weaker plume starts on the partner floor at the stair.
-Fire uses the same path and rules, only slower. Playback continues after
-everyone has evacuated until stair spread has finished (or max time). There is
+Fire uses the same stair path and rules, only slower. Playback continues after
+everyone has evacuated until hazard spread has finished (or max time). There is
 no separate standalone smoke emergency in the editor.

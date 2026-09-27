@@ -8,7 +8,7 @@ import type {
   Selection,
 } from '../../../types/building';
 import { isRefSelected } from '../../../types/editor';
-import type { FloodRoomState, SmokeFloorState } from '../../../types/api';
+import type { FloodRoomState, SmokeFloorState, SmokeRoomState } from '../../../types/api';
 import { layoutFires, layoutFloods } from '../../../layout/hazards';
 import { SCALE } from '../../../utils';
 import type {
@@ -28,7 +28,7 @@ interface Props {
   floodRooms?: FloodRoomState[];
   fireRadiusM?: number | null;
   fireFloors?: SmokeFloorState[];
-  smokeFloors?: SmokeFloorState[];
+  smokeRooms?: SmokeRoomState[];
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
   onObjectClick: HandleObjectClickFn;
@@ -47,7 +47,7 @@ export function HazardLayer({
   floodRooms = [],
   fireRadiusM,
   fireFloors = [],
-  smokeFloors = [],
+  smokeRooms = [],
   onChange,
   dragProps,
   onObjectClick,
@@ -174,7 +174,11 @@ export function HazardLayer({
     return space != null && onFloor(space.floor_id);
   });
   const fireOnActive = fireFloors.filter((p) => onFloor(p.floor_id));
-  const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
+  const smokePlumesOnFloor = smokeRooms.filter((plume) => {
+    const space = layout.spaces.find((s) => s.id === plume.space_id);
+    return space != null && onFloor(space.floor_id);
+  });
+  const playbackSmoke = smokePlumesOnFloor.length > 0;
   const markerListening = interactive && tool === 'select';
   const playbackFlood = floodPlumesOnFloor.length > 0;
 
@@ -346,31 +350,38 @@ export function HazardLayer({
         );
       })}
 
-      {smokeOnFloor.map((plume, index) =>
-        clippedHazard(
-          plume.x,
-          plume.y,
-          plume.radius_m,
-          `rgba(100, 116, 139, ${0.12 + plume.intensity / 280})`,
-          '#475569',
-          plume.floor_id,
-          `smoke-play-${index}`,
-        ),
-      )}
-      {smokeOnFloor.length === 0
+      {playbackSmoke
+        && smokePlumesOnFloor.map((plume) =>
+          clipSpace(
+            plume.space_id,
+            plume.x,
+            plume.y,
+            plume.radius_m,
+            `rgba(100, 116, 139, ${0.12 + plume.intensity / 280})`,
+            '#475569',
+            `smoke-${plume.space_id}-${plume.x}-${plume.y}-${plume.radius_m}`,
+          ),
+        )}
+      {!playbackSmoke
         && firesOnFloor
           .filter((fire) => fire.enabled && fire.emit_smoke !== false)
-          .map((fire) =>
-            clippedHazard(
+          .map((fire) => {
+            const originSpaceId = layout.spaces.find(
+              (space) =>
+                (space.floor_id ?? 'floor-0') === (fire.floor_id ?? 'floor-0')
+                && containsPoint(space.vertices, fire.x, fire.y),
+            )?.id;
+            if (!originSpaceId) return null;
+            return clipSpace(
+              originSpaceId,
               fire.x,
               fire.y,
               fire.radius_m * 1.4,
               `rgba(100, 116, 139, ${0.12 + Math.max(1, fire.intensity * 0.8) / 280})`,
               '#475569',
-              fire.floor_id ?? 'floor-0',
-              `smoke-preview-${fire.id}`,
-            ),
-          )}
+              `smoke-preview-${fire.id}-${originSpaceId}`,
+            );
+          })}
     </>
   );
 }

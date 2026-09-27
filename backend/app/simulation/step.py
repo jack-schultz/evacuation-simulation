@@ -84,7 +84,7 @@ def _advance_climbers(
             0.5,
         )
         base = edge.base_speed_factor if edge is not None else params.stair_descent_speed_factor
-        smoke = smoke_factor_at(smoke_plumes, occ.floor_id, occ.x, occ.y)
+        smoke = smoke_factor_at(smoke_plumes, occ.current_space_id, occ.x, occ.y)
         speed = occ.speed_mps * base * smoke
         delta = (speed * params.timestep_s) / path_len
         progress = (occ.climb_progress or 0.0) + delta
@@ -247,7 +247,7 @@ def advance_timestep(
                 )
         if edge is not None:
             factor *= edge.base_speed_factor
-        factor *= smoke_factor_at(smoke_plumes, occ.floor_id, occ.x, occ.y)
+        factor *= smoke_factor_at(smoke_plumes, occ.current_space_id, occ.x, occ.y)
         speed_factors[occ.id] = factor
         if edge is None or factor <= 0:
             occ.status = OccupantStatus.TRAPPED

@@ -19,8 +19,8 @@ from app.simulation.collision import (
     resolve_wall_collisions,
 )
 from app.simulation.hazards import (
-    HazardRouteSelector, hazard_radius_at, apply_hazards, active_fire_plumes,
-    active_smoke_plumes, fire_emergencies_from_plumes, smoke_emergencies_from_plumes,
+    HazardRouteSelector, hazard_radius_at, apply_hazards, apply_smoke_plumes,
+    active_fire_plumes, active_smoke_plumes, fire_emergencies_from_plumes,
 )
 from app.simulation.graph import NodeKind, NavigationGraphBuilder, NavigationGraph
 from app.simulation.obstacles import free_position
@@ -51,8 +51,8 @@ def spawn_occupants(
     initial_hazards = (
         *layout.floods,
         *fire_emergencies_from_plumes(active_fire_plumes(layout, 0)),
-        *smoke_emergencies_from_plumes(active_smoke_plumes(layout, 0)),
     )
+    smoke_plumes0 = active_smoke_plumes(layout, 0)
     spawn_defaults = defaults or {
         "occupant_radius_m": radius_m, "door_flow_per_s": 1.2,
         "exit_flow_per_s": 1.5, "stairs_flow_per_s": 0.8,
@@ -129,9 +129,9 @@ def spawn_occupants(
                 )
                 # Apply the same initial hazards to the newly added spawn edges.
                 spawn_edges = {eid: graph.edges[eid] for eid in graph.adjacency[individual_start]}
-                apply_hazards(
-                    NavigationGraph(nodes=graph.nodes, edges=spawn_edges), initial_hazards,
-                )
+                spawn_graph = NavigationGraph(nodes=graph.nodes, edges=spawn_edges)
+                apply_hazards(spawn_graph, initial_hazards)
+                apply_smoke_plumes(spawn_graph, smoke_plumes0, layout)
                 if type(route_selector) is DijkstraRouteSelector:
                     routes = _candidate_routes(route_selector, graph, layout, group.space_id,
                         individual_start, [group.destination_exit_id] if group.destination_exit_id

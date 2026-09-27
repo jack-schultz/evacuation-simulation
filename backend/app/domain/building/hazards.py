@@ -38,8 +38,10 @@ class FireEmergency(RadialEmergency):
 
     Contact with the fire circle is lethal (occupant becomes trapped), including
     on stairs. Smoke is part of the fire disaster: when emit_smoke is true the
-    engine synthesizes a soft plume that expands faster than the fire and only
-    slows people. Both spread through linked stairs in either direction.
+    engine synthesizes a soft plume that expands faster than the fire, spreads
+    room-to-room through doors, and only slows people. Fire itself keeps radial
+    floor spread; when it reaches a room without smoke it seeds a new smoke
+    origin there. Both also transfer through linked stairs in either direction.
     """
 
     id: str = Field(default="fire", description="Stable id for editor selection.")

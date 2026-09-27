@@ -22,7 +22,7 @@ import { OpeningsLayer } from './layers/OpeningsLayer';
 import { PathsLayer } from './layers/PathsLayer';
 import { OccupantsLayer } from './layers/OccupantsLayer';
 import { StairArrowLayer } from './layers/StairArrowLayer';
-import type { SmokeFloorState, FloodRoomState } from '../../types/api';
+import type { SmokeFloorState, FloodRoomState, SmokeRoomState } from '../../types/api';
 
 interface Props {
   layout: BuildingLayout;
@@ -51,7 +51,7 @@ interface Props {
   floodRooms?: FloodRoomState[];
   fireRadiusM?: number | null;
   fireFloors?: SmokeFloorState[];
-  smokeFloors?: SmokeFloorState[];
+  smokeRooms?: SmokeRoomState[];
   floorPlanUrl?: string | null;
   floorPlanOpacity?: number;
   activeFloorId: string;
@@ -82,7 +82,7 @@ export function BuildingCanvas({
   floodRooms = [],
   fireRadiusM,
   fireFloors = [],
-  smokeFloors = [],
+  smokeRooms = [],
   floorPlanUrl = null,
   floorPlanOpacity = 0.2,
   activeFloorId,
@@ -312,7 +312,7 @@ export function BuildingCanvas({
             floodRooms={floodRooms}
             fireRadiusM={fireRadiusM}
             fireFloors={fireFloors}
-            smokeFloors={smokeFloors}
+            smokeRooms={smokeRooms}
             onChange={onChange}
             dragProps={dragProps}
             onObjectClick={handleObjectClick}

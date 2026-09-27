@@ -19,6 +19,14 @@ from app.simulation.hazards import (
 from tests.test_stair_link import linked_floors_layout
 
 
+def _smoke_floor_ids(layout: BuildingLayout, plumes) -> set[str]:
+    spaces = {s.id: s for s in layout.spaces}
+    return {
+        (spaces[p.space_id].floor_id if p.space_id in spaces else "floor-0")
+        for p in plumes
+    }
+
+
 class SmokeUnitTests(unittest.TestCase):
     def test_smoke_never_hard_blocks(self):
         smoke = SmokeEmergency(
@@ -79,6 +87,7 @@ class SmokeUnitTests(unittest.TestCase):
         )
         plumes = active_smoke_plumes(layout, 0.0)
         self.assertEqual(len(plumes), 1)
+        self.assertEqual(plumes[0].space_id, "r")
         self.assertGreater(plumes[0].radius_m, 2.0)
         smoke_r = active_smoke_plumes(layout, 10.0)[0].radius_m
         fire_r = active_fire_plumes(layout, 10.0)[0].radius_m
@@ -109,6 +118,114 @@ class SmokeUnitTests(unittest.TestCase):
         self.assertIsNone(resolve_origin_smoke(layout))
 
 
+class SmokeDoorSpreadTests(unittest.TestCase):
+    def test_neighbor_room_stays_clear_until_door_is_reached(self):
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 40,
+                "height": 20,
+                "spaces": [
+                    {
+                        "id": "a",
+                        "name": "A",
+                        "type": "room",
+                        "vertices": [[0, 0], [10, 0], [10, 10], [0, 10]],
+                    },
+                    {
+                        "id": "b",
+                        "name": "B",
+                        "type": "room",
+                        "vertices": [[10, 0], [20, 0], [20, 10], [10, 10]],
+                    },
+                ],
+                "doors": [
+                    {"id": "ab", "x": 10, "y": 5, "width": 1, "connects": ["a", "b"]}
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 20,
+                        "y": 5,
+                        "width": 1,
+                        "connected_space_id": "b",
+                    }
+                ],
+                "occupant_groups": [
+                    {"id": "g", "name": "G", "count": 1, "space_id": "a"}
+                ],
+                "fire": {
+                    "enabled": True,
+                    "x": 5,
+                    "y": 5,
+                    "radius_m": 0.5,
+                    "spread_speed_mps": 0.1,
+                    "intensity": 50,
+                    "emit_smoke": True,
+                },
+            }
+        )
+        # Smoke speed = 0.1 * 2.5 = 0.25 m/s; r0 = 0.7 → door at ~17.2 s.
+        early = active_smoke_plumes(layout, 0.0)
+        self.assertEqual({p.space_id for p in early}, {"a"})
+        mid = active_smoke_plumes(layout, 17.0)
+        self.assertEqual({p.space_id for p in mid}, {"a"})
+        after = active_smoke_plumes(layout, 18.0)
+        self.assertEqual({p.space_id for p in after}, {"a", "b"})
+        b_plume = next(p for p in after if p.space_id == "b")
+        self.assertEqual((b_plume.x, b_plume.y), (10.0, 5.0))
+
+    def test_fire_seeds_smoke_when_it_reaches_a_clear_room(self):
+        """Fire keeps radial spread; when it hits a room, smoke starts there too."""
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 40,
+                "height": 20,
+                "spaces": [
+                    {
+                        "id": "a",
+                        "name": "A",
+                        "type": "room",
+                        "vertices": [[0, 0], [10, 0], [10, 10], [0, 10]],
+                    },
+                    {
+                        "id": "isolated",
+                        "name": "Isolated",
+                        "type": "room",
+                        "vertices": [[12, 0], [22, 0], [22, 10], [12, 10]],
+                    },
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 0,
+                        "y": 5,
+                        "width": 1,
+                        "connected_space_id": "a",
+                    }
+                ],
+                "occupant_groups": [
+                    {"id": "g", "name": "G", "count": 1, "space_id": "a"}
+                ],
+                "fire": {
+                    "enabled": True,
+                    "x": 5,
+                    "y": 5,
+                    "radius_m": 0.5,
+                    "spread_speed_mps": 1.0,
+                    "intensity": 50,
+                    "emit_smoke": True,
+                },
+            }
+        )
+        early = {p.space_id for p in active_smoke_plumes(layout, 0.0)}
+        self.assertEqual(early, {"a"})
+        # Isolated wall at x=12; fire reaches it at (12 - 5 - 0.5) / 1 = 6.5 s.
+        mid = {p.space_id for p in active_smoke_plumes(layout, 6.0)}
+        self.assertNotIn("isolated", mid)
+        late = {p.space_id for p in active_smoke_plumes(layout, 7.0)}
+        self.assertIn("isolated", late)
+
+
 class SmokeChimneyTests(unittest.TestCase):
     def test_smoke_rises_through_linked_stairs(self):
         layout = linked_floors_layout(count=1)
@@ -125,9 +242,9 @@ class SmokeChimneyTests(unittest.TestCase):
             smoke_stair_intensity_factor=0.8,
         )]
         early = active_smoke_plumes(layout, 0.0)
-        self.assertEqual({p.floor_id for p in early}, {"floor-0"})
+        self.assertEqual(_smoke_floor_ids(layout, early), {"floor-0"})
         late = active_smoke_plumes(layout, 30.0)
-        floors = {p.floor_id for p in late}
+        floors = _smoke_floor_ids(layout, late)
         self.assertIn("floor-0", floors)
         self.assertIn("floor-1", floors)
 
@@ -145,7 +262,7 @@ class SmokeChimneyTests(unittest.TestCase):
             smoke_stair_spread_delay_s=0.0,
         )]
         plumes = active_smoke_plumes(layout, 20.0)
-        self.assertEqual({p.floor_id for p in plumes}, {"floor-0", "floor-1"})
+        self.assertEqual(_smoke_floor_ids(layout, plumes), {"floor-0", "floor-1"})
 
     def test_fire_descends_from_top_floor_through_stairs(self):
         layout = linked_floors_layout(count=1)
@@ -327,7 +444,7 @@ class SmokeChimneyTests(unittest.TestCase):
         )]
         # At an intermediate time smoke has reached the upper floor but fire has not.
         mid_t = 4.0
-        smoke_floors = {p.floor_id for p in active_smoke_plumes(layout, mid_t)}
+        smoke_floors = _smoke_floor_ids(layout, active_smoke_plumes(layout, mid_t))
         fire_floors = {p.floor_id for p in active_fire_plumes(layout, mid_t)}
         self.assertIn("floor-1", smoke_floors)
         self.assertNotIn("floor-1", fire_floors)
@@ -383,7 +500,7 @@ class SmokeSimTests(unittest.TestCase):
         )
         out = SimulationEngine().run(layout, SimulationParameters(max_time_s=60))
         self.assertEqual(out.results.evacuated_count, 1)
-        self.assertTrue(any(f.smoke_floors for f in out.frames))
+        self.assertTrue(any(f.smoke_rooms for f in out.frames))
         self.assertTrue(any(f.fire_floors for f in out.frames))
 
     def test_smoke_alone_does_not_kill(self):
@@ -495,7 +612,14 @@ class HazardPlaybackTests(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                any(p.floor_id == "floor-0" for p in f.smoke_floors)
+                any(
+                    next(
+                        (s.floor_id for s in layout.spaces if s.id == p.space_id),
+                        None,
+                    )
+                    == "floor-0"
+                    for p in f.smoke_rooms
+                )
                 for f in out.frames
             ),
             "expected smoke on ground floor in playback frames",
@@ -644,7 +768,7 @@ class HazardPlaybackTests(unittest.TestCase):
                 },
             }
         )
-        late = {p.floor_id for p in active_smoke_plumes(layout, 30.0)}
+        late = _smoke_floor_ids(layout, active_smoke_plumes(layout, 30.0))
         self.assertEqual(late, {"floor-0", "floor-1", "floor-2", "floor-3"})
 
 
