@@ -59,6 +59,7 @@ def _advance_climbers(
             continue
         if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_r):
             occ.status = OccupantStatus.TRAPPED
+            occ.deceased = True
             occ.climb_progress = None
             occ.climb_from_space_id = None
             occ.climb_to_space_id = None
@@ -103,6 +104,7 @@ def _advance_climbers(
             occ.progress_on_edge = 0.0
             if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_r):
                 occ.status = OccupantStatus.TRAPPED
+                occ.deceased = True
                 continue
             occ.status = OccupantStatus.ACTIVE
             waypoint = graph.nodes.get(occ.current_node_id)
@@ -123,6 +125,7 @@ def _advance_climbers(
         )
         if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_r):
             occ.status = OccupantStatus.TRAPPED
+            occ.deceased = True
             occ.climb_progress = None
             occ.climb_from_space_id = None
             occ.climb_to_space_id = None
@@ -141,6 +144,7 @@ def _apply_fire_casualties(
             continue
         if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_radius_m):
             occ.status = OccupantStatus.TRAPPED
+            occ.deceased = True
             occ.climb_progress = None
             occ.climb_from_space_id = None
             occ.climb_to_space_id = None

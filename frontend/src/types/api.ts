@@ -37,6 +37,7 @@ export interface OccupantFrameState {
   x: number;
   y: number;
   status: 'active' | 'waiting' | 'evacuated' | 'trapped' | 'climbing';
+  deceased?: boolean;
   group_id: string;
   floor_id?: string;
   climb_progress?: number | null;
@@ -88,6 +89,7 @@ export interface OccupantResult {
   id: string;
   group_id: string;
   evacuated: boolean;
+  deceased?: boolean;
   distance_m: number;
   travel_time_s: number;
   wait_time_s: number;
@@ -100,6 +102,7 @@ export interface SimulationResults {
   total_occupants: number;
   evacuated_count: number;
   remaining_count: number;
+  death_count?: number;
   total_evacuation_time_s: number | null;
   average_evacuation_time_s: number | null;
   max_evacuation_time_s: number | null;

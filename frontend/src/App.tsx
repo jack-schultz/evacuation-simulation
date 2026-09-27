@@ -51,6 +51,9 @@ export default function App() {
   const liveEvacuated = session.playback.currentFrame
     ? session.playback.currentFrame.occupants.filter((o) => o.status === 'evacuated').length
     : null;
+  const liveDeaths = session.playback.currentFrame
+    ? session.playback.currentFrame.occupants.filter((occupant) => occupant.deceased).length
+    : null;
 
   const selectPanel = (id: PanelId) => {
     setActivePanel((current) => (current === id ? null : id));
@@ -138,6 +141,7 @@ export default function App() {
         simulating={session.simulating}
         results={session.playback.results}
         evacuatedCount={liveEvacuated}
+        deathCount={liveDeaths}
         showPaths={showPaths}
         onShowPathsChange={setShowPaths}
         error={error}

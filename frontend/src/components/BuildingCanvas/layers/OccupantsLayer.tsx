@@ -129,7 +129,9 @@ export function OccupantsLayer({
             radius={occupantRadiusPx}
             opacity={o.status === 'climbing' ? 0.55 + 0.45 * (o.climb_progress ?? 0) : 1}
             fill={
-              o.status === 'trapped'
+              o.deceased
+                ? '#000000'
+                : o.status === 'trapped'
                 ? '#7c3aed'
                 : o.status === 'climbing'
                   ? '#d97706'

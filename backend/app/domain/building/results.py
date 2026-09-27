@@ -21,6 +21,7 @@ class OccupantFrameState(BaseModel):
     x: float
     y: float
     status: OccupantStatus
+    deceased: bool = False
     group_id: str
     floor_id: str = "floor-0"
     climb_progress: float | None = Field(
@@ -84,6 +85,7 @@ class OccupantResult(BaseModel):
     id: str
     group_id: str
     evacuated: bool
+    deceased: bool = False
     distance_m: float
     travel_time_s: float
     wait_time_s: float
@@ -96,6 +98,7 @@ class SimulationResults(BaseModel):
     total_occupants: int
     evacuated_count: int
     remaining_count: int
+    death_count: int = 0
     total_evacuation_time_s: float | None
     average_evacuation_time_s: float | None
     max_evacuation_time_s: float | None

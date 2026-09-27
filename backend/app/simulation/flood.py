@@ -427,6 +427,7 @@ def apply_flood_exposure(
         occ.flood_exposure_s += (intensity / 100.0) * dt
         if occ.flood_exposure_s + 1e-12 >= FLOOD_LETHAL_EXPOSURE_S:
             occ.status = OccupantStatus.TRAPPED
+            occ.deceased = True
             occ.climb_progress = None
             occ.climb_from_space_id = None
             occ.climb_to_space_id = None

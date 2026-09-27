@@ -30,6 +30,7 @@ class SimulatedOccupant:
     x: float = 0.0
     y: float = 0.0
     status: OccupantStatus = OccupantStatus.ACTIVE
+    deceased: bool = False
     distance_m: float = 0.0
     travel_time_s: float = 0.0
     wait_time_s: float = 0.0

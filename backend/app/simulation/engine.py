@@ -192,6 +192,7 @@ class SimulationEngine:
                     x=round(o.x, 3),
                     y=round(o.y, 3),
                     status=o.status,
+                    deceased=o.deceased,
                     group_id=o.group_id,
                     floor_id=o.floor_id,
                     climb_progress=(

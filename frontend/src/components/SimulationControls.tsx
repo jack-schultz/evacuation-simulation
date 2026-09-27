@@ -15,6 +15,7 @@ interface Props {
   results: SimulationResults | null;
   /** Live count from the current playback frame; falls back to final results. */
   evacuatedCount?: number | null;
+  deathCount?: number | null;
   showPaths: boolean;
   onShowPathsChange: (show: boolean) => void;
   error?: string | null;
@@ -33,6 +34,7 @@ export function SimulationControls({
   simulating,
   results,
   evacuatedCount,
+  deathCount,
   showPaths,
   onShowPathsChange,
   error,
@@ -41,6 +43,7 @@ export function SimulationControls({
     evacuatedCount != null
       ? evacuatedCount
       : results?.evacuated_count;
+  const deaths = deathCount ?? results?.death_count ?? 0;
   return (
     <div className="controls-bar">
       <div className="controls-left">
@@ -83,6 +86,7 @@ export function SimulationControls({
       </div>
       <div className="controls-right">
         <span>Simulation time: {simTime.toFixed(1)}s</span>
+        <span>Deaths: {deaths}</span>
         {results && (
           <>
             <span>

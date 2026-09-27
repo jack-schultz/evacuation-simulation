@@ -60,6 +60,7 @@ function interpolateOccupant(
     x: lerp(a.x, b.x, posAlpha),
     y: lerp(a.y, b.y, posAlpha),
     status: meta.status,
+    deceased: meta.deceased ?? false,
     group_id: meta.group_id,
     floor_id: meta.floor_id,
     climb_progress,
