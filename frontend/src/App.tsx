@@ -145,6 +145,7 @@ export default function App() {
         onPlay={session.playback.play}
         onReset={session.onReset}
         running={busy}
+        simulating={session.simulating}
         results={session.playback.results}
         evacuatedCount={liveEvacuated}
         showPaths={showPaths}
