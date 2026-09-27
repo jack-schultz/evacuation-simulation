@@ -65,6 +65,7 @@ function interpolateOccupant(
     floor_id: meta.floor_id,
     route_index: meta.route_index ?? 0,
     climb_progress,
+    path_preview: meta.path_preview ?? [],
   };
 }
 

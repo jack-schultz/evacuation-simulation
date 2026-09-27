@@ -6,9 +6,8 @@ from app.simulation.engine import SimulationEngine
 
 
 class FloodedAlternativeRouteTests(unittest.TestCase):
-    def test_flood_does_not_divert_routes_away_from_shorter_exit(self):
-        # Without disaster pathing, the shorter south exit stays selectable
-        # even when flooded.
+    def test_flood_diverts_some_routes_away_from_wet_exit(self):
+        # Soft flood on the south path makes the dry north exit competitive.
         building = BuildingLayout.model_validate({
             "width": 30, "height": 33,
             "spaces": [
@@ -42,4 +41,4 @@ class FloodedAlternativeRouteTests(unittest.TestCase):
             building, SimulationParameters(max_time_s=90)
         ).results
         exits = Counter(occupant.route_node_ids[-1] for occupant in result.occupants)
-        self.assertGreater(exits["exit:south"], 0)
+        self.assertGreater(exits["exit:north"], 0)

@@ -47,3 +47,15 @@ class SimulationParameters(BaseModel):
         le=1.0,
         description="Fraction of flat walking speed when ascending stairs.",
     )
+    hazard_clearance_m: float = Field(
+        default=2.5,
+        ge=0.0,
+        le=10.0,
+        description="Hard skirt distance from fire plumes when pathing.",
+    )
+    hazard_soft_clearance_m: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=10.0,
+        description="Soft prefer-away distance from flood and smoke plumes.",
+    )

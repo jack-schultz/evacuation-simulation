@@ -49,7 +49,7 @@ other and with space-edge segments, and squeeze through openings.
 3. **Run engine** (server, all at once):
    - Build the navigation graph.
    - Expand each occupant group into individuals.
-   - Assign each person a route to a viable exit. Without a preferred exit, the initial assignment weighs walking time from the spawn point against projected queues at every door and exit on viable routes. Alternate doors from the starting room are considered even when they lead to the same exit. A reachable preferred exit remains binding. Routes stay fixed for the run.
+   - Assign each person a route to a viable exit. Without a preferred exit, the initial assignment weighs walking time from the spawn point against projected queues at every door and exit on viable routes, plus fire/flood/smoke costs. Alternate doors from the starting room are considered even when they lead to the same exit. A reachable preferred exit remains binding while not on fire. Macro routes replan when expanding fire blocks the current path.
    - Step through time (default 0.25 s). At each step, everyone tries to move
      toward their next waypoint at once; body collisions, space edges, and door/exit widths
      create jams — excess demand means waiting outside the opening.
@@ -76,7 +76,8 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
   is filled; no panic or
   disability-specific movement.
 - Space edges block movement except at door/exit widths; they do not carve the navigation graph.
-- Occupants do not replan or follow crowds mid-run.
+- Occupants replan exit routes mid-run when fire blocks the way; they do not follow crowds.
+- Inside rooms, steering skirts fire clearance and prefers paths that avoid flood/smoke.
 
 See [ASSUMPTIONS.md](ASSUMPTIONS.md) for the complete list.
 

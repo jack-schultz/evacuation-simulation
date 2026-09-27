@@ -32,23 +32,28 @@ regulatory compliance calculation.
 ## Occupant knowledge and behaviour
 
 * Occupants initially know available routes to exits.
-* Each occupant (expanded from a group) gets a fixed route at spawn. The route
-  to each viable exit is found with Dijkstra; the initial exit assignment weighs
-  walking time against projected queues at door and exit apertures across
-  occupants. Multiple doors from the same room can share the crowd even when
-  they lead to one exit.
-* A reachable preferred exit remains binding. If a hazard blocks it, another
-  viable exit is chosen where possible.
-* Occupants do not dynamically replan, follow crowds, or exhibit panic.
-* Walking speeds are configurable per group and constant during a run.
+* Each occupant (expanded from a group) gets a Dijkstra route at spawn. The route
+  to each viable exit weighs walking time, projected aperture queues, and
+  hazard costs (fire hard-blocks openings; flood/smoke soft-slow edges). Multiple
+  doors from the same room can share the crowd even when they lead to one exit.
+* A reachable preferred exit remains binding while it is not on fire. If fire
+  blocks it — at spawn or later as plumes expand — another viable exit is chosen.
+* Macro routes (doors / stairs / exits) **replan during the run** when fire seals
+  the current path. Occupants do not follow crowds or exhibit panic.
+* Within a room, people **skirt** fire with a hard clearance
+  (`hazard_clearance_m`, default 2.5 m) and prefer paths that avoid flood/smoke
+  soft buffers. Local skirt paths update as hazards expand. Room centroids are
+  not walked; people path opening-to-opening.
+* Walking speeds are configurable per group and constant during a run (hazards
+  still multiply instantaneous speed).
 
 ## Movement and congestion
 
 * Discrete-time simulation (default timestep 0.25 s).
-* Occupants steer continuously in 2D toward fixed route waypoints (doors and
-  exits; plus the spawn space node only to leave the starting room; plus linked
-  stair space nodes for teleport transfers) rather than sliding on a single
-  shared edge line.
+* Occupants steer continuously in 2D toward route waypoints (doors and
+  exits; plus linked stair space nodes for climb transfers). When hazards
+  intervene inside a room, steering follows an ephemeral skirt path that keeps
+  clearance from fire and prefers drier/clearer chords.
 * Each person has a body radius (`occupant_radius_m`, default 0.25 m). Bodies
   cannot overlap; pairwise separation is resolved each timestep. Bodies also
   cannot cross space boundaries except through door/exit gaps.
@@ -121,20 +126,20 @@ playback speed changes keep them synchronized. Old frames without room plumes
 show their original fixed area.
 
 At spawn, routes prefer drier paths because flooded edges are slower, falling
-back from an inaccessible preferred exit where possible. Routes remain fixed.
-People may walk through water: movement speed is multiplied by
+back from an inaccessible preferred exit where possible. During the run, people
+locally skirt wet regions when a clear chord exists. People may still walk
+through water: movement speed is multiplied by
 `max(0.1, 1 - intensity / 100)` while standing in a wet plume. Immersion
 accumulates a dose of `(intensity / 100) * dt` seconds; after
 `FLOOD_LETHAL_EXPOSURE_S` (10) full-intensity-equivalent seconds the occupant
-becomes trapped (purple). Brief contact is not lethal. Local detours around
-water are preferred when available but are not required. Zero intensity and
+becomes trapped (purple). Brief contact is not lethal. Zero intensity and
 disabled floods preserve dry behavior. Finite timesteps introduce timing
 uncertainty up to a step; smaller steps improve comparisons near flood arrival
 and lethal-exposure times.
 
 Trapped occupants appear purple, count as remaining, and do not count as
-evacuated. Partial evacuation has no total completion time. There is no mid-run
-replanning of exit routes (local detours around water within a room are allowed).
+evacuated. Partial evacuation has no total completion time. Fire (not flood)
+triggers mid-run exit-route replanning; flood only soft-costs paths.
 
 This remains a simplified radial scenario, not a water-depth or hydraulic
 model. Spread within a room is Euclidean from the room's plume centre (not a
@@ -157,12 +162,14 @@ and snapshotted for each run.
 People avoid entering active fire and cannot use exits within it. Anyone the
 fire circle touches — including people climbing stairs — becomes trapped
 (casualty). Intensity still blocks routes and exits; it is not a physical
-temperature. Routes are chosen at spawn; spreading fire can cut people off or
-kill them on contact. Fire also spreads through linked stairs (up and down),
-slower than smoke. When fire reaches a room that does not yet have smoke, it
-seeds a new smoke origin there. Smoke only slows movement and shortens
-sightlines. With both fire and flood enabled, the strongest restriction applies,
-including blocking by either hazard.
+temperature. Routes are chosen at spawn with fire-aware costs and **update
+during the run** when expanding fire seals the current path or preferred exit —
+people switch to another exit when one remains reachable. Inside a room they
+skirt fire by about `hazard_clearance_m` (default 2.5 m). Fire also spreads
+through linked stairs (up and down), slower than smoke. When fire reaches a room
+that does not yet have smoke, it seeds a new smoke origin there. Smoke only
+slows movement and soft-costs paths. With both fire and flood enabled, the
+strongest restriction applies, including hard blocking by fire.
 
 This illustrative model does not simulate combustion, fuel, heat,
 ventilation, injury, or wall-dependent fire spread. It is an evacuation estimate,

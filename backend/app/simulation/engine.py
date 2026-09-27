@@ -39,9 +39,10 @@ class SimulationOutput:
 class SimulationEngine:
     """Runs a discrete-time evacuation over a building navigation graph.
 
-    Occupants steer continuously toward fixed Dijkstra opening waypoints, collide via
+    Occupants steer continuously toward Dijkstra opening waypoints, collide via
     body radius and space boundaries, and pass doors/exits through width-limited
-    apertures.
+    apertures. Local paths skirt expanding fire/flood/smoke; macro routes replan
+    when fire blocks the current exit path.
     """
 
     def __init__(
@@ -95,6 +96,7 @@ class SimulationEngine:
             doors,
             params.timestep_s,
             defaults,
+            params,
         )
         queues: dict[str, ElementQueueState] = {}
         frames: list[SimulationFrame] = []
@@ -142,6 +144,8 @@ class SimulationEngine:
                     fire_plumes,
                     flood_plumes,
                     layout.obstacles,
+                    layout,
+                    self.route_selector,
                 )
 
             if t + 1e-9 >= next_frame_t:
@@ -182,6 +186,9 @@ class SimulationEngine:
                         if o.climb_progress is not None
                         else None
                     ),
+                    path_preview=[
+                        (round(px, 3), round(py, 3)) for px, py in o.path_preview[:24]
+                    ],
                 )
                 for o in occupants
             ],

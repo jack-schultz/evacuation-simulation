@@ -21,11 +21,22 @@ function walkIndexes(result: OccupantResult): number[] {
   return result.route_points.map((_, i) => i);
 }
 
+/** Prefer live skirt preview when present; else remaining macro route points. */
 function remainingFloorPath(
   live: OccupantFrameState,
   result: OccupantResult,
   activeFloorId: string,
 ): number[] | null {
+  const preview = live.path_preview;
+  if (preview && preview.length >= 1) {
+    const poly: number[] = [live.x * SCALE, live.y * SCALE];
+    for (const [x, y] of preview) {
+      poly.push(x * SCALE, y * SCALE);
+    }
+    if (poly.length < 4) return null;
+    return poly;
+  }
+
   const pts = result.route_points;
   if (!pts || pts.length < 1) return null;
 

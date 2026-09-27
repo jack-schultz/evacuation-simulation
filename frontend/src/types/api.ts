@@ -30,6 +30,8 @@ export interface SimulationParameters {
   corridor_density_per_m2: number;
   occupant_radius_m: number;
   frame_interval_s: number;
+  hazard_clearance_m?: number;
+  hazard_soft_clearance_m?: number;
 }
 
 export interface OccupantFrameState {
@@ -42,6 +44,8 @@ export interface OccupantFrameState {
   floor_id?: string;
   route_index?: number;
   climb_progress?: number | null;
+  /** Remaining debug polyline: local skirt hops then openings. */
+  path_preview?: [number, number][];
 }
 
 export interface SmokeFloorState {

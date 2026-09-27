@@ -5,7 +5,7 @@ from __future__ import annotations
 import heapq
 import math
 
-from app.domain.building import BuildingLayout, OccupantStatus
+from app.domain.building import BuildingLayout, OccupantStatus, SimulationParameters
 from app.domain.geometry import (
     clamp_into_polygon,
     distance_to_boundary,
@@ -19,6 +19,7 @@ from app.simulation.collision import (
     resolve_wall_collisions,
 )
 from app.simulation.graph import NodeKind, NavigationGraphBuilder
+from app.simulation.hazard_routing import HazardRoutingContext, edge_traversal_cost
 from app.simulation.obstacles import free_position
 from app.simulation.movement import SimulatedOccupant
 from app.simulation.routing import DijkstraRouteSelector, edge_between, shortest_path_to_node
@@ -33,6 +34,7 @@ def spawn_occupants(
     doors: dict | None = None,
     timestep_s: float = 0.25,
     defaults: dict | None = None,
+    params: SimulationParameters | None = None,
 ) -> list[SimulatedOccupant]:
     occupants: list[SimulatedOccupant] = []
     spaces = spaces if spaces is not None else {s.id: s for s in layout.spaces}
@@ -46,6 +48,10 @@ def spawn_occupants(
         "occupant_radius_m": radius_m, "door_flow_per_s": 1.2,
         "exit_flow_per_s": 1.5, "stairs_flow_per_s": 0.8,
     }
+    hazard_ctx = HazardRoutingContext.at(layout, 0.0, params, body_radius_m=radius_m)
+    has_hazards = bool(
+        hazard_ctx.fire_plumes or hazard_ctx.flood_plumes or hazard_ctx.smoke_plumes
+    )
 
     for group in layout.occupant_groups:
         start_node = graph.space_node_ids[group.space_id]
@@ -55,12 +61,19 @@ def spawn_occupants(
         elif type(route_selector) is DijkstraRouteSelector:
             exit_ids = ([group.destination_exit_id] if group.destination_exit_id
                         else [e.id for e in layout.exits])
-            routes = _candidate_routes(route_selector, graph, layout, group.space_id,
-                                       start_node, exit_ids)
+            routes = _candidate_routes(
+                route_selector, graph, layout, group.space_id,
+                start_node, exit_ids, hazard_ctx=hazard_ctx if has_hazards else None,
+                speed_mps=group.walking_speed_mps,
+            )
             if not routes:
                 try:
                     routes = [route_selector.select_route(
-                        graph, start_node, preferred_exit_id=group.destination_exit_id
+                        graph, start_node,
+                        preferred_exit_id=group.destination_exit_id,
+                        layout=layout if has_hazards else None,
+                        hazard_ctx=hazard_ctx if has_hazards else None,
+                        speed_mps=group.walking_speed_mps,
                     )]
                 except ValueError:
                     routes = [[start_node]]
@@ -110,9 +123,14 @@ def spawn_occupants(
                     spawn_defaults,
                 )
                 if type(route_selector) is DijkstraRouteSelector:
-                    routes = _candidate_routes(route_selector, graph, layout, group.space_id,
-                        individual_start, [group.destination_exit_id] if group.destination_exit_id
-                        else [e.id for e in layout.exits])
+                    routes = _candidate_routes(
+                        route_selector, graph, layout, group.space_id,
+                        individual_start,
+                        [group.destination_exit_id] if group.destination_exit_id
+                        else [e.id for e in layout.exits],
+                        hazard_ctx=hazard_ctx if has_hazards else None,
+                        speed_mps=group.walking_speed_mps,
+                    )
                 else:
                     try:
                         routes = [route_selector.select_route(graph, individual_start,
@@ -125,6 +143,7 @@ def spawn_occupants(
                 key=lambda candidate: _projected_route_time(
                     candidate, ox, oy, group.walking_speed_mps,
                     graph, layout, radius_m, timestep_s, opening_slots,
+                    hazard_ctx=hazard_ctx if has_hazards else None,
                 ),
             )
             if len(route) > 1:
@@ -132,6 +151,7 @@ def spawn_occupants(
                     route, ox, oy, group.walking_speed_mps,
                     graph, layout, radius_m, timestep_s, opening_slots,
                     reserve=True,
+                    hazard_ctx=hazard_ctx if has_hazards else None,
                 )
             occupants.append(
                 SimulatedOccupant(
@@ -145,6 +165,7 @@ def spawn_occupants(
                     x=ox,
                     y=oy,
                     aperture_slot=i,
+                    preferred_exit_id=group.destination_exit_id,
                 )
             )
     resolve_overlaps(occupants, radius_m, iterations=6)
@@ -159,20 +180,30 @@ def spawn_occupants(
     return occupants
 
 
-
-def _candidate_routes(selector, graph, layout, start_space_id, start_node, exit_ids):
+def _candidate_routes(
+    selector, graph, layout, start_space_id, start_node, exit_ids,
+    *, hazard_ctx=None, speed_mps=1.0,
+):
     """Include shortest routes through each reachable door of the start room."""
     routes: list[list[str]] = []
     seen: set[tuple[str, ...]] = set()
 
     def add(route):
-        if route and tuple(route) not in seen and _route_is_walkable(route, graph):
+        if route and tuple(route) not in seen and _route_is_walkable(
+            route, graph, layout=layout, hazard_ctx=hazard_ctx, speed_mps=speed_mps
+        ):
             routes.append(route)
             seen.add(tuple(route))
 
     for exit_id in exit_ids:
         try:
-            add(selector.select_route(graph, start_node, preferred_exit_id=exit_id))
+            add(selector.select_route(
+                graph, start_node, preferred_exit_id=exit_id,
+                layout=layout if hazard_ctx is not None else None,
+                hazard_ctx=hazard_ctx,
+                speed_mps=speed_mps,
+                allow_preferred_fallback=False,
+            ))
         except ValueError:
             pass
 
@@ -185,8 +216,13 @@ def _candidate_routes(selector, graph, layout, start_space_id, start_node, exit_
         door_node = f"door:{door.id}"
         other_space = door.connects[1] if door.connects[0] == start_space_id else door.connects[0]
         other_node = graph.space_node_ids[other_space]
-        prefix = shortest_path_to_node(graph, start_node, door_node,
-                                       room_nodes | {door_node})
+        prefix = shortest_path_to_node(
+            graph, start_node, door_node,
+            room_nodes | {door_node},
+            layout=layout if hazard_ctx is not None else None,
+            hazard_ctx=hazard_ctx,
+            speed_mps=speed_mps,
+        )
         if prefix is None or edge_between(graph, door_node, other_node) is None:
             continue
         for exit_id in exit_ids:
@@ -194,6 +230,10 @@ def _candidate_routes(selector, graph, layout, start_space_id, start_node, exit_
                 suffix = selector.select_route(
                     graph, other_node, preferred_exit_id=exit_id,
                     forbidden_node_ids=frozenset({door_node}),
+                    layout=layout if hazard_ctx is not None else None,
+                    hazard_ctx=hazard_ctx,
+                    speed_mps=speed_mps,
+                    allow_preferred_fallback=False,
                 )
             except ValueError:
                 continue
@@ -210,11 +250,17 @@ def _candidate_routes(selector, graph, layout, start_space_id, start_node, exit_
     return routes
 
 
-def _route_is_walkable(route, graph):
-    return all(
-        (edge := edge_between(graph, a, b)) is not None and edge.speed_factor > 0
-        for a, b in zip(route, route[1:])
-    )
+def _route_is_walkable(route, graph, *, layout=None, hazard_ctx=None, speed_mps=1.0):
+    for a, b in zip(route, route[1:]):
+        edge = edge_between(graph, a, b)
+        if edge is None:
+            return False
+        if hazard_ctx is not None and layout is not None:
+            if edge_traversal_cost(graph, layout, edge, hazard_ctx, speed_mps=speed_mps) is None:
+                return False
+        elif edge.speed_factor <= 0:
+            return False
+    return True
 
 
 def _opening_service(node, speed_mps, layout, radius_m, timestep_s, opening_slots):
@@ -231,7 +277,7 @@ def _opening_service(node, speed_mps, layout, radius_m, timestep_s, opening_slot
 
 
 def _projected_route_time(route, x, y, speed_mps, graph, layout, radius_m,
-                          timestep_s, opening_slots, *, reserve=False):
+                          timestep_s, opening_slots, *, reserve=False, hazard_ctx=None):
     if len(route) <= 1:
         return float("inf"), float("inf")
     time_s = 0.0
@@ -240,13 +286,37 @@ def _projected_route_time(route, x, y, speed_mps, graph, layout, radius_m,
 
     for i, (from_id, to_id) in enumerate(zip(route, route[1:])):
         edge = edge_between(graph, from_id, to_id)
-        if edge is None or edge.speed_factor <= 0:
+        if edge is None:
             return float("inf"), float("inf")
+        if hazard_ctx is not None:
+            step = edge_traversal_cost(
+                graph, layout, edge, hazard_ctx, speed_mps=speed_mps
+            )
+            if step is None:
+                return float("inf"), float("inf")
+            # step already includes soft hazard slowdown + distance/penalty.
+            # Split out clearance for tie-breaking consistency.
+            travel_s = step
+            if i == 0:
+                node = graph.nodes[to_id]
+                distance = math.hypot(node.x - x, node.y - y)
+                soft_ratio = step / max(
+                    (edge.distance_m + edge.route_penalty_m)
+                    / max(speed_mps * edge.speed_factor, 1e-6),
+                    1e-9,
+                )
+                travel_s = (distance / max(speed_mps * edge.speed_factor, 1e-6)) * soft_ratio
+            time_s += travel_s
+        else:
+            if edge.speed_factor <= 0:
+                return float("inf"), float("inf")
+            node = graph.nodes[to_id]
+            distance = math.hypot(node.x - x, node.y - y) if i == 0 else edge.distance_m
+            travel_s = distance / (speed_mps * edge.speed_factor)
+            time_s += travel_s
+            clearance_time_s += edge.route_penalty_m / (speed_mps * edge.speed_factor)
+            node = graph.nodes[to_id]
         node = graph.nodes[to_id]
-        distance = math.hypot(node.x - x, node.y - y) if i == 0 else edge.distance_m
-        travel_s = distance / (speed_mps * edge.speed_factor)
-        time_s += travel_s
-        clearance_time_s += edge.route_penalty_m / (speed_mps * edge.speed_factor)
         if node.kind in (NodeKind.DOOR, NodeKind.EXIT):
             queue, service_s = _opening_service(
                 node, speed_mps, layout, radius_m, timestep_s, opening_slots

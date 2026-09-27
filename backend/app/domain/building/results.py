@@ -32,6 +32,10 @@ class OccupantFrameState(BaseModel):
         default=None,
         description="0..1 along a stair transfer when status is climbing.",
     )
+    path_preview: list[tuple[float, float]] = Field(
+        default_factory=list,
+        description="Remaining debug polyline (local skirt hops + openings).",
+    )
 
 
 class SmokeFloorState(BaseModel):

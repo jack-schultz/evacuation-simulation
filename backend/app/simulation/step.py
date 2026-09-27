@@ -30,6 +30,7 @@ from app.simulation.hazards import (
     fire_touches,
     smoke_factor_at,
 )
+from app.simulation.hazard_routing import HazardRoutingContext
 from app.simulation.flow import ElementQueueState
 from app.simulation.graph import EdgeKind, NodeKind
 from app.simulation.movement import (
@@ -38,6 +39,7 @@ from app.simulation.movement import (
     is_walk_anchor,
 )
 from app.simulation.pixel_obstacles import position_is_walkable
+from app.simulation.replan import replan_blocked_occupants
 from app.simulation.routing import edge_between
 from app.simulation.obstacles import clear_segment
 from app.simulation.stair_geometry import climb_path_length_m, climb_position
@@ -145,6 +147,42 @@ def _apply_fire_casualties(
         if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
             continue
         if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_radius_m):
+            # #region agent log
+            try:
+                import json, time
+                plume = next(
+                    (p for p in fire_plumes if p.floor_id == occ.floor_id),
+                    fire_plumes[0],
+                )
+                with open("/Users/jackschultz/PycharmProjects/evacuation-simulation/.cursor/debug-a376ca.log", "a") as _f:
+                    _f.write(json.dumps({
+                        "sessionId": "a376ca",
+                        "hypothesisId": "F",
+                        "location": "step.py:_apply_fire_casualties",
+                        "message": "fire contact death",
+                        "data": {
+                            "occ": occ.id,
+                            "xy": [round(occ.x, 2), round(occ.y, 2)],
+                            "detour": occ.hazard_detour,
+                            "preview_n": len(occ.path_preview),
+                            "preview0": (
+                                [round(occ.path_preview[0][0], 2), round(occ.path_preview[0][1], 2)]
+                                if occ.path_preview else None
+                            ),
+                            "fire": {
+                                "xy": [plume.x, plume.y],
+                                "r": plume.radius_m,
+                                "dist": round(
+                                    ((occ.x - plume.x) ** 2 + (occ.y - plume.y) ** 2) ** 0.5, 2
+                                ),
+                            },
+                            "next": occ.next_node_id,
+                        },
+                        "timestamp": int(time.time() * 1000),
+                    }) + "\n")
+            except Exception:
+                pass
+            # #endregion
             occ.status = OccupantStatus.TRAPPED
             occ.deceased = True
             occ.climb_progress = None
@@ -174,6 +212,8 @@ def advance_timestep(
     fire_plumes=None,
     flood_plumes=None,
     obstacles=(),
+    layout=None,
+    route_selector=None,
 ) -> None:
     radius = params.occupant_radius_m
     solids = boundary_solids or []
@@ -185,6 +225,15 @@ def advance_timestep(
     flood_plumes = flood_plumes or []
     flood_active = bool(flood_plumes)
     speed_factors: dict[str, float] = {}
+
+    if layout is not None and route_selector is not None:
+        replan_blocked_occupants(
+            occupants, graph, layout, params, t, route_selector
+        )
+
+    hazard_ctx = None
+    if layout is not None:
+        hazard_ctx = HazardRoutingContext.at(layout, t, params)
 
     _apply_fire_casualties(occupants, fire_plumes, radius)
     _advance_climbers(
@@ -396,8 +445,31 @@ def advance_timestep(
         is_admitted = occ.id in admitted
         # Non-aperture edges always admitted above; doors need admission to enter throat
         target_x, target_y = movement_model.propose_target(
-            occ, graph, radius, admitted=is_admitted, doors=doors
+            occ, graph, radius, admitted=is_admitted, doors=doors,
+            hazard_ctx=hazard_ctx,
         )
+        # #region agent log
+        if occ.id.endswith(":0") and occ.hazard_detour and int(getattr(occ, "_dbg_move_n", 0)) < 6:
+            occ._dbg_move_n = int(getattr(occ, "_dbg_move_n", 0)) + 1  # type: ignore[attr-defined]
+            try:
+                import json, time
+                with open("/Users/jackschultz/PycharmProjects/evacuation-simulation/.cursor/debug-a376ca.log", "a") as _f:
+                    _f.write(json.dumps({
+                        "sessionId": "a376ca",
+                        "hypothesisId": "D",
+                        "location": "step.py:advance_timestep",
+                        "message": "steering with hazard_detour",
+                        "data": {
+                            "occ": occ.id,
+                            "from": [round(occ.x, 2), round(occ.y, 2)],
+                            "target": [round(target_x, 2), round(target_y, 2)],
+                            "next": occ.next_node_id,
+                        },
+                        "timestamp": int(time.time() * 1000),
+                    }) + "\n")
+            except Exception:
+                pass
+        # #endregion
 
         desired = occ.speed_mps * params.timestep_s
         desired *= speed_factors[occ.id]

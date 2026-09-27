@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import heapq
 from typing import Protocol
 
@@ -39,6 +39,12 @@ class SimulatedOccupant:
     climb_to_space_id: str | None = None
     # Full-intensity-equivalent seconds spent in flood water (dose).
     flood_exposure_s: float = 0.0
+    # When True, body is following a hazard skirt — do not snap onto the direct chord.
+    hazard_detour: bool = False
+    # Preferred exit id from the spawning group (for mid-run replan fallback).
+    preferred_exit_id: str | None = None
+    # Debug / playback: remaining steer polyline (local skirt + openings).
+    path_preview: list[tuple[float, float]] = field(default_factory=list)
 
     @property
     def current_node_id(self) -> str:
@@ -119,6 +125,8 @@ def enforce_walk_segment(
     """Keep the body on the walk chord; hold non-admitted agents outside the throat on-line."""
     from app.simulation.collision import in_throat, throat_radius
 
+    if occupant.hazard_detour:
+        return
     project_onto_route_segment(occupant, graph)
     if admitted:
         return
@@ -173,6 +181,8 @@ class MovementModel(Protocol):
         radius_m: float,
         admitted: bool,
         doors: dict[str, Door] | None = None,
+        *,
+        hazard_ctx=None,
     ) -> tuple[float, float]:
         """Return the (x, y) steering target for this timestep."""
         ...
@@ -305,7 +315,10 @@ class SpatialMovementModel:
         radius_m: float,
         admitted: bool,
         doors: dict[str, Door] | None = None,
+        *,
+        hazard_ctx=None,
     ) -> tuple[float, float]:
+        occupant.hazard_detour = False
         nxt = occupant.next_node_id
         if nxt is None:
             node = graph.nodes[occupant.current_node_id]
@@ -324,11 +337,153 @@ class SpatialMovementModel:
             # next route waypoint (do not re-apply aperture approach geometry).
             return waypoint.x, waypoint.y
 
+        # Hazard skirting inside the current room toward the next macro node.
+        if (
+            hazard_ctx is not None
+            and (
+                hazard_ctx.fire_plumes
+                or hazard_ctx.flood_plumes
+                or hazard_ctx.smoke_plumes
+            )
+            and occupant.current_space_id
+            and waypoint.kind in (
+                NodeKind.WAYPOINT, NodeKind.DOOR, NodeKind.EXIT, NodeKind.SPACE,
+            )
+        ):
+            space = graph.spaces.get(occupant.current_space_id)
+            if space is not None:
+                from app.simulation.hazard_local_path import local_path_to_node
+
+                local = local_path_to_node(
+                    (occupant.x, occupant.y),
+                    waypoint,
+                    space,
+                    occupant.floor_id,
+                    graph,
+                    hazard_ctx,
+                    radius_m,
+                )
+                if local.reachable and local.hops:
+                    # Preview: skirt hops then remaining macro openings on this floor.
+                    preview = list(local.hops)
+                    for nid in occupant.route[occupant.route_index + 2 :]:
+                        n = graph.nodes.get(nid)
+                        if n is None:
+                            continue
+                        if n.kind.value == "space" and nid not in graph.stair_space_node_ids:
+                            continue
+                        preview.append((n.x, n.y))
+                    occupant.path_preview = preview
+                # #region agent log
+                if occupant.id.endswith(":0") and int(getattr(occupant, "_dbg_skirt_n", 0)) < 8:
+                    occupant._dbg_skirt_n = int(getattr(occupant, "_dbg_skirt_n", 0)) + 1  # type: ignore[attr-defined]
+                    try:
+                        import json, time
+                        with open("/Users/jackschultz/PycharmProjects/evacuation-simulation/.cursor/debug-a376ca.log", "a") as _f:
+                            _f.write(json.dumps({
+                                "sessionId": "a376ca",
+                                "hypothesisId": "A,B,C,F",
+                                "location": "movement.py:propose_target",
+                                "message": "local skirt decision",
+                                "data": {
+                                    "occ": occupant.id,
+                                    "xy": [round(occupant.x, 2), round(occupant.y, 2)],
+                                    "goal": [round(waypoint.x, 2), round(waypoint.y, 2)],
+                                    "goal_kind": waypoint.kind.value,
+                                    "floor": occupant.floor_id,
+                                    "space": occupant.current_space_id,
+                                    "n_fire": len(hazard_ctx.fire_plumes),
+                                    "fire0": (
+                                        {
+                                            "floor": hazard_ctx.fire_plumes[0].floor_id,
+                                            "xy": [hazard_ctx.fire_plumes[0].x, hazard_ctx.fire_plumes[0].y],
+                                            "r": hazard_ctx.fire_plumes[0].radius_m,
+                                        }
+                                        if hazard_ctx.fire_plumes else None
+                                    ),
+                                    "reachable": local.reachable,
+                                    "direct": local.direct,
+                                    "hop": (
+                                        [round(local.first_hop[0], 2), round(local.first_hop[1], 2)]
+                                        if local.first_hop else None
+                                    ),
+                                    "n_hops": len(local.hops),
+                                    "clearance": hazard_ctx.hard_fire_radius_extra,
+                                },
+                                "timestamp": int(time.time() * 1000),
+                            }) + "\n")
+                    except Exception:
+                        pass
+                # #endregion
+                if local.reachable and local.first_hop is not None and not local.direct:
+                    occupant.hazard_detour = True
+                    return local.first_hop
+                # Skirt graph failed but the direct chord crosses fire — do not
+                # walk into the plume; step toward the nearest clear skirt point.
+                if (
+                    not local.reachable
+                    and hazard_ctx.fire_plumes
+                    and space is not None
+                ):
+                    from app.simulation.hazard_local_path import _fire_skirt_points
+                    from app.simulation.hazard_routing import fire_disk_blocks_segment
+
+                    if fire_disk_blocks_segment(
+                        hazard_ctx,
+                        occupant.floor_id,
+                        occupant.x,
+                        occupant.y,
+                        waypoint.x,
+                        waypoint.y,
+                    ):
+                        skirts = _fire_skirt_points(
+                            hazard_ctx,
+                            occupant.floor_id,
+                            space,
+                            radius_m,
+                            from_point=(occupant.x, occupant.y),
+                            to_point=(waypoint.x, waypoint.y),
+                        )
+                        best = None
+                        best_d = float("inf")
+                        for sx, sy in skirts:
+                            if fire_disk_blocks_segment(
+                                hazard_ctx, occupant.floor_id,
+                                occupant.x, occupant.y, sx, sy,
+                            ):
+                                continue
+                            d = dist(occupant.x, occupant.y, sx, sy)
+                            if d < best_d:
+                                best_d = d
+                                best = (sx, sy)
+                        if best is not None:
+                            # #region agent log
+                            try:
+                                import json, time
+                                with open("/Users/jackschultz/PycharmProjects/evacuation-simulation/.cursor/debug-a376ca.log", "a") as _f:
+                                    _f.write(json.dumps({
+                                        "sessionId": "a376ca",
+                                        "hypothesisId": "E-fix",
+                                        "location": "movement.py:propose_target",
+                                        "message": "fallback skirt hop",
+                                        "data": {
+                                            "occ": occupant.id,
+                                            "hop": [round(best[0], 2), round(best[1], 2)],
+                                        },
+                                        "timestamp": int(time.time() * 1000),
+                                    }) + "\n")
+                            except Exception:
+                                pass
+                            # #endregion
+                            occupant.hazard_detour = True
+                            return best
+
         if graph.obstacles and waypoint.kind in (
             NodeKind.WAYPOINT, NodeKind.DOOR, NodeKind.EXIT,
         ):
             detour = self._rejoin_target(occupant, graph, waypoint, radius_m)
             if detour is not None:
+                occupant.hazard_detour = True
                 return detour
 
         edge = edge_between(graph, occupant.current_node_id, nxt)

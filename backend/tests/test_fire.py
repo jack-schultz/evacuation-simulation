@@ -37,11 +37,12 @@ class FireTests(unittest.TestCase):
             self.assertEqual(output.results, baseline.results)
             self.assertEqual(output.frames, baseline.frames)
 
-    def test_fire_on_preferred_exit_does_not_reroute(self):
-        # Disasters do not change pathing; preferred exit stays binding.
+    def test_fire_on_preferred_exit_reroutes_to_other_exit(self):
+        # Lethal fire on the preferred exit forces fallback to another exit.
         for intensity in (1, 50, 100):
             output = run(fire_layout(dict(x=7, y=5, radius_m=0.5, intensity=intensity), preferred='near'))
-            self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
+            self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:far')
+            self.assertEqual(output.results.evacuated_count, 1)
 
     def test_fire_contact_is_lethal(self):
         """Anyone inside the fire circle is trapped; no outward escape."""
@@ -58,30 +59,39 @@ class FireTests(unittest.TestCase):
             self.assertEqual(result.evacuated_count, 0)
 
     def test_size_kills_more_by_contact_not_reroute(self):
-        small = run(fire_layout(dict(x=10, y=5, radius_m=1, spread_speed_mps=0), two_exits=False))
-        large = run(fire_layout(dict(x=10, y=5, radius_m=4, spread_speed_mps=0), two_exits=False))
+        # Fire beside the path: small enough to skirt past; large enough that
+        # the only exit is inside the lethal plume.
+        small = run(fire_layout(dict(x=9, y=2, radius_m=1, spread_speed_mps=0), two_exits=False))
+        large = run(fire_layout(dict(x=7, y=5, radius_m=2, spread_speed_mps=0), two_exits=False))
         self.assertEqual(small.results.evacuated_count, 1)
         self.assertEqual(large.results.evacuated_count, 0)
 
     def test_spread_uses_simulation_clock_and_can_trap_people(self):
         for dt, interval in [(0.1, 0.2), (0.25, 0.5), (0.5, 1)]:
-            building = fire_layout(dict(x=10, y=5, radius_m=0.5, spread_speed_mps=2), two_exits=False)
+            # Expanding fire from beside the exit eventually claims a slow walker.
+            building = fire_layout(
+                dict(x=9, y=5, radius_m=0.4, spread_speed_mps=1.5),
+                two_exits=False,
+            )
+            building.occupant_groups[0].walking_speed_mps = 0.25
+            building.occupant_groups[0].spawn_x = 1
+            building.occupant_groups[0].spawn_y = 5
             output = SimulationEngine().run(building, SimulationParameters(
-                timestep_s=dt, frame_interval_s=interval, max_time_s=5))
+                timestep_s=dt, frame_interval_s=interval, max_time_s=25))
             self.assertEqual(output.frames[0].occupants[0].status, 'active')
             self.assertEqual(output.frames[-1].occupants[0].status, 'trapped')
             for frame in output.frames:
-                self.assertAlmostEqual(frame.fire_radius_m, 0.5 + 2 * frame.t)
-            self.assertEqual(building.fires[0].radius_m, 0.5)
-        fixed = run(fire_layout(dict(x=10, y=5, radius_m=0.5, spread_speed_mps=0), two_exits=False))
+                self.assertAlmostEqual(frame.fire_radius_m, 0.4 + 1.5 * frame.t)
+            self.assertEqual(building.fires[0].radius_m, 0.4)
+        fixed = run(fire_layout(dict(x=9, y=2, radius_m=0.5, spread_speed_mps=0), two_exits=False))
         self.assertEqual(fixed.results.evacuated_count, 1)
         self.assertTrue(all(frame.fire_radius_m == 0.5 for frame in fixed.frames))
 
-    def test_fire_and_flood_do_not_change_routes(self):
+    def test_fire_and_flood_prefer_safer_exit(self):
         building = fire_layout(dict(x=0, y=5, radius_m=0.5),
                                flood=dict(x=7, y=5, radius_m=0.5, intensity=80))
         output = run(building)
-        # Shortest path is near; disasters no longer divert routing.
+        # Fire covers the far exit; near remains usable despite soft flood.
         self.assertEqual(output.results.evacuated_count, 1)
         self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
         self.assertIsNotNone(output.frames[-1].fire_radius_m)
@@ -103,7 +113,7 @@ class FireTests(unittest.TestCase):
             snapshot = simulations.create(saved.id, SimulationParameters(max_time_s=10))
             buildings.update_building(saved.id, layout())
             result = simulations.run(snapshot.id)
-            self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:near')
+            self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:far')
             self.assertEqual(result.frames[0].fire_radius_m, 0.5)
             self.assertEqual(simulations.get(snapshot.id).frames, result.frames)
             self.assertEqual(buildings.get_layout(saved.id).fires, [])

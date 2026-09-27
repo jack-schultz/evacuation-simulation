@@ -25,11 +25,11 @@ def flood(intensity=80, **kwargs):
 
 
 class FloodTests(unittest.TestCase):
-    def test_high_intensity_does_not_change_route(self):
-        # Flood no longer affects route choice; take the nearer exit even if wet.
+    def test_high_intensity_prefers_drier_exit(self):
+        # Soft flood on the near exit makes the dry far exit preferable.
         config = dict(x=7, y=5, radius_m=0.5, intensity=80)
         output = run(layout(config))
-        self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:near')
+        self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:far')
         self.assertEqual(output.results.evacuated_count, 1)
 
     def test_preferred_exit_stays_binding_when_only_slowed(self):
