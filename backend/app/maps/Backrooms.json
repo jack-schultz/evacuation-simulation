@@ -1,0 +1,777 @@
+{
+  "format": "evacuation-simulation-layout",
+  "version": 1,
+  "layout": {
+    "name": "Backrooms",
+    "width": 53.5,
+    "height": 40,
+    "meters_per_cell": 1,
+    "floors": [
+      {
+        "id": "floor-0",
+        "name": "Ground",
+        "elevation_m": 0,
+        "order": 0
+      }
+    ],
+    "spaces": [
+      {
+        "id": "room_cht912z",
+        "name": "room 1",
+        "type": "room",
+        "vertices": [
+          [
+            1,
+            1
+          ],
+          [
+            52.5,
+            1
+          ],
+          [
+            52.5,
+            38.5
+          ],
+          [
+            1,
+            38.5
+          ]
+        ],
+        "capacity_density_per_m2": null,
+        "linked_stair_id": null,
+        "floor_id": "floor-0"
+      }
+    ],
+    "obstacles": [
+      {
+        "id": "obstacle_pdsleaw",
+        "name": "Obstacle",
+        "x": 1,
+        "y": 7.5,
+        "width": 9.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_nsqk64i",
+        "name": "Obstacle",
+        "x": 9,
+        "y": 1,
+        "width": 1,
+        "height": 5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_54it9l3",
+        "name": "Obstacle",
+        "x": 23.5,
+        "y": 1,
+        "width": 0.5,
+        "height": 9.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_e3h0fd6",
+        "name": "Obstacle",
+        "x": 12.5,
+        "y": 18.5,
+        "width": 17.5,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_c1doq2y",
+        "name": "Obstacle",
+        "x": 1,
+        "y": 18.5,
+        "width": 3,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_6c2rlu3",
+        "name": "Obstacle",
+        "x": 4,
+        "y": 9.5,
+        "width": 0.5,
+        "height": 14,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_2oy44hv",
+        "name": "Obstacle",
+        "x": 14.5,
+        "y": 3.5,
+        "width": 0.5,
+        "height": 11,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_eybczzk",
+        "name": "Obstacle",
+        "x": 15,
+        "y": 7,
+        "width": 4,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_nfextw0",
+        "name": "Obstacle",
+        "x": 20,
+        "y": 9.5,
+        "width": 3.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_wfkr3zr",
+        "name": "Obstacle",
+        "x": 27,
+        "y": 11.5,
+        "width": 1,
+        "height": 7,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_ryw9vhn",
+        "name": "Obstacle",
+        "x": 12,
+        "y": 31,
+        "width": 0.5,
+        "height": 7.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_a40sszv",
+        "name": "Obstacle",
+        "x": 1,
+        "y": 26,
+        "width": 8,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_2ftjn2r",
+        "name": "Obstacle",
+        "x": 9,
+        "y": 24,
+        "width": 0.5,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_1iwo5do",
+        "name": "Obstacle",
+        "x": 3,
+        "y": 31,
+        "width": 5.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_41ks09q",
+        "name": "Obstacle",
+        "x": 2.5,
+        "y": 28.5,
+        "width": 0.5,
+        "height": 5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_oble47p",
+        "name": "Obstacle",
+        "x": 10,
+        "y": 12.5,
+        "width": 4,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_68egcxz",
+        "name": "Obstacle",
+        "x": 7.5,
+        "y": 8,
+        "width": 0.5,
+        "height": 10,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_pf3qiv8",
+        "name": "Obstacle",
+        "x": 9.5,
+        "y": 11.5,
+        "width": 0.5,
+        "height": 3.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_zlmb86b",
+        "name": "Obstacle",
+        "x": 8,
+        "y": 23,
+        "width": 9.5,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_nlkkimr",
+        "name": "Obstacle",
+        "x": 14,
+        "y": 12.5,
+        "width": 0.5,
+        "height": 3,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_f8lnm0v",
+        "name": "Obstacle",
+        "x": 4.5,
+        "y": 20.5,
+        "width": 3.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_op9bdnc",
+        "name": "Obstacle",
+        "x": 30,
+        "y": 1,
+        "width": 0.5,
+        "height": 7,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_fi1ua9g",
+        "name": "Obstacle",
+        "x": 24,
+        "y": 7.5,
+        "width": 3.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_3lw5vnn",
+        "name": "Obstacle",
+        "x": 30.5,
+        "y": 7,
+        "width": 5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_ehdf7ha",
+        "name": "Obstacle",
+        "x": 34.5,
+        "y": 7.5,
+        "width": 0.5,
+        "height": 7.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_65kfhoj",
+        "name": "Obstacle",
+        "x": 30.5,
+        "y": 14.5,
+        "width": 4,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_0vt051y",
+        "name": "Obstacle",
+        "x": 21.5,
+        "y": 14,
+        "width": 5.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_5173urw",
+        "name": "Obstacle",
+        "x": 21.5,
+        "y": 14.5,
+        "width": 0.5,
+        "height": 2.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_v8vpz8m",
+        "name": "Obstacle",
+        "x": 15,
+        "y": 14,
+        "width": 4,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_bvzukxr",
+        "name": "Obstacle",
+        "x": 12.5,
+        "y": 19.5,
+        "width": 0.5,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_qjcd4cn",
+        "name": "Obstacle",
+        "x": 15,
+        "y": 24,
+        "width": 0.5,
+        "height": 4,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_w5lvz50",
+        "name": "Obstacle",
+        "x": 12.5,
+        "y": 31,
+        "width": 8,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_izw1p5v",
+        "name": "Obstacle",
+        "x": 20,
+        "y": 31.5,
+        "width": 0.5,
+        "height": 2.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_ypnymis",
+        "name": "Obstacle",
+        "x": 22.5,
+        "y": 38,
+        "width": 0.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_jcvuha3",
+        "name": "Obstacle",
+        "x": 15.5,
+        "y": 33,
+        "width": 0.5,
+        "height": 3.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_oa51km2",
+        "name": "Obstacle",
+        "x": 21.5,
+        "y": 19.5,
+        "width": 0.5,
+        "height": 6.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_tvquddl",
+        "name": "Obstacle",
+        "x": 29.5,
+        "y": 19.5,
+        "width": 0.5,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_1wg1xed",
+        "name": "Obstacle",
+        "x": 30,
+        "y": 23.5,
+        "width": 6.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_g07wy65",
+        "name": "Obstacle",
+        "x": 46.5,
+        "y": 11,
+        "width": 6,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_pk0ucff",
+        "name": "Obstacle",
+        "x": 46.5,
+        "y": 5.5,
+        "width": 0.5,
+        "height": 5.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_r15oyrt",
+        "name": "Obstacle",
+        "x": 50,
+        "y": 1,
+        "width": 0.5,
+        "height": 6.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_7f0cokr",
+        "name": "Obstacle",
+        "x": 43.5,
+        "y": 2.5,
+        "width": 6.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_fjnoda7",
+        "name": "Obstacle",
+        "x": 36.5,
+        "y": 1,
+        "width": 0.5,
+        "height": 5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_p7m31ls",
+        "name": "Obstacle",
+        "x": 41.5,
+        "y": 6,
+        "width": 2.5,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_h3bkdkt",
+        "name": "Obstacle",
+        "x": 39,
+        "y": 10,
+        "width": 0.5,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_4v10vto",
+        "name": "Obstacle",
+        "x": 44.5,
+        "y": 14,
+        "width": 5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_xvn83si",
+        "name": "Obstacle",
+        "x": 36.5,
+        "y": 22.5,
+        "width": 0.5,
+        "height": 2.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_zm7n6rx",
+        "name": "Obstacle",
+        "x": 24.5,
+        "y": 24,
+        "width": 0.5,
+        "height": 7.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_60dzd2r",
+        "name": "Obstacle",
+        "x": 25,
+        "y": 24,
+        "width": 6.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_913pbb6",
+        "name": "Obstacle",
+        "x": 32.5,
+        "y": 34.5,
+        "width": 0.5,
+        "height": 4,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_25j7gqr",
+        "name": "Obstacle",
+        "x": 33,
+        "y": 37.5,
+        "width": 6,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_dh2s76f",
+        "name": "Obstacle",
+        "x": 46.5,
+        "y": 32,
+        "width": 0.5,
+        "height": 6.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_bsg1b0h",
+        "name": "Obstacle",
+        "x": 52,
+        "y": 33,
+        "width": 0.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_zr6m0e6",
+        "name": "Obstacle",
+        "x": 49,
+        "y": 35,
+        "width": 3.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_d6einj5",
+        "name": "Obstacle",
+        "x": 49,
+        "y": 30.5,
+        "width": 0.5,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_qd666u5",
+        "name": "Obstacle",
+        "x": 41,
+        "y": 27,
+        "width": 0.5,
+        "height": 8,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_hd6emry",
+        "name": "Obstacle",
+        "x": 41.5,
+        "y": 33,
+        "width": 3.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_n9mppeh",
+        "name": "Obstacle",
+        "x": 44,
+        "y": 36.5,
+        "width": 0.5,
+        "height": 2,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_i129e0c",
+        "name": "Obstacle",
+        "x": 35.5,
+        "y": 27,
+        "width": 5.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_00heoqg",
+        "name": "Obstacle",
+        "x": 29.5,
+        "y": 24.5,
+        "width": 0.5,
+        "height": 3,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_5y9htfd",
+        "name": "Obstacle",
+        "x": 26.5,
+        "y": 33.5,
+        "width": 6.5,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_5gkpo9z",
+        "name": "Obstacle",
+        "x": 32,
+        "y": 31.5,
+        "width": 0.5,
+        "height": 2,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_z2ns7rc",
+        "name": "Obstacle",
+        "x": 35,
+        "y": 27,
+        "width": 0.5,
+        "height": 3.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_b5i36yi",
+        "name": "Obstacle",
+        "x": 39,
+        "y": 14.5,
+        "width": 3.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_rkwh3bv",
+        "name": "Obstacle",
+        "x": 46.5,
+        "y": 14.5,
+        "width": 0.5,
+        "height": 5.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_lxgyfjw",
+        "name": "Obstacle",
+        "x": 40,
+        "y": 19,
+        "width": 3,
+        "height": 3,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_p5cv64i",
+        "name": "Obstacle",
+        "x": 41.5,
+        "y": 24.5,
+        "width": 6.5,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_6ul5o0c",
+        "name": "Obstacle",
+        "x": 50,
+        "y": 21,
+        "width": 0.5,
+        "height": 4.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_28v55zl",
+        "name": "Obstacle",
+        "x": 47.5,
+        "y": 23.5,
+        "width": 2.5,
+        "height": 1,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_vj13k77",
+        "name": "Obstacle",
+        "x": 44.5,
+        "y": 27.5,
+        "width": 7,
+        "height": 0.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_ssxu4n1",
+        "name": "Obstacle",
+        "x": 4,
+        "y": 2.5,
+        "width": 0.5,
+        "height": 3.5,
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "obstacle_2dnlo97",
+        "name": "Obstacle",
+        "x": 5.5,
+        "y": 35,
+        "width": 0.5,
+        "height": 3.5,
+        "floor_id": "floor-0"
+      }
+    ],
+    "doors": [],
+    "exits": [
+      {
+        "id": "exit_aygygc6",
+        "name": "Exit 1",
+        "x": 52,
+        "y": 38,
+        "width": 1.2,
+        "connected_space_id": "room_cht912z",
+        "flow_rate_per_s": 1,
+        "floor_id": "floor-0"
+      }
+    ],
+    "occupant_groups": [
+      {
+        "id": "group_q9tw6zx",
+        "name": "Group 1",
+        "count": 2,
+        "space_id": "room_cht912z",
+        "spawn_x": 2,
+        "spawn_y": 15.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_ypvw1ao",
+        "name": "Group 2",
+        "count": 3,
+        "space_id": "room_cht912z",
+        "spawn_x": 28.5,
+        "spawn_y": 1.5,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      },
+      {
+        "id": "group_e5lgbpx",
+        "name": "Group 3",
+        "count": 1,
+        "space_id": "room_cht912z",
+        "spawn_x": 51,
+        "spawn_y": 10,
+        "walking_speed_mps": 1.2,
+        "destination_exit_id": null,
+        "behaviour": {},
+        "floor_id": "floor-0"
+      }
+    ],
+    "floods": [
+      {
+        "enabled": true,
+        "x": 18.5,
+        "y": 28.5,
+        "radius_m": 3,
+        "spread_speed_mps": 0,
+        "intensity": 50,
+        "floor_id": "floor-0",
+        "id": "flood_rfstpeh"
+      }
+    ],
+    "fires": [
+      {
+        "enabled": true,
+        "x": 39.5,
+        "y": 25,
+        "radius_m": 3,
+        "spread_speed_mps": 0,
+        "intensity": 50,
+        "floor_id": "floor-0",
+        "id": "fire_e42pnsq",
+        "emit_smoke": true,
+        "smoke_visibility_m": 8,
+        "smoke_stair_spread_delay_s": 8,
+        "smoke_stair_intensity_factor": 0.85
+      }
+    ],
+    "smoke": null,
+    "obstacle_map": null
+  }
+}
