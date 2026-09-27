@@ -463,6 +463,125 @@ class SpaceContainmentTests(unittest.TestCase):
         self.assertTrue(inset.contains_point(occ.x, occ.y))
         self.assertLessEqual(occ.y, inset.bottom + 1e-9)
 
+    def test_obstacle_waypoint_nearer_far_room_still_opens_door(self):
+        """Lobby obstacle waypoints can sit closer to the stair centroid than lobby.
+
+        Forward space must follow waypoint ownership, not centroid distance —
+        otherwise containment clamps bodies back onto the origin side forever.
+        """
+        from app.domain.building import OccupantStatus
+        from app.simulation.containment import _forward_space_for_door
+
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 30,
+                "height": 20,
+                "spaces": [
+                    {
+                        "id": "lobby",
+                        "name": "Lobby",
+                        "type": "room",
+                        "floor_id": "floor-0",
+                        "vertices": [[1, 1], [17, 1], [17, 13], [1, 13]],
+                    },
+                    {
+                        "id": "stairs_g",
+                        "name": "Stairs",
+                        "type": "stairs",
+                        "floor_id": "floor-0",
+                        "vertices": [[17, 2], [19, 2], [19, 8], [17, 8]],
+                    },
+                ],
+                "doors": [
+                    {
+                        "id": "door_lobby_stairs",
+                        "x": 17,
+                        "y": 3,
+                        "width": 0.6,
+                        "connects": ["lobby", "stairs_g"],
+                        "floor_id": "floor-0",
+                    }
+                ],
+                "exits": [
+                    {
+                        "id": "exit_street",
+                        "x": 1,
+                        "y": 11,
+                        "width": 1.4,
+                        "connected_space_id": "lobby",
+                        "floor_id": "floor-0",
+                    }
+                ],
+                "obstacles": [
+                    {
+                        "id": "desk",
+                        "x": 14.5,
+                        "y": 4.5,
+                        "width": 1.0,
+                        "height": 1.0,
+                        "floor_id": "floor-0",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "Crowd",
+                        "count": 1,
+                        "space_id": "stairs_g",
+                        "floor_id": "floor-0",
+                        "walking_speed_mps": 1.2,
+                    }
+                ],
+            }
+        )
+        graph = NavigationGraphBuilder().build(layout, self._defaults)
+        doors = {d.id: d for d in layout.doors}
+        spaces = {s.id: s for s in layout.spaces}
+        wp_id = next(
+            nid
+            for nid, n in graph.nodes.items()
+            if n.kind.value == "waypoint" and n.ref_id == "lobby"
+        )
+        lobby_n = graph.nodes[graph.space_node_ids["lobby"]]
+        stairs_n = graph.nodes[graph.space_node_ids["stairs_g"]]
+        wp = graph.nodes[wp_id]
+        # Sanity: this is the mis-ranking geometry the bug depended on.
+        self.assertLess(
+            dist(wp.x, wp.y, stairs_n.x, stairs_n.y),
+            dist(wp.x, wp.y, lobby_n.x, lobby_n.y),
+        )
+
+        occ = SimulatedOccupant(
+            id="g:0",
+            group_id="g",
+            speed_mps=1.2,
+            route=["space:stairs_g", "door:door_lobby_stairs", wp_id, "exit:exit_street"],
+            route_index=1,
+            current_space_id="stairs_g",
+            x=16.6,
+            y=3.0,
+            status=OccupantStatus.ACTIVE,
+            floor_id="floor-0",
+        )
+        self.assertEqual(
+            _forward_space_for_door(occ, doors["door_lobby_stairs"], graph),
+            "lobby",
+        )
+        update_space_membership_from_position(
+            [occ], spaces, doors, graph, admitted={"g:0"}
+        )
+        self.assertEqual(occ.current_space_id, "lobby")
+        resolve_space_containment(
+            [occ], spaces, 0.25, doors=doors, graph=graph, admitted={"g:0"}
+        )
+        self.assertLess(occ.x, 17.0, "must stay on lobby side, not clamped into stairs")
+
+        output = SimulationEngine().run(
+            layout,
+            SimulationParameters(max_time_s=120, occupant_radius_m=0.25),
+        )
+        self.assertEqual(output.results.evacuated_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

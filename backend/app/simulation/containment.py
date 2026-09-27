@@ -105,9 +105,20 @@ def _forward_space_for_door(
         if nxt_id is None:
             return door_other_space(door, occupant.current_space_id)
         waypoint = nodes.get(nxt_id)
+        if waypoint is None:
+            return door_other_space(door, occupant.current_space_id)
+        # Prefer the space that owns the next route node. Distance-to-centroid
+        # fails when a lobby obstacle waypoint sits closer to the stair center
+        # than to the lobby center — forward looked like stairs, containment
+        # refused the lobby, and bodies were yanked back through the door.
+        if (
+            waypoint.kind in (NodeKind.SPACE, NodeKind.WAYPOINT)
+            and waypoint.ref_id in door.connects
+        ):
+            return waypoint.ref_id
         a_nid = space_node_ids.get(a)
         b_nid = space_node_ids.get(b)
-        if waypoint is None or a_nid is None or b_nid is None:
+        if a_nid is None or b_nid is None:
             return door_other_space(door, occupant.current_space_id)
         an, bn = nodes[a_nid], nodes[b_nid]
         da = dist(waypoint.x, waypoint.y, an.x, an.y)

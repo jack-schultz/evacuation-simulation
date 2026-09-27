@@ -71,7 +71,14 @@ def _next_waypoint_on_space_side(
     space_id: str,
     other_space_id: str,
 ) -> bool:
-    """True if waypoint is closer to space_id's node than to other_space_id's."""
+    """True if waypoint belongs on space_id's side of a door (vs other_space_id)."""
+    # Ownership beats centroid distance: obstacle waypoints can sit nearer the
+    # far room's center while still belonging to the near room.
+    if (
+        waypoint.kind in (NodeKind.SPACE, NodeKind.WAYPOINT)
+        and waypoint.ref_id in (space_id, other_space_id)
+    ):
+        return waypoint.ref_id == space_id
     cur_nid = graph.space_node_ids.get(space_id)
     oth_nid = graph.space_node_ids.get(other_space_id)
     if cur_nid is None or oth_nid is None:
