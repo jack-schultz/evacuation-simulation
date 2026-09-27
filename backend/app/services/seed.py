@@ -268,7 +268,7 @@ def create_23_floor_template() -> BuildingLayout:
     ground_y = core_y + core_height / 2
 
     return BuildingLayout(
-        name="23-Floor Twin Tower Template",
+        name= "Dual NYC Office Template (2001)",
         width=right_x + tower_size + 4.0,
         height=top_y + tower_size + 4.0,
         meters_per_cell=1.0,
