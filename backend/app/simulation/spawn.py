@@ -24,6 +24,7 @@ from app.simulation.hazards import (
 )
 from app.simulation.graph import NodeKind, NavigationGraphBuilder, NavigationGraph
 from app.simulation.obstacles import free_position
+from app.simulation.flood import active_flood_plumes, flood_intensity_at
 from app.simulation.movement import SimulatedOccupant
 from app.simulation.routing import DijkstraRouteSelector, edge_between, shortest_path_to_node
 
@@ -46,6 +47,7 @@ def spawn_occupants(
     solids = boundary_solids or []
     # Track projected availability at every door and exit aperture across groups.
     opening_slots: dict[str, list[float]] = {}
+    flood_cache: dict[int, list] = {}
     initial_hazards = (
         layout.flood,
         *fire_emergencies_from_plumes(active_fire_plumes(layout, 0)),
@@ -148,6 +150,7 @@ def spawn_occupants(
                 key=lambda candidate: _projected_route_time(
                     candidate, ox, oy, group.walking_speed_mps,
                     graph, layout, radius_m, timestep_s, opening_slots,
+                    flood_cache=flood_cache,
                 ),
             )
             if len(route) > 1:
@@ -155,6 +158,7 @@ def spawn_occupants(
                     route, ox, oy, group.walking_speed_mps,
                     graph, layout, radius_m, timestep_s, opening_slots,
                     reserve=True,
+                    flood_cache=flood_cache,
                 )
             occupants.append(
                 SimulatedOccupant(
@@ -253,27 +257,91 @@ def _opening_service(node, speed_mps, layout, radius_m, timestep_s, opening_slot
     return queue, service_s
 
 
+def _route_edge_space_ids(graph, layout, from_id, to_id):
+    """Spaces shared by the endpoints of a route leg."""
+    doors = {d.id: d for d in layout.doors}
+    exits = {e.id: e for e in layout.exits}
+
+    def memberships(node):
+        if node.kind in (NodeKind.SPACE, NodeKind.WAYPOINT):
+            return {node.ref_id}
+        if node.kind == NodeKind.DOOR:
+            door = doors.get(node.ref_id)
+            return set(door.connects) if door else set()
+        if node.kind == NodeKind.EXIT:
+            exit_ = exits.get(node.ref_id)
+            return {exit_.connected_space_id} if exit_ else set()
+        return set()
+
+    return memberships(graph.nodes[from_id]) & memberships(graph.nodes[to_id])
+
+
 def _projected_route_time(route, x, y, speed_mps, graph, layout, radius_m,
-                          timestep_s, opening_slots, *, reserve=False):
+                          timestep_s, opening_slots, *, reserve=False,
+                          flood_cache=None):
     if len(route) <= 1:
         return float("inf"), float("inf")
     time_s = 0.0
     total_wait_s = 0.0
+    clearance_time_s = 0.0
+    flood_exposure_s = 0.0
+    flood = layout.flood
+    forecast_flood = bool(
+        not reserve and flood is not None and flood.enabled and flood.intensity > 0
+    )
+    if flood_cache is None:
+        flood_cache = {}
+
+    def plumes_at(t):
+        second = math.ceil(t)
+        if second not in flood_cache:
+            flood_cache[second] = active_flood_plumes(layout, second)
+        return flood_cache[second]
+
     for i, (from_id, to_id) in enumerate(zip(route, route[1:])):
         edge = edge_between(graph, from_id, to_id)
         if edge is None or edge.speed_factor <= 0:
             return float("inf"), float("inf")
         node = graph.nodes[to_id]
         distance = math.hypot(node.x - x, node.y - y) if i == 0 else edge.distance_m
-        time_s += distance / (speed_mps * edge.speed_factor)
+        travel_s = distance / (speed_mps * edge.speed_factor)
+        if forecast_flood:
+            from_node = graph.nodes[from_id]
+            mid_x = (from_node.x + node.x) * 0.5
+            mid_y = (from_node.y + node.y) * 0.5
+            memberships = _route_edge_space_ids(graph, layout, from_id, to_id)
+            exposure = max(
+                (flood_intensity_at(
+                    plumes_at(time_s + travel_s * 0.5), sid, mid_x, mid_y,
+                ) for sid in memberships),
+                default=0.0,
+            )
+            flood_exposure_s += travel_s * exposure / 100.0
+        time_s += travel_s
+        clearance_time_s += edge.route_penalty_m / (speed_mps * edge.speed_factor)
         if node.kind in (NodeKind.DOOR, NodeKind.EXIT):
             queue, service_s = _opening_service(
                 node, speed_mps, layout, radius_m, timestep_s, opening_slots
             )
-            total_wait_s += max(0.0, queue[0] - time_s)
+            wait_s = max(0.0, queue[0] - time_s)
+            if forecast_flood and wait_s > 0:
+                memberships = _route_edge_space_ids(
+                    graph, layout, from_id, to_id,
+                )
+                exposure = max(
+                    (flood_intensity_at(
+                        plumes_at(time_s + wait_s * 0.5), sid, node.x, node.y,
+                    ) for sid in memberships),
+                    default=0.0,
+                )
+                flood_exposure_s += wait_s * exposure / 100.0
+            total_wait_s += wait_s
             time_s = max(time_s, queue[0]) + service_s
             if reserve:
                 heapq.heapreplace(queue, time_s)
     # A shared downstream bottleneck can make different first doors have the
     # same finish time. Prefer the route with less total waiting in that tie.
-    return time_s, total_wait_s
+    # The route remains traversable in water, but exposure can be lethal.
+    # Prefer a slower dry exit over a short flooded route when both are open.
+    route_score = time_s + clearance_time_s + flood_exposure_s * 15.0
+    return time_s if reserve else route_score, total_wait_s

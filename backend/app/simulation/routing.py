@@ -64,7 +64,7 @@ class DijkstraRouteSelector:
                     continue
                 if edge.speed_factor <= 0:
                     continue
-                new_cost = cost + edge.distance_m / edge.speed_factor
+                new_cost = cost + (edge.distance_m + edge.route_penalty_m) / edge.speed_factor
                 if new_cost < dist.get(nxt, float("inf")):
                     dist[nxt] = new_cost
                     prev[nxt] = node_id
@@ -134,7 +134,7 @@ def shortest_path_to_node(
             edge = graph.edges[edge_id]
             if edge.to_id not in allowed_node_ids or edge.speed_factor <= 0:
                 continue
-            next_cost = cost + edge.distance_m / edge.speed_factor
+            next_cost = cost + (edge.distance_m + edge.route_penalty_m) / edge.speed_factor
             if next_cost < distance.get(edge.to_id, float('inf')):
                 distance[edge.to_id] = next_cost
                 previous[edge.to_id] = node_id

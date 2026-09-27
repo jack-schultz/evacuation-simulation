@@ -159,3 +159,58 @@ class ObstacleTests(unittest.TestCase):
                 self.assertFalse(any(":obstacle:" in n for n in result_after.results.occupants[0].route_node_ids))
         finally:
             engine.dispose()
+
+
+class WallClearanceTests(unittest.TestCase):
+    def test_wider_detour_beats_shorter_wall_side_gap(self):
+        data = layout_with_obstacles([{
+            "id": "block", "x": 8, "y": 1.6, "width": 4, "height": 5.4,
+        }], spawn=(2, 4)).model_dump()
+        data["exits"][0]["y"] = 4
+        layout = BuildingLayout.model_validate(data)
+        output = ObstacleTests().run_layout(layout)
+        route = output.results.occupants[0].route_points
+        self.assertEqual(output.results.evacuated_count, 1)
+        self.assertTrue(any(x > 7 and y > 7 for x, y in route), route)
+        ObstacleTests().assert_clear_frames(layout, output)
+
+    def test_crowd_uses_open_detour_without_stalling_at_wall(self):
+        data = layout_with_obstacles([{
+            "id": "block", "x": 8, "y": 1.6, "width": 4, "height": 5.4,
+        }], count=20, spawn=(2, 4)).model_dump()
+        data["exits"][0]["y"] = 4
+        layout = BuildingLayout.model_validate(data)
+        output = ObstacleTests().run_layout(layout)
+        self.assertEqual(output.results.evacuated_count, 20)
+        ObstacleTests().assert_clear_frames(layout, output)
+
+    def test_displaced_occupant_steers_back_to_reachable_corner(self):
+        from app.simulation.graph import NavigationGraphBuilder
+        from app.simulation.movement import SimulatedOccupant, SpatialMovementModel
+        layout = layout_with_obstacles()
+        graph = NavigationGraphBuilder().build(layout, {
+            "occupant_radius_m": 0.25, "door_flow_per_s": 1.2,
+            "exit_flow_per_s": 1.5, "stairs_flow_per_s": 0.8,
+            "corridor_density_per_m2": 2.0,
+        })
+        corners = [n for n in graph.nodes.values()
+                   if ":obstacle:" in n.id and n.y < 3]
+        first, second = sorted(corners, key=lambda n: n.x)
+        occupant = SimulatedOccupant(
+            id="g:0", group_id="g", speed_mps=1.2,
+            route=[first.id, second.id, "exit:exit"],
+            current_space_id="room", x=7.5, y=2.95,
+        )
+        target = SpatialMovementModel().propose_target(
+            occupant, graph, radius_m=0.25, admitted=True,
+        )
+        self.assertEqual(target, (first.x, first.y))
+        self.assertEqual(occupant.route, [first.id, second.id, "exit:exit"])
+
+    def test_only_passable_gap_remains_available(self):
+        layout = layout_with_obstacles([{
+            "id": "barrier", "x": 8, "y": 0.9, "width": 1, "height": 11.1,
+        }])
+        output = ObstacleTests().run_layout(layout)
+        self.assertEqual(output.results.evacuated_count, 1)
+        ObstacleTests().assert_clear_frames(layout, output)

@@ -17,7 +17,7 @@ from app.simulation.graph_types import (
     edge_exists,
 )
 
-from app.simulation.obstacles import corner_points, free_position, visible
+from app.simulation.obstacles import corner_points, free_position, visible, wall_clearance_cost
 
 def _dist(ax: float, ay: float, bx: float, by: float) -> float:
     return ((ax - bx) ** 2 + (ay - by) ** 2) ** 0.5
@@ -114,12 +114,13 @@ class NavigationGraphBuilder:
     """
 
     def build(self, layout: BuildingLayout, defaults: dict[str, float]) -> NavigationGraph:
-        graph = NavigationGraph(obstacles=layout.obstacles)
+        graph = NavigationGraph(obstacles=layout.obstacles, spaces={s.id: s for s in layout.spaces})
         spaces = {s.id: s for s in layout.spaces}
         doors = {d.id: d for d in layout.doors}
         exits = {e.id: e for e in layout.exits}
 
         radius = float(defaults.get("occupant_radius_m", 0.25))
+        obstacle_floors = {o.floor_id for o in layout.obstacles}
         for space in layout.spaces:
             cx, cy = interior_point(space.vertices)
             obstacles = [o for o in layout.obstacles if o.floor_id == space.floor_id]
@@ -168,6 +169,9 @@ class NavigationGraphBuilder:
                         capacity_density_per_m2=None,
                         area_m2=None,
                         element_id=door.id,
+                        route_penalty_m=wall_clearance_cost(
+                            (sn.x, sn.y), portal, space, radius,
+                        ) if space.floor_id in obstacle_floors else 0.0,
                     )
                     graph.add_edge(edge)
 
@@ -226,6 +230,9 @@ class NavigationGraphBuilder:
                     capacity_density_per_m2=None,
                     area_m2=None,
                     element_id=exit_.id,
+                    route_penalty_m=wall_clearance_cost(
+                        (sn.x, sn.y), portal, space, radius,
+                    ) if space.floor_id in obstacle_floors else 0.0,
                 )
                 graph.add_edge(edge)
             openings_by_space[exit_.connected_space_id].append(node.id)
@@ -279,6 +286,8 @@ class NavigationGraphBuilder:
                 graph, node_id, node.id, max(_dist(*position, node.x, node.y), 0.01),
                 space, _edge_kind_for_space(space.type), min(space.bbox[2:]),
                 doors, exits, defaults,
+                wall_clearance_cost(position, (node.x, node.y), space, radius)
+                if obstacles else 0.0,
             )
 
     def _register_stair_hosts(
@@ -461,6 +470,7 @@ class NavigationGraphBuilder:
                     doors,
                     exits,
                     defaults,
+                    wall_clearance_cost(pa, pb, space, radius) if obstacles else 0.0,
                 )
                 self._add_directed_visibility_edge(
                     graph,
@@ -473,6 +483,7 @@ class NavigationGraphBuilder:
                     doors,
                     exits,
                     defaults,
+                    wall_clearance_cost(pa, pb, space, radius) if obstacles else 0.0,
                 )
 
     def _add_directed_visibility_edge(
@@ -487,6 +498,7 @@ class NavigationGraphBuilder:
         doors: dict[str, Door],
         exits: dict[str, Exit],
         defaults: dict[str, float],
+        route_penalty_m: float = 0.0,
     ) -> None:
         # Avoid duplicate adjacency if space↔opening already added
         if edge_exists(graph, from_id, to_id):
@@ -516,6 +528,7 @@ class NavigationGraphBuilder:
                 capacity_density_per_m2=None,
                 area_m2=None,
                 element_id=elem,
+                route_penalty_m=route_penalty_m,
             ),
             bidirectional=False,
         )

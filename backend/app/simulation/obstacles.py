@@ -58,6 +58,32 @@ def visible(
     return True
 
 
+def wall_clearance_cost(
+    a: Point, b: Point, space: Space, radius: float,
+) -> float:
+    """Soft routing penalty for walking close to room walls.
+
+    Paths through narrow passages remain available when they are necessary.
+    """
+    length = math.dist(a, b)
+    if length < 1e-9:
+        return 0.0
+    desired_free_m = 0.9
+    samples = (0.2, 0.4, 0.6, 0.8)
+    crowding = sum(
+        max(0.0, (desired_free_m - max(
+            0.0,
+            distance_to_boundary(
+                a[0] + (b[0] - a[0]) * t,
+                a[1] + (b[1] - a[1]) * t,
+                space.vertices,
+            ) - radius,
+        )) / desired_free_m)
+        for t in samples
+    ) / len(samples)
+    return length * 2.5 * crowding
+
+
 def corner_points(
     obstacles: Sequence[Obstacle], radius: float, space: Space | None = None,
 ) -> Iterable[Point]:

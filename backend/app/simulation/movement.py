@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import heapq
 from typing import Protocol
 
 from app.domain.building import Door, OccupantStatus
@@ -168,6 +169,67 @@ class SpatialMovementModel:
         offset = max(radius_m * 1.5, 0.4)
         return slot_x + dx / length * offset, slot_y + dy / length * offset
 
+    def _rejoin_target(
+        self,
+        occupant: SimulatedOccupant,
+        graph: NavigationGraph,
+        target: GraphNode,
+        radius_m: float,
+    ) -> tuple[float, float] | None:
+        """Rejoin a fixed route leg from a position displaced by crowd movement."""
+        from app.simulation.obstacles import visible, wall_clearance_cost
+
+        space = graph.spaces.get(occupant.current_space_id)
+        if space is None:
+            return None
+        obstacles = [o for o in graph.obstacles if o.floor_id == occupant.floor_id]
+        start = (occupant.x, occupant.y)
+        goal = (target.x, target.y)
+        if visible(start, goal, space, obstacles, radius_m):
+            return None
+
+        candidates = {
+            n.id: n for n in graph.nodes.values()
+            if n.id == target.id or (
+                n.ref_id == space.id
+                and (n.kind == NodeKind.WAYPOINT or n.id == graph.space_node_ids.get(space.id))
+                and not n.id.startswith("spawn:")
+            )
+        }
+        if target.id not in candidates:
+            return None
+
+        heap: list[tuple[float, str, str]] = []
+        for node in candidates.values():
+            point = (node.x, node.y)
+            if dist(*start, *point) < 0.05 or not visible(
+                start, point, space, obstacles, radius_m
+            ):
+                continue
+            cost = dist(*start, *point) + wall_clearance_cost(
+                start, point, space, radius_m
+            )
+            heapq.heappush(heap, (cost, node.id, node.id))
+        best: dict[str, float] = {}
+        while heap:
+            cost, node_id, first_id = heapq.heappop(heap)
+            if cost >= best.get(node_id, float("inf")):
+                continue
+            best[node_id] = cost
+            if node_id == target.id:
+                first = candidates[first_id]
+                return first.x, first.y
+            for edge_id in graph.adjacency.get(node_id, []):
+                edge = graph.edges[edge_id]
+                if edge.to_id not in candidates or edge.speed_factor <= 0:
+                    continue
+                next_cost = cost + (
+                    edge.distance_m + edge.route_penalty_m
+                ) / edge.speed_factor
+                if next_cost < best.get(edge.to_id, float("inf")):
+                    heapq.heappush(heap, (next_cost, edge.to_id, first_id))
+        return None
+
     def propose_target(
         self,
         occupant: SimulatedOccupant,
@@ -193,6 +255,13 @@ class SpatialMovementModel:
             # Already on the destination side of this door — leave toward the
             # next route waypoint (do not re-apply aperture approach geometry).
             return waypoint.x, waypoint.y
+
+        if graph.obstacles and waypoint.kind in (
+            NodeKind.WAYPOINT, NodeKind.DOOR, NodeKind.EXIT,
+        ):
+            detour = self._rejoin_target(occupant, graph, waypoint, radius_m)
+            if detour is not None:
+                return detour
 
         edge = edge_between(graph, occupant.current_node_id, nxt)
         if edge is None:

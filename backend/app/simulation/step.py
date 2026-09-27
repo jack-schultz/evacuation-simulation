@@ -166,11 +166,8 @@ def advance_timestep(
     floors: dict[str, Floor] | None = None,
     smoke_plumes=None,
     fire_plumes=None,
-<<<<<<< HEAD
-    obstacles=(),
-=======
     flood_plumes=None,
->>>>>>> f7599a3948d88e71be0aa9e180c6c62f3c6f94de
+    obstacles=(),
 ) -> None:
     radius = params.occupant_radius_m
     solids = boundary_solids or []

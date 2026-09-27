@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from app.domain.building import Obstacle
+from app.domain.building import Obstacle, Space
 
 class NodeKind(str, Enum):
     SPACE = "space"
@@ -43,6 +43,7 @@ class GraphEdge:
     capacity_density_per_m2: float | None
     area_m2: float | None
     element_id: str
+    route_penalty_m: float = 0.0
     speed_factor: float = 1.0
     # Intrinsic slowdown (e.g. stair ascent/descent); hazards multiply this.
     base_speed_factor: float = 1.0
@@ -51,6 +52,7 @@ class GraphEdge:
 @dataclass
 class NavigationGraph:
     obstacles: list[Obstacle] = field(default_factory=list)
+    spaces: dict[str, Space] = field(default_factory=dict)
     opening_axes: dict[str, tuple[float, float]] = field(default_factory=dict)
     nodes: dict[str, GraphNode] = field(default_factory=dict)
     edges: dict[str, GraphEdge] = field(default_factory=dict)
@@ -87,6 +89,7 @@ class NavigationGraph:
                 capacity_density_per_m2=edge.capacity_density_per_m2,
                 area_m2=edge.area_m2,
                 element_id=edge.element_id,
+                route_penalty_m=edge.route_penalty_m,
                 speed_factor=edge.speed_factor,
                 base_speed_factor=edge.base_speed_factor,
             )
