@@ -22,12 +22,14 @@ regulatory compliance calculation.
 * Space polygon edges are solid for spatial movement; door and exit clear
   widths are the only gaps on those edges. Space edges do not alter the
   navigation graph beyond defining which openings may connect.
-* Stairs spaces may set `linked_stair_id` to stairs on a **different floor**.
-  Occupants walk a directed centreline along the stair polygon (ascent slower
-  than descent), then continue on the partner floor. Capacity still limits
-  concurrent climbers. A stair whose center lies inside a same-floor room is
-  treated as an opening of that host. This is stacked 2D geometry with climb
-  time — not a continuous 3D mesh.
+* Stairs spaces may set `linked_stair_id` to another stairs space on a
+  **different floor**, or on the **same floor** for a single-page multi-level
+  plan. Occupants walk a directed centreline along the stair polygon (ascent
+  slower than descent), then continue from the partner stair. When floor
+  elevations match, climb distance uses a default storey rise (~3 m). Capacity
+  still limits concurrent climbers. A stair whose center lies inside a
+  same-floor room is treated as an opening of that host. This is stacked 2D
+  geometry with climb time — not a continuous 3D mesh.
 
 ## Occupant knowledge and behaviour
 

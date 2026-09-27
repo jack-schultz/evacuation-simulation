@@ -67,8 +67,9 @@ Full interpretation guidance: [ASSUMPTIONS.md](ASSUMPTIONS.md).
 
 ## Known simplifications
 
-- Multi-floor tabs with stacked plans; linked stairs use a directed slowed climb between
-  stair centers for multi-level pathing (not continuous vertical physics).
+- Multi-floor tabs with stacked plans, or same-floor linked stairs for a
+  single-page multi-level plan; linked stairs use a directed slowed climb
+  between stair centers (not continuous vertical physics).
 - Illustrative circular fire (radial floor spread + stairs) and room-scoped
   smoke (through doors like flood, faster than fire; fire seeds smoke in rooms
   it reaches); flood fills each room separately,

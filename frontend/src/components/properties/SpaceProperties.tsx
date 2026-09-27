@@ -71,10 +71,7 @@ export function SpaceProperties({
   disabled,
 }: Props) {
   const otherStairs = layout.spaces.filter(
-    (s) =>
-      s.type === 'stairs' &&
-      s.id !== space.id &&
-      (s.floor_id ?? 'floor-0') !== (space.floor_id ?? 'floor-0'),
+    (s) => s.type === 'stairs' && s.id !== space.id,
   );
 
   const renameId = (raw: string) => {
@@ -136,7 +133,7 @@ export function SpaceProperties({
               ))}
             </select>
           </label>
-          <p className="hint">Link stairs on another floor. People walk the stair centreline slowly (ascent slower than descent). Arrows on the canvas show preferred down direction.</p>
+          <p className="hint">Link stairs on another floor, or on the same floor for a single-page multi-level plan. People walk the stair centreline slowly (ascent slower than descent). Same-floor links use a default storey rise when elevations match. Arrows on the canvas show preferred down direction.</p>
         </>
       )}
       <p className="hint">

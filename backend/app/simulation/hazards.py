@@ -346,7 +346,6 @@ def _stair_hosts(layout: BuildingLayout) -> list[tuple[str, str, float, float]]:
 def _smoke_adjacency(layout: BuildingLayout) -> tuple[dict, dict, list]:
     """doors_by_space, vertical_links by stair id, host openings."""
     spaces = {s.id: s for s in layout.spaces}
-    floors = {f.id: f for f in layout.floors}
     doors_by_space: dict[str, list] = {sid: [] for sid in spaces}
     for door in layout.doors:
         a, b = door.connects
@@ -360,10 +359,6 @@ def _smoke_adjacency(layout: BuildingLayout) -> tuple[dict, dict, list]:
     for stair in stairs:
         partner = spaces.get(stair.linked_stair_id)
         if partner is None or partner.type != SpaceType.STAIRS:
-            continue
-        elev = floor_elevation(floors, stair.floor_id)
-        partner_elev = floor_elevation(floors, partner.floor_id)
-        if abs(partner_elev - elev) <= 1e-9:
             continue
         for a, b in ((stair, partner), (partner, stair)):
             key = (a.id, b.id)

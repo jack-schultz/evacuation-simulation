@@ -60,10 +60,11 @@ API routers → services → domain / simulation engine
 
 - Layout pieces: **floors**, **spaces** (`room` \| `stairs` as closed polygons), **doors**, **exits**, **occupant_groups**.
 - Connectivity is **doors + exits**, plus **linked stairs** (`linked_stair_id`)
-  across different floors. Occupants walk a directed, slowed stair centreline
-  (ascent slower than descent) with capacity while climbing. A stair whose center
-  lies inside a same-floor room is pathable as an opening of that host (like a
-  door). Space nodes sit at an
+  across floors or on the same floor (single-page multi-level plans). Occupants
+  walk a directed, slowed stair centreline (ascent slower than descent) with
+  capacity while climbing. Same-floor links use a default storey rise when
+  elevations match. A stair whose center lies inside a same-floor room is
+  pathable as an opening of that host (like a door). Space nodes sit at an
   **interior point** and define which openings share a room; within a space, routes
   follow a visibility graph (openings + reflex-corner waypoints) so paths stay inside
   non-convex rooms. Space edges act as solid barriers for movement (door/exit widths

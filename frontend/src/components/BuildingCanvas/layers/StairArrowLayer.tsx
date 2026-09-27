@@ -47,11 +47,16 @@ export function StairArrowLayer({ layout, activeFloorId, showAllFloors = false }
         let from = a;
         let to = b;
         let label = 'Link a floor';
-        if (partner) {
+        if partner:
           const elev = floors[entityFloorId(space)]?.elevation_m ?? 0;
           const partnerElev = floors[entityFloorId(partner)]?.elevation_m ?? 0;
           const partnerFloor = floors[entityFloorId(partner)];
-          if (elev >= partnerElev) {
+          const partnerLabel = partnerFloor?.name ?? partner.name;
+          if (Math.abs(elev - partnerElev) <= 1e-9) {
+            from = a;
+            to = b;
+            label = `To ${partnerLabel}`;
+          } else if (elev >= partnerElev) {
             from = a;
             to = b;
             label = `Down to ${partnerFloor?.name ?? 'lower'}`;

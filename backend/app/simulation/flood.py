@@ -99,6 +99,7 @@ def _build_flood_adjacency(layout: BuildingLayout) -> tuple[dict, dict, list]:
             doors_by_space[b].append(door)
 
     # stair_id -> list of (partner_stair, going_up)
+    # Same-elevation (incl. same-floor) links transfer immediately both ways.
     vertical: dict[str, list] = {}
     stairs = [s for s in layout.spaces if s.type == SpaceType.STAIRS and s.linked_stair_id]
     seen: set[tuple[str, str]] = set()
@@ -106,18 +107,14 @@ def _build_flood_adjacency(layout: BuildingLayout) -> tuple[dict, dict, list]:
         partner = spaces.get(stair.linked_stair_id)
         if partner is None or partner.type != SpaceType.STAIRS:
             continue
-        elev = floor_elevation(floors, stair.floor_id)
-        partner_elev = floor_elevation(floors, partner.floor_id)
-        if abs(partner_elev - elev) <= 1e-9:
-            continue
         for a, b in ((stair, partner), (partner, stair)):
             key = (a.id, b.id)
             if key in seen:
                 continue
             seen.add(key)
-            going_up = floor_elevation(floors, b.floor_id) > floor_elevation(
-                floors, a.floor_id
-            )
+            elev_a = floor_elevation(floors, a.floor_id)
+            elev_b = floor_elevation(floors, b.floor_id)
+            going_up = elev_b > elev_a + 1e-9
             vertical.setdefault(a.id, []).append((b, going_up))
 
     return doors_by_space, vertical, _stair_hosts(layout)
@@ -165,11 +162,12 @@ def _flood_spread_meta(
         host_links[stair_id].append((host_id, sx, sy))
 
     # Descending stairs on each floor for "past stair" checks.
+    # Same-floor / same-elevation links are lateral portals, not gravity dumps.
     descending_on_floor: dict[str, list] = {}
     for stair_id, partners in vertical.items():
         stair = spaces[stair_id]
         for partner, going_up in partners:
-            if going_up:
+            if going_up or _floor_id(partner) == _floor_id(stair):
                 continue
             descending_on_floor.setdefault(_floor_id(stair), []).append(
                 (stair, partner)

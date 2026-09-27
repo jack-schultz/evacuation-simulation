@@ -16,7 +16,7 @@ export interface Space {
   /** Closed polygon ring in metres (closing duplicate omitted). */
   vertices: [number, number][];
   capacity_density_per_m2?: number | null;
-  /** Paired stairs space id for vertical pathing; only used when type is stairs. */
+  /** Paired stairs space id for climb pathing; same- or cross-floor. */
   linked_stair_id?: string | null;
   floor_id?: string;
 }

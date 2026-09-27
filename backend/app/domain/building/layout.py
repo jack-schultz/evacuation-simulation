@@ -51,7 +51,10 @@ class Space(BaseModel):
     )
     linked_stair_id: str | None = Field(
         default=None,
-        description="Paired stairs space id for vertical pathing; only used when type is stairs.",
+        description=(
+            "Paired stairs space id for climb pathing; only used when type is stairs. "
+            "May link across floors or on the same floor (single-page multi-level plans)."
+        ),
     )
     floor_id: str = Field(default=DEFAULT_FLOOR_ID)
 
@@ -341,10 +344,6 @@ class BuildingLayout(BaseModel):
             if other.type != SpaceType.STAIRS:
                 raise ValueError(
                     f"Stairs '{space.id}' links to non-stairs space '{space.linked_stair_id}'"
-                )
-            if other.floor_id == space.floor_id:
-                raise ValueError(
-                    f"Stairs '{space.id}' must link to stairs on a different floor"
                 )
 
         for group in self.occupant_groups:

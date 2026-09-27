@@ -148,30 +148,116 @@ class StairLinkValidationTests(unittest.TestCase):
                 }
             )
 
-    def test_rejects_same_floor_link(self):
-        with self.assertRaises(ValueError):
-            BuildingLayout.model_validate(
+    def test_allows_same_floor_link(self):
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 20,
+                "height": 20,
+                "spaces": [
+                    {
+                        "id": "stairs_a",
+                        "name": "S",
+                        "type": "stairs",
+                        "vertices": [[0, 0], [4, 0], [4, 4], [0, 4]],
+                        "linked_stair_id": "stairs_b",
+                    },
+                    {
+                        "id": "stairs_b",
+                        "name": "S2",
+                        "type": "stairs",
+                        "vertices": [[5, 0], [9, 0], [9, 4], [5, 4]],
+                        "linked_stair_id": "stairs_a",
+                    },
+                ],
+            }
+        )
+        a = next(s for s in layout.spaces if s.id == "stairs_a")
+        self.assertEqual(a.linked_stair_id, "stairs_b")
+
+
+def linked_same_floor_layout(*, count: int = 1) -> BuildingLayout:
+    """Single floor: upper room—door—stairs linked to lower stairs—door—exit room."""
+    return BuildingLayout.model_validate(
+        {
+            "width": 40,
+            "height": 20,
+            "floors": [
+                {"id": "floor-0", "name": "Plan", "elevation_m": 0, "order": 0},
+            ],
+            "spaces": [
                 {
-                    "width": 20,
-                    "height": 20,
-                    "spaces": [
-                        {
-                            "id": "stairs_a",
-                            "name": "S",
-                            "type": "stairs",
-                            "vertices": [[0, 0], [4, 0], [4, 4], [0, 4]],
-                            "linked_stair_id": "stairs_b",
-                        },
-                        {
-                            "id": "stairs_b",
-                            "name": "S2",
-                            "type": "stairs",
-                            "vertices": [[5, 0], [9, 0], [9, 4], [5, 4]],
-                            "linked_stair_id": "stairs_a",
-                        },
-                    ],
+                    "id": "room_a",
+                    "name": "Upper",
+                    "type": "room",
+                    "floor_id": "floor-0",
+                    "vertices": [[0, 0], [8, 0], [8, 8], [0, 8]],
+                },
+                {
+                    "id": "stairs_a",
+                    "name": "Stairs A",
+                    "type": "stairs",
+                    "floor_id": "floor-0",
+                    "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                    "linked_stair_id": "stairs_b",
+                },
+                {
+                    "id": "stairs_b",
+                    "name": "Stairs B",
+                    "type": "stairs",
+                    "floor_id": "floor-0",
+                    "vertices": [[20, 2], [24, 2], [24, 6], [20, 6]],
+                    "linked_stair_id": "stairs_a",
+                },
+                {
+                    "id": "room_b",
+                    "name": "Lower",
+                    "type": "room",
+                    "floor_id": "floor-0",
+                    "vertices": [[24, 0], [32, 0], [32, 8], [24, 8]],
+                },
+            ],
+            "doors": [
+                {
+                    "id": "door_a",
+                    "x": 8,
+                    "y": 4,
+                    "width": 1.2,
+                    "floor_id": "floor-0",
+                    "connects": ["room_a", "stairs_a"],
+                },
+                {
+                    "id": "door_b",
+                    "x": 24,
+                    "y": 4,
+                    "width": 1.2,
+                    "floor_id": "floor-0",
+                    "connects": ["stairs_b", "room_b"],
+                },
+            ],
+            "exits": [
+                {
+                    "id": "out",
+                    "x": 32,
+                    "y": 4,
+                    "width": 1.2,
+                    "floor_id": "floor-0",
+                    "connected_space_id": "room_b",
                 }
-            )
+            ],
+            "occupant_groups": [
+                {
+                    "id": "g",
+                    "name": "Crowd",
+                    "count": count,
+                    "space_id": "room_a",
+                    "floor_id": "floor-0",
+                    "spawn_x": 2.0,
+                    "spawn_y": 4.0,
+                    "walking_speed_mps": 1.4,
+                }
+            ],
+        }
+    )
 
 
 class StairLinkGraphTests(unittest.TestCase):
@@ -201,6 +287,21 @@ class StairLinkGraphTests(unittest.TestCase):
         self.assertEqual(forward[0].kind, EdgeKind.STAIRS)
         # Descent A(floor-1)->B(floor-0) faster than ascent
         self.assertGreater(forward[0].base_speed_factor, reverse[0].base_speed_factor)
+
+    def test_same_floor_linked_stairs_get_portal(self):
+        layout = linked_same_floor_layout()
+        graph = NavigationGraphBuilder().build(layout, self.defaults)
+        a = graph.space_node_ids["stairs_a"]
+        b = graph.space_node_ids["stairs_b"]
+        to_b = [
+            graph.edges[eid]
+            for eid in graph.adjacency[a]
+            if graph.edges[eid].to_id == b
+        ]
+        self.assertEqual(len(to_b), 1)
+        self.assertEqual(to_b[0].kind, EdgeKind.STAIRS)
+        # Equal elevations → default rise still yields a climb distance
+        self.assertGreater(to_b[0].distance_m, 3.0)
 
     def test_unlinked_stairs_have_no_portal(self):
         layout = linked_floors_layout(link=False)
@@ -233,6 +334,19 @@ class StairClimbSimTests(unittest.TestCase):
         }
         self.assertIn("floor-1", floors_seen)
         self.assertIn("floor-0", floors_seen)
+
+    def test_same_floor_link_evacuee_reaches_exit(self):
+        layout = linked_same_floor_layout(count=1)
+        out = SimulationEngine().run(
+            layout, SimulationParameters(max_time_s=120, frame_interval_s=0.5)
+        )
+        self.assertEqual(out.results.evacuated_count, 1)
+        climbing = [
+            f
+            for f in out.frames
+            if any(o.status.value == "climbing" for o in f.occupants)
+        ]
+        self.assertTrue(climbing, "expected climbing frames on same-floor stairs")
 
 
 if __name__ == "__main__":
