@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.domain.building import BuildingLayout
 from app.models.building import BuildingRecord
 from app.schemas.api import BuildingResponse, BuildingSummary
-from app.services.seed import create_seed_layout
+from app.services.seed import create_23_floor_template, create_seed_layout
 
 
 class BuildingService:
@@ -63,9 +63,28 @@ class BuildingService:
 
     def ensure_seed(self) -> BuildingResponse | None:
         existing = self.db.query(BuildingRecord).first()
-        if existing:
-            return None
-        return self.create_building(create_seed_layout())
+        created: BuildingResponse | None = None
+        if existing is None:
+            created = self.create_building(create_seed_layout())
+        template_exists = (
+            self.db.query(BuildingRecord)
+            .filter(BuildingRecord.name == "Dual NYC Office Template (2001)")
+            .first()
+        )
+        if template_exists is None:
+            template = self.create_building(create_23_floor_template())
+            legacy = (
+                self.db.query(BuildingRecord)
+                .filter(BuildingRecord.name == "Dual NYC Office Template (2001)")
+                .first()
+            )
+            if legacy:
+                legacy_layout = BuildingLayout.model_validate_json(legacy.layout_json)
+                if len(legacy_layout.floors) == 23 and len(legacy_layout.spaces) == 46:
+                    self.db.delete(legacy)
+                    self.db.commit()
+            created = created or template
+        return created
 
     def get_layout(self, building_id: str) -> BuildingLayout:
         row = self._get_or_404(building_id)
