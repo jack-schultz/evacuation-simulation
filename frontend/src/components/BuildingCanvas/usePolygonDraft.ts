@@ -1,9 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { BuildingLayout, EditorTool, Selection } from '../../types/building';
-import { polygonArea, samePoint, uid, type Point } from '../../utils';
+import {
+  distance,
+  formatLengthM,
+  polygonArea,
+  samePoint,
+  uid,
+  type Point,
+} from '../../utils';
 import { toFlatPoints } from './geometryHelpers';
 
 const SPACE_TOOLS: EditorTool[] = ['room', 'stairs'];
+/** Pull length labels slightly off the edge so they stay readable. */
+const LABEL_OFFSET_M = 0.35;
+
+export type DraftLengthLabel = {
+  key: string;
+  x: number;
+  y: number;
+  text: string;
+};
+
+function lengthLabel(a: Point, b: Point, key: string): DraftLengthLabel | null {
+  const len = distance(a, b);
+  if (len < 1e-6) return null;
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const nx = -dy / len;
+  const ny = dx / len;
+  return {
+    key,
+    x: (a[0] + b[0]) / 2 + nx * LABEL_OFFSET_M,
+    y: (a[1] + b[1]) / 2 + ny * LABEL_OFFSET_M,
+    text: formatLengthM(len),
+  };
+}
 
 export function usePolygonDraft({
   tool,
@@ -85,6 +116,20 @@ export function usePolygonDraft({
     return toFlatPoints(pts);
   }, [draftPoints, cursor, closingPreview]);
 
+  const draftLengthLabels = useMemo(() => {
+    const labels: DraftLengthLabel[] = [];
+    for (let i = 1; i < draftPoints.length; i++) {
+      const label = lengthLabel(draftPoints[i - 1], draftPoints[i], `edge-${i}`);
+      if (label) labels.push(label);
+    }
+    if (draftPoints.length > 0 && cursor) {
+      const end = closingPreview ? draftPoints[0] : cursor;
+      const label = lengthLabel(draftPoints[draftPoints.length - 1], end, 'preview');
+      if (label) labels.push(label);
+    }
+    return labels;
+  }, [draftPoints, cursor, closingPreview]);
+
   return {
     draftPoints,
     setDraftPoints,
@@ -95,6 +140,7 @@ export function usePolygonDraft({
     cancelDraft,
     closingPreview,
     draftLinePoints,
+    draftLengthLabels,
     SPACE_TOOLS,
   };
 }

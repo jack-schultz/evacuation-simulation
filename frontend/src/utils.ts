@@ -10,6 +10,17 @@ export const SCALE = 20; // pixels per metre
 
 export type Point = [number, number];
 
+/** Format a metres length for canvas dimension labels (0.5 m grid). */
+export function formatLengthM(metres: number): string {
+  const rounded = Math.round(metres * 10) / 10;
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  return `${text} m`;
+}
+
+export function distance(a: Point, b: Point): number {
+  return Math.hypot(b[0] - a[0], b[1] - a[1]);
+}
+
 export function polygonArea(vertices: Point[]): number {
   if (vertices.length < 3) return 0;
   let total = 0;

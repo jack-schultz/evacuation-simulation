@@ -15,6 +15,9 @@ import { layoutFires, layoutFloods } from '../../layout/hazards';
 import { findNearestSpaces, spaceContaining } from './geometryHelpers';
 import { filterLayoutByFloor } from '../../layout/emptyLayout';
 
+/** Magnetism for axis-aligned room edges while drafting (metres). */
+const ORTHO_SNAP_M = 0.35;
+
 type DraftApi = {
   draftPoints: Point[];
   setDraftPoints: React.Dispatch<React.SetStateAction<Point[]>>;
@@ -98,13 +101,24 @@ export function useCanvasInteraction({
   const dragRefRef = useRef<ObjectRef | null>(null);
   const suppressNextClickRef = useRef(false);
 
-  const toWorld = (evt: Konva.KonvaEventObject<MouseEvent | PointerEvent>) => {
+  const toWorld = (
+    evt: Konva.KonvaEventObject<MouseEvent | PointerEvent>,
+    options?: { orthoFrom?: Point | null },
+  ) => {
     const stage = evt.target.getStage();
     const pointer = stage?.getPointerPosition();
     if (!stage || !pointer) return null;
     const transform = stage.getAbsoluteTransform().copy().invert();
     const local = transform.point(pointer);
-    return { x: snap(local.x / SCALE), y: snap(local.y / SCALE) };
+    let x = local.x / SCALE;
+    let y = local.y / SCALE;
+    // Soft axis lock so room edges land on clean 0.5 m lengths.
+    const from = options?.orthoFrom;
+    if (from) {
+      if (Math.abs(y - from[1]) <= ORTHO_SNAP_M) y = from[1];
+      else if (Math.abs(x - from[0]) <= ORTHO_SNAP_M) x = from[0];
+    }
+    return { x: snap(x), y: snap(y) };
   };
 
   const onMouseDown = (evt: Konva.KonvaEventObject<MouseEvent>) => {
@@ -118,8 +132,18 @@ export function useCanvasInteraction({
       draft.cancelDraft();
       return;
     }
-    const p = toWorld(evt);
+    const draftFrom =
+      draft.SPACE_TOOLS.includes(tool) && draft.draftPoints.length > 0
+        ? draft.draftPoints[draft.draftPoints.length - 1]
+        : null;
+    let p = toWorld(evt, { orthoFrom: draftFrom });
     if (!p) return;
+    if (draft.SPACE_TOOLS.includes(tool) && draft.draftPoints.length >= 3) {
+      const first = draft.draftPoints[0];
+      if (Math.hypot(p.x - first[0], p.y - first[1]) <= ORTHO_SNAP_M) {
+        p = { x: first[0], y: first[1] };
+      }
+    }
     const point: Point = [p.x, p.y];
 
     if (draft.SPACE_TOOLS.includes(tool)) {
@@ -226,8 +250,18 @@ export function useCanvasInteraction({
 
   const onMouseMove = (evt: Konva.KonvaEventObject<MouseEvent>) => {
     if (!interactive || !draft.SPACE_TOOLS.includes(tool)) return;
-    const p = toWorld(evt);
+    const from =
+      draft.draftPoints.length > 0
+        ? draft.draftPoints[draft.draftPoints.length - 1]
+        : null;
+    let p = toWorld(evt, { orthoFrom: from });
     if (!p) return;
+    if (draft.draftPoints.length >= 3) {
+      const first = draft.draftPoints[0];
+      if (Math.hypot(p.x - first[0], p.y - first[1]) <= ORTHO_SNAP_M) {
+        p = { x: first[0], y: first[1] };
+      }
+    }
     draft.setCursor([p.x, p.y]);
   };
 

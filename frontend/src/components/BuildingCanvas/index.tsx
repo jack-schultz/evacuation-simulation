@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Circle, Layer, Line, Rect, Stage, Image as KonvaImage } from 'react-konva';
+import { Circle, Group, Layer, Line, Rect, Stage, Text, Image as KonvaImage } from 'react-konva';
 import type {
   BuildingLayout,
   EditorTool,
@@ -365,6 +365,34 @@ export function BuildingCanvas({
               listening={false}
             />
           )}
+          {draft.draftLengthLabels.map((label) => {
+            const w = 52;
+            const h = 16;
+            return (
+              <Group key={label.key} listening={false}>
+                <Rect
+                  x={label.x * SCALE - w / 2}
+                  y={label.y * SCALE - h / 2}
+                  width={w}
+                  height={h}
+                  fill="rgba(255,255,255,0.92)"
+                  stroke="#93c5fd"
+                  strokeWidth={1}
+                  cornerRadius={3}
+                />
+                <Text
+                  text={label.text}
+                  x={label.x * SCALE - w / 2}
+                  y={label.y * SCALE - 5}
+                  width={w}
+                  align="center"
+                  fontSize={11}
+                  fontStyle="bold"
+                  fill={label.key === 'preview' && draft.closingPreview ? '#15803d' : '#1d4ed8'}
+                />
+              </Group>
+            );
+          })}
           {draft.draftPoints.map(([x, y], i) => (
             <Circle
               key={`draft-${i}`}

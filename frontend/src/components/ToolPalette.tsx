@@ -61,7 +61,8 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
         flood/fire centres. Shift or Cmd/Ctrl+click to multi-select.
         Right-click for copy, paste, duplicate, and delete. Hover an object
         and press E to select it. Drag occupants to move their spawn point.
-        Positions snap to the 0.5 m grid.
+        Edge lengths show while drawing rooms/stairs. Positions snap to
+        the 0.5 m grid (axis-aligned edges lock near horizontal/vertical).
       </p>
     </div>
   );
