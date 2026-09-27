@@ -386,6 +386,84 @@ class SmokeSimTests(unittest.TestCase):
         self.assertTrue(any(f.smoke_floors for f in out.frames))
         self.assertTrue(any(f.fire_floors for f in out.frames))
 
+    def test_smoke_alone_does_not_kill(self):
+        """Smoke slowdown must not mark people trapped when fire does not touch them."""
+        layout = BuildingLayout.model_validate(
+            {
+                "width": 20,
+                "height": 12,
+                "spaces": [
+                    {
+                        "id": "r",
+                        "name": "R",
+                        "type": "room",
+                        "vertices": [[0, 0], [16, 0], [16, 10], [0, 10]],
+                    }
+                ],
+                "exits": [
+                    {
+                        "id": "e",
+                        "x": 16,
+                        "y": 5,
+                        "width": 1.2,
+                        "connected_space_id": "r",
+                    }
+                ],
+                "occupant_groups": [
+                    {
+                        "id": "g",
+                        "name": "G",
+                        "count": 1,
+                        "space_id": "r",
+                        "spawn_x": 2,
+                        "spawn_y": 5,
+                        "walking_speed_mps": 1.2,
+                    }
+                ],
+                "fire": {
+                    "enabled": True,
+                    "x": 8,
+                    "y": 8,
+                    "radius_m": 0.5,
+                    "spread_speed_mps": 0,
+                    "intensity": 90,
+                    "emit_smoke": True,
+                    "smoke_visibility_m": 8,
+                },
+            }
+        )
+        out = SimulationEngine().run(layout, SimulationParameters(max_time_s=60))
+        self.assertEqual(out.results.evacuated_count, 1)
+        self.assertFalse(
+            any(
+                o.status == "trapped"
+                for f in out.frames
+                for o in f.occupants
+            )
+        )
+
+    def test_fire_kills_climbers_on_stairs(self):
+        layout = linked_floors_layout(count=1)
+        # Fire covers the stair shaft on both floors.
+        layout.fire = FireEmergency(
+            enabled=True,
+            x=10.0,
+            y=4.0,
+            radius_m=3.0,
+            spread_speed_mps=0.0,
+            intensity=80,
+            floor_id="floor-1",
+            emit_smoke=False,
+            smoke_stair_spread_delay_s=0.0,
+        )
+        out = SimulationEngine().run(
+            layout, SimulationParameters(max_time_s=60, frame_interval_s=0.5)
+        )
+        self.assertEqual(out.results.evacuated_count, 0)
+        self.assertTrue(
+            any(o.status == "trapped" for f in out.frames for o in f.occupants)
+        )
+
 
 class HazardPlaybackTests(unittest.TestCase):
     def test_sim_continues_for_downward_fire_after_egress(self):

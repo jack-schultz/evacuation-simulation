@@ -26,6 +26,7 @@ from app.simulation.collision import (
     update_space_membership_from_position,
 )
 from app.simulation.hazards import (
+    fire_touches,
     hard_plume_factor,
     hazard_radius_at,
     hazards_speed_factor,
@@ -48,10 +49,19 @@ def _advance_climbers(
     params: SimulationParameters,
     t: float,
     smoke_plumes,
+    fire_plumes=None,
 ) -> None:
     """Walk climbing occupants along the directed stair path at reduced speed."""
+    fire_plumes = fire_plumes or []
+    body_r = params.occupant_radius_m
     for occ in occupants:
         if occ.status != OccupantStatus.CLIMBING:
+            continue
+        if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_r):
+            occ.status = OccupantStatus.TRAPPED
+            occ.climb_progress = None
+            occ.climb_from_space_id = None
+            occ.climb_to_space_id = None
             continue
         from_id = occ.climb_from_space_id
         to_id = occ.climb_to_space_id
@@ -86,12 +96,15 @@ def _advance_climbers(
             occ.x, occ.y = x, y
             occ.floor_id = floor_id
             occ.current_space_id = graph.stair_host_space_ids.get(to_id, to_id)
-            occ.status = OccupantStatus.ACTIVE
             occ.climb_progress = None
             occ.climb_from_space_id = None
             occ.climb_to_space_id = None
             occ.route_index += 1
             occ.progress_on_edge = 0.0
+            if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_r):
+                occ.status = OccupantStatus.TRAPPED
+                continue
+            occ.status = OccupantStatus.ACTIVE
             waypoint = graph.nodes.get(occ.current_node_id)
             if waypoint is not None and (
                 waypoint.kind == NodeKind.EXIT or occ.next_node_id is None
@@ -108,6 +121,29 @@ def _advance_climbers(
         occ.current_space_id = (
             from_id if progress < 0.5 else graph.stair_host_space_ids.get(to_id, to_id)
         )
+        if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_r):
+            occ.status = OccupantStatus.TRAPPED
+            occ.climb_progress = None
+            occ.climb_from_space_id = None
+            occ.climb_to_space_id = None
+
+
+def _apply_fire_casualties(
+    occupants: list[SimulatedOccupant],
+    fire_plumes,
+    body_radius_m: float,
+) -> None:
+    """Fire contact is lethal on any floor, including while climbing stairs."""
+    if not fire_plumes:
+        return
+    for occ in occupants:
+        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+            continue
+        if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_radius_m):
+            occ.status = OccupantStatus.TRAPPED
+            occ.climb_progress = None
+            occ.climb_from_space_id = None
+            occ.climb_to_space_id = None
 
 
 def advance_timestep(
@@ -143,7 +179,11 @@ def advance_timestep(
     has_hazard = flood_active or fire_active
     speed_factors: dict[str, float] = {}
 
-    _advance_climbers(occupants, spaces, floors, graph, params, t, smoke_plumes)
+    _apply_fire_casualties(occupants, fire_plumes, radius)
+    _advance_climbers(
+        occupants, spaces, floors, graph, params, t, smoke_plumes, fire_plumes
+    )
+    _apply_fire_casualties(occupants, fire_plumes, radius)
 
     contenders: dict[str, list[SimulatedOccupant]] = defaultdict(list)
     element_edge: dict = {}
@@ -527,3 +567,5 @@ def advance_timestep(
         if blocked and moved > 1e-4:
             occ.distance_m += moved
             occ.travel_time_s += params.timestep_s
+
+    _apply_fire_casualties(occupants, fire_plumes, radius)

@@ -27,12 +27,12 @@ class FloodEmergency(RadialEmergency):
 
 
 class FireEmergency(RadialEmergency):
-    """Illustrative fire scenario; intensity is a relative slowdown, not heat.
+    """Illustrative fire scenario.
 
-    Smoke is part of the fire disaster: when emit_smoke is true the engine
-    synthesizes a soft plume that expands faster than the fire. Both climb
-    linked stairs; once the top floor is reached they cascade downward.
-    Fire uses the same stair path with a longer transfer delay.
+    Contact with the fire circle is lethal (occupant becomes trapped), including
+    on stairs. Smoke is part of the fire disaster: when emit_smoke is true the
+    engine synthesizes a soft plume that expands faster than the fire and only
+    slows people. Both spread through linked stairs in either direction.
     """
 
     emit_smoke: bool = Field(

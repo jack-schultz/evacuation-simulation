@@ -43,15 +43,19 @@ class FireTests(unittest.TestCase):
             self.assertEqual(output.results.occupants[0].route_node_ids[-1], 'exit:far')
             self.assertEqual(output.results.evacuated_count, 1)
 
-    def test_higher_intensity_slows_outward_escape(self):
-        times = []
-        for intensity in (0, 25, 75):
+    def test_fire_contact_is_lethal(self):
+        """Anyone inside the fire circle is trapped; no outward escape."""
+        output = run(fire_layout(dict(x=5, y=5, radius_m=2, intensity=50, spread_speed_mps=0),
+                                 two_exits=False))
+        self.assertEqual(output.results.evacuated_count, 0)
+        self.assertTrue(all(f.occupants[0].status == 'trapped' for f in output.frames[1:]))
+
+    def test_higher_intensity_does_not_allow_escape_from_fire(self):
+        """Legacy escape-through-fire behaviour is removed; contact kills."""
+        for intensity in (25, 75, 100):
             result = run(fire_layout(dict(x=5, y=5, radius_m=1, intensity=intensity,
                                          spread_speed_mps=0), two_exits=False)).results
-            self.assertEqual(result.evacuated_count, 1)
-            times.append(result.total_evacuation_time_s)
-        self.assertLess(times[0], times[1])
-        self.assertLess(times[1], times[2])
+            self.assertEqual(result.evacuated_count, 0)
 
     def test_size_blocks_more_routes(self):
         small = run(fire_layout(dict(x=10, y=5, radius_m=1, spread_speed_mps=0), two_exits=False))

@@ -317,6 +317,24 @@ def smoke_factor_at(
     return factor
 
 
+def fire_touches(
+    plumes: list[SmokeFloorState],
+    floor_id: str,
+    x: float,
+    y: float,
+    body_radius_m: float = 0.0,
+) -> bool:
+    """True when the person's body intersects a fire plume on their floor."""
+    for plume in plumes:
+        if plume.floor_id != floor_id:
+            continue
+        r = plume.radius_m + max(body_radius_m, 0.0)
+        dx, dy = x - plume.x, y - plume.y
+        if dx * dx + dy * dy <= r * r:
+            return True
+    return False
+
+
 def hard_plume_factor(
     plumes: list[SmokeFloorState],
     floor_id: str,
@@ -327,7 +345,7 @@ def hard_plume_factor(
     *,
     is_exit: bool = False,
 ) -> float:
-    """Hard fire/flood-style restriction from floor-scoped plumes (already expanded)."""
+    """Hard fire restriction: no entry/crossing; contact is lethal (handled separately)."""
     factor = 1.0
     for plume in plumes:
         if plume.floor_id != floor_id:
@@ -341,11 +359,18 @@ def hard_plume_factor(
             intensity=plume.intensity,
             floor_id=plume.floor_id,
         )
+        # Fire is lethal on contact: never allow the "escape outward" slowdown.
+        radius = plume.radius_m
+        radius_sq = radius * radius
+        ax, ay = x - hazard.x, y - hazard.y
+        start_sq = ax * ax + ay * ay
+        if start_sq <= radius_sq:
+            return 0.0
         factor = min(
             factor,
             segment_speed_factor(
                 hazard,
-                plume.radius_m,
+                radius,
                 x,
                 y,
                 target_x,

@@ -133,13 +133,14 @@ zero spread keeps the area fixed. Disabled fire or zero intensity has no effect.
 The orange overlay expands on the simulation clock and pauses with playback.
 Settings are saved with the building and snapshotted for each run.
 
-People avoid entering active fire and cannot use exits within it. People already
-inside can escape outward along available routes at a speed multiplier of
-max(0.1, 1 - intensity/100). Intensity is a relative scenario control, not a
-physical temperature or heat-release rate. Routes are chosen at spawn; spreading
-fire can trap people on their fixed route. Fire also spreads through linked
-stairs (up and down), slower than smoke. With both fire and flood enabled, the
-strongest restriction applies, including blocking by either hazard.
+People avoid entering active fire and cannot use exits within it. Anyone the
+fire circle touches — including people climbing stairs — becomes trapped
+(casualty). Intensity still blocks routes and exits; it is not a physical
+temperature. Routes are chosen at spawn; spreading fire can cut people off or
+kill them on contact. Fire also spreads through linked stairs (up and down),
+slower than smoke. Smoke only slows movement and shortens sightlines. With both
+fire and flood enabled, the strongest restriction applies, including blocking
+by either hazard.
 
 This illustrative model does not simulate combustion, fuel, heat,
 ventilation, injury, or wall-dependent spread. It is an evacuation estimate,
