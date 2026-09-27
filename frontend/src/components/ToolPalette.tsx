@@ -8,6 +8,8 @@ const TOOLS: { id: EditorTool; label: string }[] = [
   { id: 'door', label: 'Door' },
   { id: 'exit', label: 'Exit' },
   { id: 'occupants', label: 'Occupants' },
+  { id: 'flood', label: 'Flood' },
+  { id: 'fire', label: 'Fire' },
 ];
 
 interface Props {
@@ -36,12 +38,14 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
       <p className="hint">
         Room and stairs: click corners to draw a polygon, then click the
         starting point to close it (Esc or right-click cancels). Esc also
-        switches back to Select. Door, exit and occupants place with a click.
+        switches back to Select. Door, exit, occupants, flood and fire place
+        with a click (flood/fire replace the existing one if already set).
         Obstacle: click and drag a rectangle; release to place it.
-        Use Select to drag spaces, obstacles, doors, exits, occupants or hazard centres.
-        Shift or Cmd/Ctrl+click to multi-select. Right-click for copy, paste,
-        duplicate, and delete. Hover an object and press E to select it. Drag
-        occupants to move their spawn point. Positions snap to the 0.5 m grid.
+        Use Select to drag spaces, obstacles, doors, exits, occupants or
+        flood/fire centres. Shift or Cmd/Ctrl+click to multi-select.
+        Right-click for copy, paste, duplicate, and delete. Hover an object
+        and press E to select it. Drag occupants to move their spawn point.
+        Positions snap to the 0.5 m grid.
       </p>
     </div>
   );

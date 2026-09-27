@@ -1,12 +1,27 @@
 import { Circle, Group, Text } from 'react-konva';
-import type { BuildingLayout, EditorTool } from '../../../types/building';
+import type {
+  BuildingLayout,
+  EditorTool,
+  ObjectRef,
+  Selection,
+} from '../../../types/building';
+import {
+  FIRE_REF_ID,
+  FLOOD_REF_ID,
+  isRefSelected,
+} from '../../../types/editor';
 import type { FloodRoomState, SmokeFloorState } from '../../../types/api';
 import { SCALE } from '../../../utils';
-import type { DragPropsFn } from '../useCanvasInteraction';
+import type {
+  DragPropsFn,
+  HandleObjectClickFn,
+  OpenObjectContextMenuFn,
+} from '../useCanvasInteraction';
 
 interface Props {
   layout: BuildingLayout;
   tool: EditorTool;
+  selected: Selection;
   interactive: boolean;
   activeFloorId: string;
   showAllFloors?: boolean;
@@ -17,11 +32,15 @@ interface Props {
   smokeFloors?: SmokeFloorState[];
   onChange: (layout: BuildingLayout) => void;
   dragProps: DragPropsFn;
+  onObjectClick: HandleObjectClickFn;
+  onHover: (ref: ObjectRef | null) => void;
+  onObjectContextMenu: OpenObjectContextMenuFn;
 }
 
 export function HazardLayer({
   layout,
   tool,
+  selected,
   interactive,
   activeFloorId,
   showAllFloors = false,
@@ -32,6 +51,9 @@ export function HazardLayer({
   smokeFloors = [],
   onChange,
   dragProps,
+  onObjectClick,
+  onHover,
+  onObjectContextMenu,
 }: Props) {
   const onFloor = (floorId?: string | null) =>
     showAllFloors || (floorId ?? 'floor-0') === activeFloorId;
@@ -144,12 +166,13 @@ export function HazardLayer({
   };
 
   const floodEnabled = Boolean(layout.flood?.enabled);
-  const floodOriginOnFloor = floodEnabled && onFloor(layout.flood?.floor_id);
+  const floodOriginOnFloor = Boolean(layout.flood) && onFloor(layout.flood?.floor_id);
   const floodPlumesOnFloor = floodRooms.filter((plume) => {
     const space = layout.spaces.find((s) => s.id === plume.space_id);
     return space != null && onFloor(space.floor_id);
   });
-  const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
+  const fireExistsOnFloor = Boolean(layout.fire) && onFloor(layout.fire?.floor_id);
+  const fireOnFloor = layout.fire?.enabled && fireExistsOnFloor;
   const fireOnActive = fireFloors.filter((p) => onFloor(p.floor_id));
   const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
   // Before/without playback frames, preview smoke as a larger disc around the fire.
@@ -183,7 +206,7 @@ export function HazardLayer({
   const floodStroke = layout.flood && layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7';
 
   const originFloodSpaceId =
-    floodOriginOnFloor && layout.flood
+    floodEnabled && floodOriginOnFloor && layout.flood
       ? layout.spaces.find(
           (space) =>
             (space.floor_id ?? 'floor-0') === (layout.flood?.floor_id ?? 'floor-0')
@@ -206,10 +229,16 @@ export function HazardLayer({
         )
       : null;
 
+  const floodRef: ObjectRef = { kind: 'flood', id: FLOOD_REF_ID };
+  const fireRef: ObjectRef = { kind: 'fire', id: FIRE_REF_ID };
+  const floodSelected = isRefSelected(selected, floodRef);
+  const fireSelected = isRefSelected(selected, fireRef);
+  const markerListening = interactive && tool === 'select';
+
   return (
     <>
       {floodEnabled && playbackFlood}
-      {floodOriginOnFloor && layout.flood && !playbackFlood && originFloodSpaceId && (
+      {floodEnabled && floodOriginOnFloor && layout.flood && !playbackFlood && originFloodSpaceId && (
         clipSpace(
           originFloodSpaceId,
           layout.flood.x,
@@ -224,9 +253,19 @@ export function HazardLayer({
         <Group
           x={layout.flood.x * SCALE}
           y={layout.flood.y * SCALE}
-          {...dragProps(null, (x, y) => {
+          onClick={(e) => onObjectClick(floodRef, e)}
+          onContextMenu={(e) => onObjectContextMenu(floodRef, e)}
+          {...dragProps(floodRef, (x, y) => {
             if (layout.flood) onChange({ ...layout, flood: { ...layout.flood, x, y } });
-          })}
+          }, 0, 0, { x: layout.flood.x, y: layout.flood.y })}
+          onMouseEnter={(event) => {
+            onHover(floodRef);
+            if (markerListening) event.target.getStage()!.container().style.cursor = 'grab';
+          }}
+          onMouseLeave={(event) => {
+            onHover(null);
+            event.target.getStage()!.container().style.cursor = '';
+          }}
         >
           <Text
             x={-55}
@@ -241,9 +280,9 @@ export function HazardLayer({
           <Circle
             radius={10}
             fill="#e0f2fe"
-            stroke="#075985"
-            strokeWidth={2}
-            listening={interactive && tool === 'select'}
+            stroke={floodSelected ? '#2563eb' : '#075985'}
+            strokeWidth={floodSelected ? 3 : 2}
+            listening={markerListening}
           />
           <Circle radius={3} fill="#075985" listening={false} />
         </Group>
@@ -269,13 +308,23 @@ export function HazardLayer({
           firePreview.floor_id,
         )
       )}
-      {fireOnFloor && layout.fire && (
+      {fireExistsOnFloor && layout.fire && (
         <Group
           x={layout.fire.x * SCALE}
           y={layout.fire.y * SCALE}
-          {...dragProps(null, (x, y) => {
+          onClick={(e) => onObjectClick(fireRef, e)}
+          onContextMenu={(e) => onObjectContextMenu(fireRef, e)}
+          {...dragProps(fireRef, (x, y) => {
             if (layout.fire) onChange({ ...layout, fire: { ...layout.fire, x, y } });
-          })}
+          }, 0, 0, { x: layout.fire.x, y: layout.fire.y })}
+          onMouseEnter={(event) => {
+            onHover(fireRef);
+            if (markerListening) event.target.getStage()!.container().style.cursor = 'grab';
+          }}
+          onMouseLeave={(event) => {
+            onHover(null);
+            event.target.getStage()!.container().style.cursor = '';
+          }}
         >
           <Text
             x={-55}
@@ -290,9 +339,9 @@ export function HazardLayer({
           <Circle
             radius={10}
             fill="#ffedd5"
-            stroke="#9a3412"
-            strokeWidth={2}
-            listening={interactive && tool === 'select'}
+            stroke={fireSelected ? '#2563eb' : '#9a3412'}
+            strokeWidth={fireSelected ? 3 : 2}
+            listening={markerListening}
           />
           <Circle radius={3} fill="#9a3412" listening={false} />
         </Group>

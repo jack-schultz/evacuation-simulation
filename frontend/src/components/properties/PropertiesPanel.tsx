@@ -2,6 +2,8 @@ import type { BuildingLayout, ObjectRef, Selection } from '../../types/building'
 import { primarySelection } from '../../types/editor';
 import { DoorProperties } from './DoorProperties';
 import { ExitProperties } from './ExitProperties';
+import { FireProperties } from './FireProperties';
+import { FloodProperties } from './FloodProperties';
 import { OccupantGroupProperties } from './OccupantGroupProperties';
 import { ObstacleProperties } from './ObstacleProperties';
 import { SpaceProperties } from './SpaceProperties';
@@ -109,6 +111,32 @@ export function PropertiesPanel({
       <OccupantGroupProperties
         layout={layout}
         group={group}
+        onChange={onChange}
+        onDeleteSelected={onDeleteSelected}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (primary.kind === 'flood') {
+    if (!layout.flood) return null;
+    return (
+      <FloodProperties
+        layout={layout}
+        flood={layout.flood}
+        onChange={onChange}
+        onDeleteSelected={onDeleteSelected}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (primary.kind === 'fire') {
+    if (!layout.fire) return null;
+    return (
+      <FireProperties
+        layout={layout}
+        fire={layout.fire}
         onChange={onChange}
         onDeleteSelected={onDeleteSelected}
         disabled={disabled}

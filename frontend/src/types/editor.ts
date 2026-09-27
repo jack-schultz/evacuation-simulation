@@ -5,14 +5,22 @@ export type EditorTool =
   | 'stairs'
   | 'door'
   | 'exit'
-  | 'occupants';
+  | 'occupants'
+  | 'flood'
+  | 'fire';
+
+/** Fixed ids for singleton layout.flood / layout.fire ObjectRefs. */
+export const FLOOD_REF_ID = 'flood';
+export const FIRE_REF_ID = 'fire';
 
 export type ObjectRef =
   | { kind: 'obstacle'; id: string }
   | { kind: 'space'; id: string }
   | { kind: 'door'; id: string }
   | { kind: 'exit'; id: string }
-  | { kind: 'occupants'; id: string };
+  | { kind: 'occupants'; id: string }
+  | { kind: 'flood'; id: string }
+  | { kind: 'fire'; id: string };
 
 /** Currently selected objects; empty means nothing selected. */
 export type Selection = ObjectRef[];

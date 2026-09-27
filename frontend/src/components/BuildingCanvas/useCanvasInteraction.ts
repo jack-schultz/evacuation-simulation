@@ -6,7 +6,8 @@ import type {
   ObjectRef,
   Selection,
 } from '../../types/building';
-import { applyContextSelect, isRefSelected } from '../../types/editor';
+import { applyContextSelect, isRefSelected, FIRE_REF_ID, FLOOD_REF_ID } from '../../types/editor';
+import type { FireEmergency, FloodEmergency } from '../../types/building';
 import { SCALE, snap, uid, polygonBBox, samePoint, type Point } from '../../utils';
 import { exitSpaceAt } from '../../exitPlacement';
 import { translateSelection } from '../../layout/clipboard';
@@ -31,6 +32,34 @@ export type ContextMenuRequest = {
   target: 'object' | 'canvas';
   ref?: ObjectRef;
 };
+
+function defaultFlood(x: number, y: number, floorId: string): FloodEmergency {
+  return {
+    enabled: true,
+    x,
+    y,
+    radius_m: 3,
+    spread_speed_mps: 0.1,
+    intensity: 50,
+    floor_id: floorId,
+  };
+}
+
+function defaultFire(x: number, y: number, floorId: string): FireEmergency {
+  return {
+    enabled: true,
+    x,
+    y,
+    radius_m: 3,
+    spread_speed_mps: 0.1,
+    intensity: 50,
+    floor_id: floorId,
+    emit_smoke: true,
+    smoke_visibility_m: 8,
+    smoke_stair_spread_delay_s: 8,
+    smoke_stair_intensity_factor: 0.85,
+  };
+}
 
 export function useCanvasInteraction({
   layout,
@@ -173,6 +202,26 @@ export function useCanvasInteraction({
         ],
       });
       onSelect([{ kind: 'occupants', id }]);
+      return;
+    }
+
+    if (tool === 'flood' || tool === 'fire') {
+      if (p.x < 0 || p.x > layout.width || p.y < 0 || p.y > layout.height) return;
+      if (tool === 'flood') {
+        const existing = layout.flood;
+        const flood = existing
+          ? { ...existing, x: p.x, y: p.y, floor_id: activeFloorId }
+          : defaultFlood(p.x, p.y, activeFloorId);
+        onChange({ ...layout, flood });
+        onSelect([{ kind: 'flood', id: FLOOD_REF_ID }]);
+      } else {
+        const existing = layout.fire;
+        const fire = existing
+          ? { ...existing, x: p.x, y: p.y, floor_id: activeFloorId }
+          : defaultFire(p.x, p.y, activeFloorId);
+        onChange({ ...layout, fire });
+        onSelect([{ kind: 'fire', id: FIRE_REF_ID }]);
+      }
     }
   };
 

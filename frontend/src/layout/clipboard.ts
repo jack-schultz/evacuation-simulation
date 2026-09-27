@@ -269,6 +269,8 @@ export function deleteRefs(
     occupant_groups: layout.occupant_groups.filter(
       (g) => !groupIds.has(g.id) && !spaceIds.has(g.space_id),
     ),
+    flood: refs.some((r) => r.kind === 'flood') ? null : layout.flood,
+    fire: refs.some((r) => r.kind === 'fire') ? null : layout.fire,
   };
 }
 
@@ -348,5 +350,21 @@ export function translateSelection(
       }
       return { ...group, spawn_x, spawn_y, space_id };
     }),
+    flood:
+      layout.flood && selection.some((r) => r.kind === 'flood')
+        ? {
+            ...layout.flood,
+            x: Math.max(0, Math.min(layout.width, snap(layout.flood.x + dx))),
+            y: Math.max(0, Math.min(layout.height, snap(layout.flood.y + dy))),
+          }
+        : layout.flood,
+    fire:
+      layout.fire && selection.some((r) => r.kind === 'fire')
+        ? {
+            ...layout.fire,
+            x: Math.max(0, Math.min(layout.width, snap(layout.fire.x + dx))),
+            y: Math.max(0, Math.min(layout.height, snap(layout.fire.y + dy))),
+          }
+        : layout.fire,
   };
 }

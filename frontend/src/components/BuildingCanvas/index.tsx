@@ -304,6 +304,7 @@ export function BuildingCanvas({
           <HazardLayer
             layout={layout}
             tool={tool}
+            selected={selected}
             interactive={interactive}
             activeFloorId={activeFloorId}
             showAllFloors={showAllFloors}
@@ -314,6 +315,9 @@ export function BuildingCanvas({
             smokeFloors={smokeFloors}
             onChange={onChange}
             dragProps={dragProps}
+            onObjectClick={handleObjectClick}
+            onHover={setHoveredObject}
+            onObjectContextMenu={openObjectContextMenu}
           />
 
           {showPaths && <PathsLayer occupants={routeOccupants} />}
