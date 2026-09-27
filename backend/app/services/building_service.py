@@ -9,7 +9,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.domain.building import BuildingLayout
-from app.models.building import BuildingRecord
+from app.models.building import BuildingRecord, FloorPlanLibraryRecord
 from app.schemas.api import BuildingResponse, BuildingSummary
 from app.services.seed import iter_default_maps
 
@@ -67,11 +67,42 @@ class BuildingService:
         existing_names = {
             row.name for row in self.db.query(BuildingRecord.name).all()
         }
-        for _path, layout in iter_default_maps():
+        for path, layout in iter_default_maps():
             if layout.name in existing_names:
-                continue
-            created = self.create_building(layout)
-            existing_names.add(layout.name)
+                building = (
+                    self.db.query(BuildingRecord)
+                    .filter(BuildingRecord.name == layout.name)
+                    .first()
+                )
+            else:
+                created = self.create_building(layout)
+                existing_names.add(layout.name)
+                building = self.db.query(BuildingRecord).filter(
+                    BuildingRecord.id == created.id
+                ).first()
+
+            # A same-named PNG beside a built-in map is seeded into its library.
+            image_path = path.with_suffix(".png")
+            if building is not None and image_path.is_file():
+                image_data = image_path.read_bytes()
+                image = (
+                    self.db.query(FloorPlanLibraryRecord)
+                    .filter_by(building_id=building.id, filename=image_path.name)
+                    .first()
+                )
+                if image is None:
+                    self.db.add(
+                        FloorPlanLibraryRecord(
+                            id=str(uuid.uuid4()),
+                            building_id=building.id,
+                            filename=image_path.name,
+                            image_data=image_data,
+                        )
+                    )
+                    self.db.commit()
+                elif image.image_data != image_data:
+                    image.image_data = image_data
+                    self.db.commit()
 
         # Drop superseded twin-tower seed if the 20 m map was just imported.
         if "Twin Towers 20m" in existing_names:
