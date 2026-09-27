@@ -91,6 +91,7 @@ export function useCanvasInteraction({
     const point: Point = [p.x, p.y];
 
     if (draft.SPACE_TOOLS.includes(tool)) {
+      if (p.x < 0 || p.x > layout.width || p.y < 0 || p.y > layout.height) return;
       if (draft.nearFirst(point)) {
         draft.commitSpace(draft.draftPoints);
         return;
