@@ -68,6 +68,15 @@ body {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-shrink: 0;
+}
+
+.top-occupant-legend {
+  flex: 1;
+  justify-content: center;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
 }
 
 .controls-bar {
@@ -87,6 +96,42 @@ body {
   align-items: center;
   flex-wrap: wrap;
 }
+
+.occupant-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.75rem;
+}
+
+.occupant-legend strong { margin-right: 0.15rem; }
+
+.occupant-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.occupant-swatch {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 50%;
+}
+
+.occupant-swatch.moving { background: #2563eb; }
+.occupant-swatch.waiting { background: #ef4444; }
+.occupant-swatch.trapped { background: #7c3aed; }
+.occupant-swatch.climbing { background: #d97706; }
+.occupant-swatch.deceased { background: #000; }
 
 .speed {
   display: flex;
