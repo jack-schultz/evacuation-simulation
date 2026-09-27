@@ -100,6 +100,10 @@ class OccupantResult(BaseModel):
         default_factory=list,
         description="Floor id for each route_points entry (same length).",
     )
+    route_point_indexes: list[int] = Field(
+        default_factory=list,
+        description="Index into route_node_ids for each route_points entry.",
+    )
 
 
 class SimulationResults(BaseModel):

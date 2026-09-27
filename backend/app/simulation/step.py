@@ -34,7 +34,11 @@ from app.simulation.hazards import (
 from app.simulation.hazard_avoidance import flood_detour_target
 from app.simulation.flow import ElementQueueState
 from app.simulation.graph import EdgeKind, NodeKind
-from app.simulation.movement import SimulatedOccupant
+from app.simulation.movement import (
+    SimulatedOccupant,
+    enforce_walk_segment,
+    is_walk_anchor,
+)
 from app.simulation.pixel_obstacles import position_is_walkable
 from app.simulation.routing import edge_between
 from app.simulation.obstacles import clear_segment
@@ -508,6 +512,32 @@ def advance_timestep(
         graph=graph,
         admitted=admitted,
     )
+    # Keep bodies on the walk polyline after crowd / wall pushes.
+    for occ in occupants:
+        if occ.status in (
+            OccupantStatus.EVACUATED,
+            OccupantStatus.TRAPPED,
+            OccupantStatus.CLIMBING,
+        ):
+            continue
+        cur = graph.nodes.get(occ.current_node_id)
+        if cur is not None and is_walk_anchor(cur, graph):
+            enforce_walk_segment(
+                occ, graph, admitted=occ.id in admitted, radius_m=radius
+            )
+        elif occ.id not in admitted:
+            edge = occ_edge.get(occ.id)
+            if (
+                edge is not None
+                and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)  # type: ignore[union-attr]
+                and occ.next_node_id is not None
+            ):
+                waypoint = graph.nodes[occ.next_node_id]
+                if waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT):
+                    occ.x, occ.y = clamp_outside_throat(
+                        occ.x, occ.y, waypoint.x, waypoint.y, radius
+                    )
+
     if obstacle_map is not None:
         for occ in occupants:
             if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
@@ -526,6 +556,12 @@ def advance_timestep(
         if not clear_segment(origin, (occ.x, occ.y), floor_obstacles[occ.floor_id], radius):
             occ.x, occ.y = origin
             moved_by[occ.id] = 0.0
+        else:
+            cur = graph.nodes.get(occ.current_node_id)
+            if cur is not None and is_walk_anchor(cur, graph):
+                enforce_walk_segment(
+                    occ, graph, admitted=occ.id in admitted, radius_m=radius
+                )
 
     for occ in occupants:
         if occ.status in (
@@ -571,6 +607,20 @@ def advance_timestep(
                 admitted=occ.id in admitted or not approaching_opening,
                 doors=doors,
             )
+            # Route may have advanced onto a walk node — snap onto the new segment.
+            if occ.status not in (
+                OccupantStatus.EVACUATED,
+                OccupantStatus.TRAPPED,
+                OccupantStatus.CLIMBING,
+            ):
+                cur = graph.nodes.get(occ.current_node_id)
+                if cur is not None and is_walk_anchor(cur, graph):
+                    enforce_walk_segment(
+                        occ,
+                        graph,
+                        admitted=occ.id in admitted or not approaching_opening,
+                        radius_m=radius,
+                    )
         if occ.status == OccupantStatus.EVACUATED and occ.evacuated_at is None:
             occ.evacuated_at = t
 

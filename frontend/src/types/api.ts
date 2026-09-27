@@ -99,6 +99,8 @@ export interface OccupantResult {
   route_points: [number, number][];
   /** Floor id for each route_points entry (same length). */
   route_floors?: string[];
+  /** Index into route_node_ids for each route_points entry. */
+  route_point_indexes?: number[];
 }
 
 export interface SimulationResults {

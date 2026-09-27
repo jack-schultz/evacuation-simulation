@@ -46,7 +46,8 @@ class ExitMoveTests(unittest.TestCase):
                 new_sim = simulations.create(building.id, params)
                 for simulation, expected_route, exit_x in (
                     (old_sim, ["space:a", "exit:exit"], 0),
-                    (new_sim, ["space:a", "door:door", "space:b", "exit:exit"], 20),
+                    # Intermediate room centroid is stripped when door→exit is walkable.
+                    (new_sim, ["space:a", "door:door", "exit:exit"], 20),
                 ):
                     result = simulations.run(simulation.id)
                     evacuated = [o for o in result.results.occupants if o.evacuated]

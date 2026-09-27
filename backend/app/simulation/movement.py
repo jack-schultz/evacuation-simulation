@@ -8,9 +8,6 @@ from typing import Protocol
 
 from app.domain.building import Door, OccupantStatus
 from app.simulation.collision import (
-    aperture_axis,
-    aperture_slot_point,
-    aperture_slots,
     dist,
     door_other_space,
 )
@@ -63,6 +60,89 @@ def interpolate_position(a: GraphNode, b: GraphNode, progress_m: float, edge_len
         return b.x, b.y
     t = min(max(progress_m / edge_length, 0.0), 1.0)
     return a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t
+
+
+def is_walk_anchor(node: GraphNode, graph: NavigationGraph) -> bool:
+    """True if node is a walk polyline vertex (not a room-centroid bookkeeping node)."""
+    if node.kind == NodeKind.SPACE:
+        return node.id in graph.stair_space_node_ids
+    return True
+
+
+def project_onto_segment(
+    px: float, py: float, ax: float, ay: float, bx: float, by: float
+) -> tuple[float, float]:
+    """Clamp (px, py) onto the segment A→B."""
+    dx = bx - ax
+    dy = by - ay
+    len2 = dx * dx + dy * dy
+    if len2 < 1e-18:
+        return ax, ay
+    t = ((px - ax) * dx + (py - ay) * dy) / len2
+    t = max(0.0, min(1.0, t))
+    return ax + t * dx, ay + t * dy
+
+
+def project_onto_route_segment(
+    occupant: SimulatedOccupant, graph: NavigationGraph
+) -> None:
+    """Snap occupant onto current→next walk segment when the current node is a walk anchor."""
+    nxt = occupant.next_node_id
+    if nxt is None:
+        return
+    cur = graph.nodes.get(occupant.current_node_id)
+    waypoint = graph.nodes.get(nxt)
+    if cur is None or waypoint is None:
+        return
+    if not is_walk_anchor(cur, graph):
+        return
+    # Stair↔stair transfer positions are driven by climb centreline, not this chord.
+    if (
+        cur.kind == NodeKind.SPACE
+        and waypoint.kind == NodeKind.SPACE
+        and cur.id in graph.stair_space_node_ids
+        and waypoint.id in graph.stair_space_node_ids
+    ):
+        return
+    occupant.x, occupant.y = project_onto_segment(
+        occupant.x, occupant.y, cur.x, cur.y, waypoint.x, waypoint.y
+    )
+
+
+def enforce_walk_segment(
+    occupant: SimulatedOccupant,
+    graph: NavigationGraph,
+    *,
+    admitted: bool,
+    radius_m: float,
+) -> None:
+    """Keep the body on the walk chord; hold non-admitted agents outside the throat on-line."""
+    from app.simulation.collision import in_throat, throat_radius
+
+    project_onto_route_segment(occupant, graph)
+    if admitted:
+        return
+    nxt = occupant.next_node_id
+    if nxt is None:
+        return
+    cur = graph.nodes.get(occupant.current_node_id)
+    waypoint = graph.nodes.get(nxt)
+    if cur is None or waypoint is None:
+        return
+    if not is_walk_anchor(cur, graph):
+        return
+    if waypoint.kind not in (NodeKind.DOOR, NodeKind.EXIT):
+        return
+    if not in_throat(occupant.x, occupant.y, waypoint.x, waypoint.y, radius_m):
+        return
+    tr = throat_radius(radius_m)
+    dx = cur.x - waypoint.x
+    dy = cur.y - waypoint.y
+    length = (dx * dx + dy * dy) ** 0.5
+    if length < 1e-9:
+        return
+    occupant.x = waypoint.x + dx / length * tr
+    occupant.y = waypoint.y + dy / length * tr
 
 
 def _next_waypoint_on_space_side(
@@ -123,7 +203,7 @@ class MovementModel(Protocol):
 
 @dataclass
 class SpatialMovementModel:
-    """Continuous 2D steering toward graph waypoints with door aperture slots."""
+    """Continuous steering along walk-route segments with door aperture admission."""
 
     approach_distance_m: float = 2.0
 
@@ -136,7 +216,7 @@ class SpatialMovementModel:
         radius_m: float,
         doors: dict[str, Door],
     ) -> tuple[float, float] | None:
-        """Aim through the aperture into the destination while still origin-side."""
+        """Aim through the door center toward the next walk waypoint while origin-side."""
         door = doors.get(door_node.ref_id)
         if door is None or not occupant.current_space_id:
             return None
@@ -149,26 +229,13 @@ class SpatialMovementModel:
         ):
             return None
 
-        origin_nid = graph.space_node_ids.get(occupant.current_space_id)
-        dest_nid = graph.space_node_ids.get(other)
-        if origin_nid is None or dest_nid is None:
-            return None
-        origin_n = graph.nodes[origin_nid]
-        dest_n = graph.nodes[dest_nid]
-
-        axis_x, axis_y = graph.opening_axes.get(door_node.id, aperture_axis(origin_n.x, origin_n.y, door_node.x, door_node.y))
-        slots = aperture_slots(door.width, radius_m)
-        slot = occupant.aperture_slot % slots
-        slot_x, slot_y = aperture_slot_point(
-            door_node.x, door_node.y, axis_x, axis_y, door.width, slot, slots
-        )
-        dx = dest_n.x - door_node.x
-        dy = dest_n.y - door_node.y
+        dx = waypoint.x - door_node.x
+        dy = waypoint.y - door_node.y
         length = (dx * dx + dy * dy) ** 0.5
         if length < 1e-9:
-            return slot_x, slot_y
+            return door_node.x, door_node.y
         offset = max(radius_m * 1.5, 0.4)
-        return slot_x + dx / length * offset, slot_y + dy / length * offset
+        return door_node.x + dx / length * offset, door_node.y + dy / length * offset
 
     def _rejoin_target(
         self,
@@ -280,45 +347,29 @@ class SpatialMovementModel:
         if edge.kind not in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):
             return waypoint.x, waypoint.y
 
-        # Next waypoint is an opening — approach / aperture / hold outside throat
-        axis_x, axis_y = graph.opening_axes.get(waypoint.id, aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y))
-        slots = aperture_slots(edge.width_m, radius_m)
-        slot = occupant.aperture_slot % slots
-        slot_x, slot_y = aperture_slot_point(
-            waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
-        )
-
+        # Next waypoint is an opening — approach / hold on centerline (admission gates throat).
         d_to_door = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
         if d_to_door > self.approach_distance_m:
-            # Far: head toward door center so the crowd converges
             return waypoint.x, waypoint.y
 
         if admitted:
-            # Near and admitted: aim at assigned aperture slot, then through
-            return slot_x, slot_y
+            return waypoint.x, waypoint.y
 
-        # Not admitted: hold at the throat boundary in front of the door
+        # Not admitted: hold at the throat boundary on the approach centerline.
         from app.simulation.collision import throat_radius
 
         tr = throat_radius(radius_m)
-        dx = occupant.x - waypoint.x
-        dy = occupant.y - waypoint.y
-        d = (dx * dx + dy * dy) ** 0.5
-        if d < 1e-9:
-            # Prefer standing on the approach side of the door
-            adx = cur.x - waypoint.x
-            ady = cur.y - waypoint.y
-            al = (adx * adx + ady * ady) ** 0.5
-            if al < 1e-9:
+        adx = cur.x - waypoint.x
+        ady = cur.y - waypoint.y
+        al = (adx * adx + ady * ady) ** 0.5
+        if al < 1e-9:
+            dx = occupant.x - waypoint.x
+            dy = occupant.y - waypoint.y
+            d = (dx * dx + dy * dy) ** 0.5
+            if d < 1e-9:
                 return waypoint.x + tr, waypoint.y
-            return waypoint.x + adx / al * tr, waypoint.y + ady / al * tr
-        # Hold just outside throat, biased toward own slot laterally
-        hold_x = waypoint.x + dx / d * tr
-        hold_y = waypoint.y + dy / d * tr
-        # Blend toward slot laterally for packing in front of the door
-        hold_x = 0.7 * hold_x + 0.3 * slot_x
-        hold_y = 0.7 * hold_y + 0.3 * slot_y
-        return hold_x, hold_y
+            return waypoint.x + dx / d * tr, waypoint.y + dy / d * tr
+        return waypoint.x + adx / al * tr, waypoint.y + ady / al * tr
 
     def step_toward(
         self,
@@ -402,20 +453,6 @@ class SpatialMovementModel:
         else:
             d_wp = dist(occupant.x, occupant.y, waypoint.x, waypoint.y)
             reached = d_wp <= reach
-            if (
-                not reached
-                and edge is not None
-                and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS)
-                and waypoint.kind in (NodeKind.DOOR, NodeKind.EXIT)
-            ):
-                cur = graph.nodes[occupant.current_node_id]
-                axis_x, axis_y = graph.opening_axes.get(waypoint.id, aperture_axis(cur.x, cur.y, waypoint.x, waypoint.y))
-                slots = aperture_slots(edge.width_m, radius_m)
-                slot = occupant.aperture_slot % slots
-                sx, sy = aperture_slot_point(
-                    waypoint.x, waypoint.y, axis_x, axis_y, edge.width_m, slot, slots
-                )
-                reached = dist(occupant.x, occupant.y, sx, sy) <= reach
 
         if reached and ":obstacle:" in waypoint.id and occupant.route_index + 2 < len(occupant.route):
             from app.simulation.obstacles import clear_segment

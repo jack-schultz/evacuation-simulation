@@ -33,24 +33,36 @@ def _node_floor(
     return DEFAULT_FLOOR_ID
 
 
+def _is_walk_node(node_id: str, graph: NavigationGraph) -> bool:
+    """True for openings, waypoints, and stair space nodes (not room centroids)."""
+    node = graph.nodes.get(node_id)
+    if node is None:
+        return False
+    if node.kind == NodeKind.SPACE:
+        return node_id in graph.stair_space_node_ids
+    return True
+
+
 def _route_geometry(
     route: list[str],
     graph: NavigationGraph | None,
     layout: BuildingLayout | None,
-) -> tuple[list[tuple[float, float]], list[str]]:
+) -> tuple[list[tuple[float, float]], list[str], list[int]]:
     if graph is None:
-        return [], []
+        return [], [], []
     doors = {d.id: d.floor_id for d in (layout.doors if layout else [])}
     exits = {e.id: e.floor_id for e in (layout.exits if layout else [])}
     points: list[tuple[float, float]] = []
     floors: list[str] = []
-    for node_id in route:
+    indexes: list[int] = []
+    for index, node_id in enumerate(route):
         node = graph.nodes.get(node_id)
-        if node is None:
+        if node is None or not _is_walk_node(node_id, graph):
             continue
         points.append((node.x, node.y))
         floors.append(_node_floor(node_id, graph, doors, exits))
-    return points, floors
+        indexes.append(index)
+    return points, floors, indexes
 
 
 def build_results(
@@ -80,7 +92,7 @@ def build_results(
 
     occupant_results = []
     for o in occupants:
-        points, floors = _route_geometry(o.route, graph, layout)
+        points, floors, indexes = _route_geometry(o.route, graph, layout)
         occupant_results.append(
             OccupantResult(
                 id=o.id,
@@ -97,6 +109,7 @@ def build_results(
                 route_node_ids=list(o.route),
                 route_points=points,
                 route_floors=floors,
+                route_point_indexes=indexes,
             )
         )
 

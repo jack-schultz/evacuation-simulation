@@ -239,12 +239,24 @@ class StairClimbSimTests(unittest.TestCase):
         out = SimulationEngine().run(layout, SimulationParameters(max_time_s=120, frame_interval_s=0.5))
         occ = out.results.occupants[0]
         self.assertEqual(len(occ.route_points), len(occ.route_floors))
+        self.assertEqual(len(occ.route_points), len(occ.route_point_indexes))
         self.assertGreaterEqual(len(occ.route_floors), 2)
         self.assertIn("floor-1", occ.route_floors)
         self.assertIn("floor-0", occ.route_floors)
-        # First waypoint is upstairs spawn; last is ground exit.
+        # Walk polyline starts upstairs (door/stair) and ends at the ground exit.
         self.assertEqual(occ.route_floors[0], "floor-1")
         self.assertEqual(occ.route_floors[-1], "floor-0")
+        # No room-centroid connectivity nodes in the walk polyline.
+        for idx in occ.route_point_indexes:
+            node_id = occ.route_node_ids[idx]
+            if node_id.startswith("space:"):
+                self.assertIn(
+                    node_id,
+                    {"space:stairs_a", "space:stairs_b"},
+                    f"unexpected space node in walk path: {node_id}",
+                )
+            self.assertGreaterEqual(idx, 0)
+            self.assertLess(idx, len(occ.route_node_ids))
 
     def test_frames_include_route_index(self):
         layout = linked_floors_layout(count=1)
@@ -255,6 +267,66 @@ class StairClimbSimTests(unittest.TestCase):
         # Route progress advances before evacuation completes.
         max_index = max(o.route_index for f in out.frames for o in f.occupants)
         self.assertGreater(max_index, 0)
+
+
+class WalkSegmentTests(unittest.TestCase):
+    def test_project_onto_segment_clamps_to_endpoints(self):
+        from app.simulation.movement import project_onto_segment
+
+        self.assertEqual(project_onto_segment(0, 5, 0, 0, 10, 0), (0.0, 0.0))
+        self.assertEqual(project_onto_segment(12, 3, 0, 0, 10, 0), (10.0, 0.0))
+        x, y = project_onto_segment(5, 4, 0, 0, 10, 0)
+        self.assertAlmostEqual(x, 5.0)
+        self.assertAlmostEqual(y, 0.0)
+
+    def test_occupant_stays_on_walk_segment_after_door(self):
+        """Once past the start SPACE node, bodies stay on current→next centerline."""
+        from app.simulation.graph import NavigationGraphBuilder, NodeKind
+        from app.simulation.movement import is_walk_anchor
+
+        layout = linked_floors_layout(count=2)
+        out = SimulationEngine().run(
+            layout,
+            SimulationParameters(max_time_s=120, frame_interval_s=0.25, timestep_s=0.25),
+        )
+        graph = NavigationGraphBuilder().build(layout, SimulationParameters().model_dump())
+        # Pick a mid-run frame where someone is between walk anchors on ground floor.
+        checked = 0
+        for frame in out.frames[1:]:
+            for fo in frame.occupants:
+                if fo.status.value in ("evacuated", "trapped", "climbing"):
+                    continue
+                result = next(r for r in out.results.occupants if r.id == fo.id)
+                idx = fo.route_index
+                if idx + 1 >= len(result.route_node_ids):
+                    continue
+                cur_id = result.route_node_ids[idx]
+                nxt_id = result.route_node_ids[idx + 1]
+                cur = graph.nodes[cur_id]
+                nxt = graph.nodes[nxt_id]
+                if not is_walk_anchor(cur, graph):
+                    continue
+                if (
+                    cur.kind == NodeKind.SPACE
+                    and nxt.kind == NodeKind.SPACE
+                    and cur.id in graph.stair_space_node_ids
+                ):
+                    continue
+                # Distance from point to segment should be tiny.
+                ax, ay, bx, by = cur.x, cur.y, nxt.x, nxt.y
+                dx, dy = bx - ax, by - ay
+                len2 = dx * dx + dy * dy
+                if len2 < 1e-9:
+                    continue
+                t = ((fo.x - ax) * dx + (fo.y - ay) * dy) / len2
+                t = max(0.0, min(1.0, t))
+                px, py = ax + t * dx, ay + t * dy
+                dist = ((fo.x - px) ** 2 + (fo.y - py) ** 2) ** 0.5
+                self.assertLess(dist, 0.08, f"{fo.id} at t={frame.t} off segment by {dist}")
+                checked += 1
+                if checked >= 8:
+                    return
+        self.assertGreater(checked, 0, "expected at least one on-segment sample")
 
 
 if __name__ == "__main__":
