@@ -1,5 +1,4 @@
 import type { FloorPlanLibraryImage } from '../hooks/useBuildingPersistence';
-import { ColumnResizer } from './ColumnResizer';
 
 interface Props {
   images: FloorPlanLibraryImage[];
@@ -7,8 +6,6 @@ interface Props {
   opacity: number;
   onSelect: (id: string | null) => void;
   onOpacityChange: (opacity: number) => void;
-  width: number;
-  onResize: (delta: number) => void;
 }
 
 export function FloorPlanLibrary({
@@ -17,17 +14,9 @@ export function FloorPlanLibrary({
   opacity,
   onSelect,
   onOpacityChange,
-  width,
-  onResize,
 }: Props) {
   return (
-    <aside className="floor-plan-library" aria-label="Floor plan library" style={{ width }}>
-      <ColumnResizer
-        label="Resize floor plan library"
-        side="left"
-        direction={-1}
-        onResize={onResize}
-      />
+    <div className="panel floor-plan-library" aria-label="Floor plan library">
       <h2>Library</h2>
       <p className="hint">Imported PNGs for this building. Select one to show it over the canvas.</p>
       {selectedId && (
@@ -66,6 +55,6 @@ export function FloorPlanLibrary({
           ))}
         </div>
       )}
-    </aside>
+    </div>
   );
 }

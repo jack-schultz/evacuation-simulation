@@ -15,15 +15,13 @@ import { useBuildingPersistence } from './hooks/useBuildingPersistence';
 import { useSimulationSession } from './hooks/useSimulationSession';
 import { activeFloorId as resolveActiveFloorId } from './layout/emptyLayout';
 
-const DEFAULT_OPEN: PanelId[] = ['tools'];
-
 export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
-  const [columnWidths, setColumnWidths] = useState({ tools: 260, properties: 260, library: 260 });
+  const [columnWidths, setColumnWidths] = useState({ tools: 260, properties: 260 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaths, setShowPaths] = useState(false);
-  const [openPanels, setOpenPanels] = useState<Set<PanelId>>(() => new Set(DEFAULT_OPEN));
+  const [activePanel, setActivePanel] = useState<PanelId | null>('tools');
   const [activeFloorId, setActiveFloorId] = useState('floor-0');
 
   const session = useSimulationSession({ setBusy, setError });
@@ -54,26 +52,20 @@ export default function App() {
     ? session.playback.currentFrame.occupants.filter((o) => o.status === 'evacuated').length
     : null;
 
-  const togglePanel = (id: PanelId) => {
-    setOpenPanels((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const selectPanel = (id: PanelId) => {
+    setActivePanel((current) => (current === id ? null : id));
   };
 
   const resizeColumn = (column: keyof typeof columnWidths, delta: number) => {
     const available = mainRef.current?.clientWidth ?? 1100;
     const inspectorVisible = editor.selected.length > 0;
-    const toolsVisible = openPanels.size > 0;
+    const sidePanelVisible = activePanel != null;
     setColumnWidths((current) => {
       const otherWidths =
-        (column !== 'tools' && toolsVisible ? 44 + current.tools : 0)
-        + (column !== 'properties' && inspectorVisible ? current.properties : 0)
-        + (column !== 'library' ? current.library : 0);
+        (column !== 'tools' && sidePanelVisible ? 44 + current.tools : 0)
+        + (column !== 'properties' && inspectorVisible ? current.properties : 0);
       const railWidth = column === 'tools' ? 44 : 0;
-      const minWidth = column === 'library' ? 200 : 180;
+      const minWidth = 180;
       const maxWidth = Math.max(minWidth, available - otherWidths - railWidth - 280);
       return {
         ...current,
@@ -155,12 +147,12 @@ export default function App() {
         className="main"
         ref={mainRef}
         style={{
-          gridTemplateColumns: `${openPanels.size > 0 ? 44 + columnWidths.tools : 44}px minmax(280px, 1fr) ${editor.selected.length > 0 ? columnWidths.properties : 0}px ${columnWidths.library}px`,
+          gridTemplateColumns: `${activePanel != null ? 44 + columnWidths.tools : 44}px minmax(280px, 1fr) ${editor.selected.length > 0 ? columnWidths.properties : 0}px`,
         }}
       >
         <PanelRail
-          openPanels={openPanels}
-          onToggle={togglePanel}
+          activePanel={activePanel}
+          onSelect={selectPanel}
           panelWidth={columnWidths.tools}
           onResize={(delta) => resizeColumn('tools', delta)}
           panels={{
@@ -169,6 +161,15 @@ export default function App() {
                 tool={editor.tool}
                 onToolChange={editor.setTool}
                 disabled={disabled}
+              />
+            ),
+            library: (
+              <FloorPlanLibrary
+                images={persistence.floorPlans}
+                selectedId={persistence.selectedFloorPlanId}
+                opacity={persistence.floorPlanOpacity}
+                onSelect={persistence.setSelectedFloorPlanId}
+                onOpacityChange={persistence.setFloorPlanOpacity}
               />
             ),
           }}
@@ -230,16 +231,6 @@ export default function App() {
             />
           </aside>
         )}
-
-        <FloorPlanLibrary
-          images={persistence.floorPlans}
-          selectedId={persistence.selectedFloorPlanId}
-          opacity={persistence.floorPlanOpacity}
-          onSelect={persistence.setSelectedFloorPlanId}
-          onOpacityChange={persistence.setFloorPlanOpacity}
-          width={columnWidths.library}
-          onResize={(delta) => resizeColumn('library', delta)}
-        />
 
       </div>
 
