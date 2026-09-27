@@ -143,7 +143,12 @@ export function HazardLayer({
       );
   };
 
-  const floodOnFloor = layout.flood?.enabled && onFloor(layout.flood.floor_id);
+  const floodEnabled = Boolean(layout.flood?.enabled);
+  const floodOriginOnFloor = floodEnabled && onFloor(layout.flood?.floor_id);
+  const floodPlumesOnFloor = floodRooms.filter((plume) => {
+    const space = layout.spaces.find((s) => s.id === plume.space_id);
+    return space != null && onFloor(space.floor_id);
+  });
   const fireOnFloor = layout.fire?.enabled && onFloor(layout.fire.floor_id);
   const fireOnActive = fireFloors.filter((p) => onFloor(p.floor_id));
   const smokeOnFloor = smokeFloors.filter((p) => onFloor(p.floor_id));
@@ -178,7 +183,7 @@ export function HazardLayer({
   const floodStroke = layout.flood && layout.flood.intensity >= 80 ? '#7c3aed' : '#0284c7';
 
   const originFloodSpaceId =
-    floodOnFloor && layout.flood
+    floodOriginOnFloor && layout.flood
       ? layout.spaces.find(
           (space) =>
             (space.floor_id ?? 'floor-0') === (layout.flood?.floor_id ?? 'floor-0')
@@ -187,8 +192,8 @@ export function HazardLayer({
       : undefined;
 
   const playbackFlood =
-    floodRooms.length > 0
-      ? floodRooms.map((plume) =>
+    floodPlumesOnFloor.length > 0
+      ? floodPlumesOnFloor.map((plume) =>
           clipSpace(
             plume.space_id,
             plume.x,
@@ -203,8 +208,8 @@ export function HazardLayer({
 
   return (
     <>
-      {floodOnFloor && layout.flood && playbackFlood}
-      {floodOnFloor && layout.flood && !playbackFlood && originFloodSpaceId && (
+      {floodEnabled && playbackFlood}
+      {floodOriginOnFloor && layout.flood && !playbackFlood && originFloodSpaceId && (
         clipSpace(
           originFloodSpaceId,
           layout.flood.x,
@@ -215,7 +220,7 @@ export function HazardLayer({
           `flood-preview-${originFloodSpaceId}`,
         )
       )}
-      {floodOnFloor && layout.flood && (
+      {floodOriginOnFloor && layout.flood && (
         <Group
           x={layout.flood.x * SCALE}
           y={layout.flood.y * SCALE}

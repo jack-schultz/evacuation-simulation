@@ -95,7 +95,13 @@ contains the flood centre) expands as a circle with radius
 `initial_radius + spread_speed_mps * t`. When that front reaches a same-floor
 door, a **new circle starts at the doorway** (radius 0 at arrival) and fills the
 adjacent room the same way. First arrival wins if multiple doors can reach a
-room. Linked stairs do not transfer flood between floors. The default spread
+room.
+
+Linked stairs transfer flood between floors with gravity: when water reaches a
+stair that goes **down**, it dumps downstairs immediately and does **not**
+expand past that stair on the current floor until the lower floor is filled
+(every wet space on that floor covered by its plume). When a floor is filled,
+flood may then spread **up** through stairs. The default spread
 speed is 0.1 m/s (6 m/min), compared with default unobstructed walking speed of
 1.2 m/s (72 m/min). This is an adjustable scenario assumption, not an
 empirically calibrated rate. It is independent of walking speed: changing
@@ -117,7 +123,7 @@ back from an inaccessible preferred exit where possible. Routes remain fixed.
 People may walk through water: movement speed is multiplied by
 `max(0.1, 1 - intensity / 100)` while standing in a wet plume. Immersion
 accumulates a dose of `(intensity / 100) * dt` seconds; after
-`FLOOD_LETHAL_EXPOSURE_S` (30) full-intensity-equivalent seconds the occupant
+`FLOOD_LETHAL_EXPOSURE_S` (10) full-intensity-equivalent seconds the occupant
 becomes trapped (purple). Brief contact is not lethal. Local detours around
 water are preferred when available but are not required. Zero intensity and
 disabled floods preserve dry behavior. Finite timesteps introduce timing

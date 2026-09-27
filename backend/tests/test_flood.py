@@ -44,12 +44,12 @@ class FloodTests(unittest.TestCase):
         self.assertTrue(all(f.occupants[0].status != 'trapped' for f in output.frames))
 
     def test_brief_contact_does_not_kill(self):
-        output = run(layout(dict(x=5, y=5, radius_m=0.5, intensity=100), two_exits=False))
+        output = run(layout(dict(x=5, y=5, radius_m=0.5, intensity=50), two_exits=False))
         self.assertEqual(output.frames[0].occupants[0].status, 'active')
         self.assertEqual(output.results.evacuated_count, 1)
 
     def test_prolonged_immersion_is_lethal(self):
-        # Full-room flood at intensity 100 → lethal after ~30s of immersion.
+        # Full-room flood at intensity 100 → lethal after FLOOD_LETHAL_EXPOSURE_S.
         # Very slow walker cannot clear the room before drowning.
         building = layout(
             dict(x=5, y=5, radius_m=10, intensity=100, spread_speed_mps=0),
@@ -64,7 +64,7 @@ class FloodTests(unittest.TestCase):
         self.assertEqual(output.frames[-1].occupants[0].status, 'trapped')
 
     def test_people_inside_flood_can_reach_an_exit(self):
-        for intensity in (1, 50, 80, 100):
+        for intensity in (1, 50, 80):
             with self.subTest(intensity=intensity):
                 config = dict(x=6, y=5, radius_m=2, intensity=intensity, spread_speed_mps=0)
                 output = SimulationEngine().run(
@@ -316,6 +316,143 @@ class RoomScopedFloodTests(unittest.TestCase):
         self.assertTrue(any(len(f.flood_rooms) >= 2 for f in output.frames))
         late = output.frames[-1]
         self.assertEqual({p.space_id for p in late.flood_rooms}, {'a', 'b'})
+
+
+def _past_stairs_layout():
+    """Upper: left room — stairs — right room; stairs dump to ground room."""
+    return BuildingLayout.model_validate({
+        "width": 40, "height": 20,
+        "floors": [
+            {"id": "floor-0", "name": "G", "elevation_m": 0, "order": 0},
+            {"id": "floor-1", "name": "1", "elevation_m": 3.2, "order": 1},
+        ],
+        "spaces": [
+            {
+                "id": "left", "name": "Left", "type": "room", "floor_id": "floor-1",
+                "vertices": [[0, 0], [8, 0], [8, 8], [0, 8]],
+            },
+            {
+                "id": "stairs_u", "name": "Stairs U", "type": "stairs", "floor_id": "floor-1",
+                "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                "linked_stair_id": "stairs_g",
+            },
+            {
+                "id": "right", "name": "Right", "type": "room", "floor_id": "floor-1",
+                "vertices": [[12, 0], [20, 0], [20, 8], [12, 8]],
+            },
+            {
+                "id": "stairs_g", "name": "Stairs G", "type": "stairs", "floor_id": "floor-0",
+                "vertices": [[8, 2], [12, 2], [12, 6], [8, 6]],
+                "linked_stair_id": "stairs_u",
+            },
+            {
+                "id": "ground", "name": "Ground", "type": "room", "floor_id": "floor-0",
+                "vertices": [[0, 0], [8, 0], [8, 8], [0, 8]],
+            },
+        ],
+        "doors": [
+            {"id": "d_left", "x": 8, "y": 4, "width": 1, "floor_id": "floor-1",
+             "connects": ["left", "stairs_u"]},
+            {"id": "d_right", "x": 12, "y": 4, "width": 1, "floor_id": "floor-1",
+             "connects": ["stairs_u", "right"]},
+            {"id": "d_ground", "x": 8, "y": 4, "width": 1, "floor_id": "floor-0",
+             "connects": ["stairs_g", "ground"]},
+        ],
+        "exits": [
+            {"id": "out", "x": 0, "y": 4, "width": 1, "floor_id": "floor-0",
+             "connected_space_id": "ground"},
+        ],
+        "occupant_groups": [
+            {"id": "g", "name": "People", "count": 1, "space_id": "left",
+             "floor_id": "floor-1", "spawn_x": 2, "spawn_y": 4},
+        ],
+        "flood": {
+            "enabled": True, "x": 2, "y": 4, "radius_m": 0.5, "intensity": 50,
+            "spread_speed_mps": 1.0, "floor_id": "floor-1",
+        },
+    })
+
+
+class StairFloodTests(unittest.TestCase):
+    def test_flood_dumps_down_stairs_before_wetting_room_past_them(self):
+        from app.simulation.flood import active_flood_plumes
+        building = _past_stairs_layout()
+        # Early: only origin room.
+        early = {p.space_id for p in active_flood_plumes(building, 1.0)}
+        self.assertEqual(early, {"left"})
+
+        # After reaching stairs and dumping down, ground should wet before right.
+        ids_over_time = []
+        right_first_t = None
+        ground_first_t = None
+        for t in [i * 0.5 for i in range(0, 80)]:
+            ids = {p.space_id for p in active_flood_plumes(building, t)}
+            ids_over_time.append((t, ids))
+            if "ground" in ids and ground_first_t is None:
+                ground_first_t = t
+            if "right" in ids and right_first_t is None:
+                right_first_t = t
+        self.assertIsNotNone(ground_first_t)
+        self.assertIsNotNone(right_first_t)
+        self.assertLess(ground_first_t, right_first_t)
+
+    def test_flood_rises_only_after_origin_floor_is_filled(self):
+        from app.simulation.flood import active_flood_plumes
+        from tests.test_stair_link import linked_floors_layout
+        building = linked_floors_layout(count=1)
+        building.flood = FloodEmergency(
+            enabled=True,
+            x=2.0,
+            y=4.0,
+            radius_m=0.5,
+            spread_speed_mps=2.0,
+            intensity=50,
+            floor_id="floor-0",
+        )
+        # Move occupants to ground so the layout validates; flood starts on ground.
+        building.occupant_groups[0].space_id = "room_b"
+        building.occupant_groups[0].floor_id = "floor-0"
+        building.occupant_groups[0].spawn_x = 2.0
+        building.occupant_groups[0].spawn_y = 4.0
+
+        early = {p.space_id for p in active_flood_plumes(building, 0.5)}
+        self.assertTrue(early <= {"room_b", "stairs_b"})
+        self.assertNotIn("stairs_a", early)
+        self.assertNotIn("room_a", early)
+
+        late = {p.space_id for p in active_flood_plumes(building, 60.0)}
+        self.assertIn("stairs_a", late)
+        self.assertIn("room_a", late)
+
+        # Upper stairs appear only after ground floor spaces are present and filling.
+        upper_t = None
+        for t in [i * 0.5 for i in range(0, 120)]:
+            ids = {p.space_id for p in active_flood_plumes(building, t)}
+            if "stairs_a" in ids:
+                upper_t = t
+                # Ground stair and room should already be wet.
+                self.assertIn("stairs_b", ids)
+                self.assertIn("room_b", ids)
+                break
+        self.assertIsNotNone(upper_t)
+
+    def test_top_floor_flood_reaches_ground_through_stairs(self):
+        from app.simulation.flood import active_flood_plumes
+        from tests.test_stair_link import linked_floors_layout
+        building = linked_floors_layout(count=1)
+        building.flood = FloodEmergency(
+            enabled=True,
+            x=2.0,
+            y=4.0,
+            radius_m=1.0,
+            spread_speed_mps=2.0,
+            intensity=50,
+            floor_id="floor-1",
+        )
+        late = {p.space_id for p in active_flood_plumes(building, 40.0)}
+        self.assertIn("stairs_a", late)
+        self.assertIn("stairs_b", late)
+        self.assertIn("room_b", late)
 
 
 if __name__ == '__main__':

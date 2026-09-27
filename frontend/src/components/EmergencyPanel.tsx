@@ -75,7 +75,7 @@ export function EmergencyPanel({ kind, layout, onChange, disabled, activeFloorId
           <p className="hint">
             {kind === 'fire'
               ? 'People avoid entering fire and never use exits inside it. Anyone the fire touches — including on stairs — is trapped (purple). Smoke only slows people; it does not kill. Routes stay fixed.'
-              : 'People prefer drier routes but may wade through flood water. Higher intensity slows them more. Spending roughly 30 seconds at full intensity in water (longer at lower intensity) becomes lethal (purple). Brief contact does not kill. Routes stay fixed.'}
+              : 'People prefer drier routes but may wade through flood water. Higher intensity slows them more. Spending roughly 10 seconds at full intensity in water (longer at lower intensity) becomes lethal (purple). Brief contact does not kill. Water dumps down stairs before spreading past them, and rises only after a floor is filled. Routes stay fixed.'}
           </p>
           {kind === 'fire' && fire && (
             <>
