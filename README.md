@@ -4,8 +4,6 @@ Web application for building planners to model simplified evacuation paths and
 estimate evacuation times. **Estimation only — not a safety certification or
 regulatory compliance calculation.**
 
-![img.png](img.png)
-
 ## Setup
 
 ```bash
@@ -58,6 +56,8 @@ evacuation-simulation/
 ├── .env.example
 └── README.md
 ```
+
+![diagram.png](diagram.png)
 
 ## Documentation
 
