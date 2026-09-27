@@ -47,7 +47,7 @@ def spawn_occupants(
     # Track projected availability at every door and exit aperture across groups.
     opening_slots: dict[str, list[float]] = {}
     initial_hazards = (
-        layout.flood,
+        *layout.floods,
         *fire_emergencies_from_plumes(active_fire_plumes(layout, 0)),
         *smoke_emergencies_from_plumes(active_smoke_plumes(layout, 0)),
     )
@@ -60,7 +60,10 @@ def spawn_occupants(
         start_node = graph.space_node_ids[group.space_id]
         selector = (
             HazardRouteSelector()
-            if any(hazard_radius_at(h, 0) is not None for h in (layout.flood, layout.fire))
+            if any(
+                hazard_radius_at(h, 0) is not None
+                for h in (*layout.floods, *layout.fires)
+            )
             and isinstance(route_selector, DijkstraRouteSelector)
             else route_selector
         )

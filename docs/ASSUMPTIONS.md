@@ -86,8 +86,8 @@ regulatory compliance calculation.
 
 ## Flood emergency scenarios
 
-The editor places a circular flood (Building tools → Flood) with a centre,
-initial radius (metres), spread speed (metres per second), and relative
+The editor can place multiple circular floods (Building tools → Flood) each with
+a centre, initial radius (metres), spread speed (metres per second), and relative
 intensity (0-100). These settings are saved with the building and snapshotted
 for each simulation.
 
@@ -145,8 +145,8 @@ context on terrain and hydraulic equation requirements, see
 
 ## Fire scenario
 
-Fire is an optional circular hazard, placed independently of flood via Building
-tools → Fire. Set the centre, initial size (radius in metres), intensity
+Fire is an optional circular hazard; place any number independently of flood via
+Building tools → Fire. Set each centre, initial size (radius in metres), intensity
 (0-100%), and radial spread rate (metres per second). Radius at time t is
 initial radius + spread rate * t; zero spread keeps the area fixed. Disabled
 fire or zero intensity has no effect. The orange overlay expands on the

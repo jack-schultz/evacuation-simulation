@@ -119,11 +119,14 @@ export function PropertiesPanel({
   }
 
   if (primary.kind === 'flood') {
-    if (!layout.flood) return null;
+    const flood = (layout.floods ?? []).find((f) => f.id === primary.id) ?? (
+      layout.flood?.id === primary.id ? layout.flood : null
+    );
+    if (!flood) return null;
     return (
       <FloodProperties
         layout={layout}
-        flood={layout.flood}
+        flood={flood}
         onChange={onChange}
         onDeleteSelected={onDeleteSelected}
         disabled={disabled}
@@ -132,11 +135,14 @@ export function PropertiesPanel({
   }
 
   if (primary.kind === 'fire') {
-    if (!layout.fire) return null;
+    const fire = (layout.fires ?? []).find((f) => f.id === primary.id) ?? (
+      layout.fire?.id === primary.id ? layout.fire : null
+    );
+    if (!fire) return null;
     return (
       <FireProperties
         layout={layout}
-        fire={layout.fire}
+        fire={fire}
         onChange={onChange}
         onDeleteSelected={onDeleteSelected}
         disabled={disabled}

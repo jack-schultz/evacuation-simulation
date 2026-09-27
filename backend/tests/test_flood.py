@@ -87,7 +87,7 @@ class FloodTests(unittest.TestCase):
         self.assertEqual(flood_soft_speed_factor(plumes, 'room', 0, 5), 1.0)
 
     def test_legacy_layout_and_round_trip(self):
-        self.assertIsNone(layout().flood)
+        self.assertEqual(layout().floods, [])
         original = layout(flood())
         self.assertEqual(BuildingLayout.model_validate_json(original.model_dump_json()), original)
 
@@ -132,12 +132,12 @@ class FloodTests(unittest.TestCase):
             buildings = BuildingService(db)
             simulations = SimulationService(db)
             saved = buildings.create_building(layout(flood()))
-            self.assertEqual(buildings.get_layout(saved.id).flood.intensity, 80)
+            self.assertEqual(buildings.get_layout(saved.id).floods[0].intensity, 80)
             snapshot = simulations.create(saved.id, SimulationParameters(max_time_s=30))
             buildings.update_building(saved.id, layout())
             result = simulations.run(snapshot.id)
             self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:far')
-            self.assertIsNone(buildings.get_layout(saved.id).flood)
+            self.assertEqual(buildings.get_layout(saved.id).floods, [])
         engine.dispose()
 
     def test_invalid_flood_values(self):
@@ -191,7 +191,7 @@ class SpreadingFloodTests(unittest.TestCase):
             for frame in output.frames:
                 self.assertAlmostEqual(frame.flood_radius_m, 0.5 + 0.1 * frame.t)
             self.assertEqual(output.frames[0].flood_radius_m, 0.5)
-        self.assertEqual(building.flood.radius_m, 0.5)
+        self.assertEqual(building.floods[0].radius_m, 0.5)
 
     def test_flood_reaching_exit_does_not_instantly_trap(self):
         config = dict(x=10, y=5, radius_m=0.5, intensity=50, spread_speed_mps=2)
@@ -400,7 +400,7 @@ class StairFloodTests(unittest.TestCase):
         from app.simulation.flood import active_flood_plumes
         from tests.test_stair_link import linked_floors_layout
         building = linked_floors_layout(count=1)
-        building.flood = FloodEmergency(
+        building.floods = [FloodEmergency(
             enabled=True,
             x=2.0,
             y=4.0,
@@ -408,7 +408,7 @@ class StairFloodTests(unittest.TestCase):
             spread_speed_mps=2.0,
             intensity=50,
             floor_id="floor-0",
-        )
+        )]
         # Move occupants to ground so the layout validates; flood starts on ground.
         building.occupant_groups[0].space_id = "room_b"
         building.occupant_groups[0].floor_id = "floor-0"
@@ -440,7 +440,7 @@ class StairFloodTests(unittest.TestCase):
         from app.simulation.flood import active_flood_plumes
         from tests.test_stair_link import linked_floors_layout
         building = linked_floors_layout(count=1)
-        building.flood = FloodEmergency(
+        building.floods = [FloodEmergency(
             enabled=True,
             x=2.0,
             y=4.0,
@@ -448,11 +448,38 @@ class StairFloodTests(unittest.TestCase):
             spread_speed_mps=2.0,
             intensity=50,
             floor_id="floor-1",
-        )
+        )]
         late = {p.space_id for p in active_flood_plumes(building, 40.0)}
         self.assertIn("stairs_a", late)
         self.assertIn("stairs_b", late)
         self.assertIn("room_b", late)
+
+
+class MultiFloodTests(unittest.TestCase):
+    def test_two_flood_origins_wet_separate_rooms(self):
+        from app.simulation.flood import active_flood_plumes
+
+        building = BuildingLayout.model_validate({
+            "width": 30,
+            "height": 20,
+            "spaces": [
+                {"id": "a", "name": "A", "type": "room", "x": 0, "y": 0, "width": 10, "height": 10},
+                {"id": "b", "name": "B", "type": "room", "x": 15, "y": 0, "width": 10, "height": 10},
+            ],
+            "exits": [
+                {"id": "ea", "x": 0, "y": 5, "width": 1, "connected_space_id": "a", "flow_rate_per_s": 100},
+                {"id": "eb", "x": 25, "y": 5, "width": 1, "connected_space_id": "b", "flow_rate_per_s": 100},
+            ],
+            "occupant_groups": [
+                {"id": "g", "name": "People", "count": 1, "space_id": "a"},
+            ],
+            "floods": [
+                {"id": "f1", "x": 5, "y": 5, "radius_m": 1, "intensity": 50, "spread_speed_mps": 0},
+                {"id": "f2", "x": 20, "y": 5, "radius_m": 1, "intensity": 50, "spread_speed_mps": 0},
+            ],
+        })
+        plumes = active_flood_plumes(building, 0.0)
+        self.assertEqual({p.space_id for p in plumes}, {"a", "b"})
 
 
 if __name__ == '__main__':

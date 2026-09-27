@@ -9,10 +9,6 @@ export type EditorTool =
   | 'flood'
   | 'fire';
 
-/** Fixed ids for singleton layout.flood / layout.fire ObjectRefs. */
-export const FLOOD_REF_ID = 'flood';
-export const FIRE_REF_ID = 'fire';
-
 export type ObjectRef =
   | { kind: 'obstacle'; id: string }
   | { kind: 'space'; id: string }

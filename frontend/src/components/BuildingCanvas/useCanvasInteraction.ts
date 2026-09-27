@@ -6,11 +6,12 @@ import type {
   ObjectRef,
   Selection,
 } from '../../types/building';
-import { applyContextSelect, isRefSelected, FIRE_REF_ID, FLOOD_REF_ID } from '../../types/editor';
+import { applyContextSelect, isRefSelected } from '../../types/editor';
 import type { FireEmergency, FloodEmergency } from '../../types/building';
 import { SCALE, snap, uid, polygonBBox, samePoint, type Point } from '../../utils';
 import { exitSpaceAt } from '../../exitPlacement';
 import { translateSelection } from '../../layout/clipboard';
+import { layoutFires, layoutFloods } from '../../layout/hazards';
 import { findNearestSpaces, spaceContaining } from './geometryHelpers';
 import { filterLayoutByFloor } from '../../layout/emptyLayout';
 
@@ -33,8 +34,9 @@ export type ContextMenuRequest = {
   ref?: ObjectRef;
 };
 
-function defaultFlood(x: number, y: number, floorId: string): FloodEmergency {
+function defaultFlood(id: string, x: number, y: number, floorId: string): FloodEmergency {
   return {
+    id,
     enabled: true,
     x,
     y,
@@ -45,8 +47,9 @@ function defaultFlood(x: number, y: number, floorId: string): FloodEmergency {
   };
 }
 
-function defaultFire(x: number, y: number, floorId: string): FireEmergency {
+function defaultFire(id: string, x: number, y: number, floorId: string): FireEmergency {
   return {
+    id,
     enabled: true,
     x,
     y,
@@ -208,19 +211,15 @@ export function useCanvasInteraction({
     if (tool === 'flood' || tool === 'fire') {
       if (p.x < 0 || p.x > layout.width || p.y < 0 || p.y > layout.height) return;
       if (tool === 'flood') {
-        const existing = layout.flood;
-        const flood = existing
-          ? { ...existing, x: p.x, y: p.y, floor_id: activeFloorId }
-          : defaultFlood(p.x, p.y, activeFloorId);
-        onChange({ ...layout, flood });
-        onSelect([{ kind: 'flood', id: FLOOD_REF_ID }]);
+        const id = uid('flood');
+        const floods = [...layoutFloods(layout), defaultFlood(id, p.x, p.y, activeFloorId)];
+        onChange({ ...layout, floods, flood: undefined });
+        onSelect([{ kind: 'flood', id }]);
       } else {
-        const existing = layout.fire;
-        const fire = existing
-          ? { ...existing, x: p.x, y: p.y, floor_id: activeFloorId }
-          : defaultFire(p.x, p.y, activeFloorId);
-        onChange({ ...layout, fire });
-        onSelect([{ kind: 'fire', id: FIRE_REF_ID }]);
+        const id = uid('fire');
+        const fires = [...layoutFires(layout), defaultFire(id, p.x, p.y, activeFloorId)];
+        onChange({ ...layout, fires, fire: undefined });
+        onSelect([{ kind: 'fire', id }]);
       }
     }
   };

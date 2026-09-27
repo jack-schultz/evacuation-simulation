@@ -1,4 +1,5 @@
 import type { BuildingLayout } from '../types/building';
+import { normalizeHazards } from './hazards';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -54,7 +55,7 @@ function validateLayout(value: unknown): BuildingLayout {
       throw new Error(`Occupant group ${index + 1} is invalid.`);
     }
   }
-  return value as unknown as BuildingLayout;
+  return normalizeHazards(value as unknown as BuildingLayout);
 }
 
 export async function readLayoutFile(file: File): Promise<BuildingLayout> {

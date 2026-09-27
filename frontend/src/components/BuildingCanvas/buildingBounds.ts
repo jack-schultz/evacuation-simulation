@@ -32,8 +32,7 @@ export function contentMinSize(layout: BuildingLayout): { width: number; height:
     if (group.spawn_x != null) maxX = Math.max(maxX, group.spawn_x);
     if (group.spawn_y != null) maxY = Math.max(maxY, group.spawn_y);
   }
-  for (const hazard of [layout.flood, layout.fire]) {
-    if (!hazard) continue;
+  for (const hazard of [...(layout.floods ?? []), ...(layout.fires ?? [])]) {
     maxX = Math.max(maxX, hazard.x);
     maxY = Math.max(maxY, hazard.y);
   }

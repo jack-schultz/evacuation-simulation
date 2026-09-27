@@ -27,6 +27,18 @@ def hazard_radius_at(hazard: RadialEmergency | None, t: float) -> float | None:
     return hazard.radius_m + hazard.spread_speed_mps * max(t, 0.0)
 
 
+def max_hazard_radius_at(
+    hazards: list[RadialEmergency] | None,
+    t: float,
+) -> float | None:
+    """Largest active origin radius, or None when no hazard is active."""
+    if not hazards:
+        return None
+    radii = [hazard_radius_at(h, t) for h in hazards]
+    active = [r for r in radii if r is not None]
+    return max(active) if active else None
+
+
 def segment_speed_factor(hazard, radius, x, y, target_x, target_y, *, is_exit=False):
     """Reject entry/crossing; allow slowed outward escape from the affected area.
 
@@ -120,9 +132,8 @@ class HazardRouteSelector(DijkstraRouteSelector):
             return [start_node_id]
 
 
-def _synthetic_fire_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
-    fire = layout.fire
-    if fire is None or not fire.enabled or not fire.emit_smoke or fire.intensity <= 0:
+def _synthetic_fire_smoke(fire: FireEmergency) -> SmokeEmergency | None:
+    if not fire.enabled or not fire.emit_smoke or fire.intensity <= 0:
         return None
     return SmokeEmergency(
         enabled=True,
@@ -138,16 +149,33 @@ def _synthetic_fire_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
     )
 
 
+def resolve_origin_smokes(layout: BuildingLayout) -> list[SmokeEmergency]:
+    """Smoke plumes produced by each fire with emit_smoke enabled."""
+    return [
+        smoke
+        for fire in layout.fires
+        if (smoke := _synthetic_fire_smoke(fire)) is not None
+    ]
+
+
 def resolve_origin_smoke(layout: BuildingLayout) -> SmokeEmergency | None:
-    """Smoke is produced by fire (emit_smoke); not a separate disaster."""
-    return _synthetic_fire_smoke(layout)
+    """First active smoke origin (compat); prefer resolve_origin_smokes."""
+    smokes = resolve_origin_smokes(layout)
+    return smokes[0] if smokes else None
+
+
+def resolve_origin_fires(layout: BuildingLayout) -> list[FireEmergency]:
+    return [
+        fire
+        for fire in layout.fires
+        if fire.enabled and fire.intensity > 0
+    ]
 
 
 def resolve_origin_fire(layout: BuildingLayout) -> FireEmergency | None:
-    fire = layout.fire
-    if fire is None or not fire.enabled or fire.intensity <= 0:
-        return None
-    return fire
+    """First active fire origin (compat); prefer resolve_origin_fires."""
+    fires = resolve_origin_fires(layout)
+    return fires[0] if fires else None
 
 
 def _stair_partners_by_floor(
@@ -280,31 +308,35 @@ def hazard_stair_spread_pending(layout: BuildingLayout, t: float, horizon: float
 
 
 def active_smoke_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorState]:
-    """Origin smoke plus plumes that spread through linked stairs (up, then down from top)."""
-    origin = resolve_origin_smoke(layout)
-    if origin is None:
-        return []
-    return _active_stair_plumes(
-        origin,
-        layout,
-        t,
-        stair_delay_s=origin.stair_spread_delay_s,
-        intensity_factor=origin.stair_spread_intensity_factor,
-    )
+    """Smoke from every fire origin, plus stair-spread plumes."""
+    plumes: list[SmokeFloorState] = []
+    for origin in resolve_origin_smokes(layout):
+        plumes.extend(
+            _active_stair_plumes(
+                origin,
+                layout,
+                t,
+                stair_delay_s=origin.stair_spread_delay_s,
+                intensity_factor=origin.stair_spread_intensity_factor,
+            )
+        )
+    return plumes
 
 
 def active_fire_plumes(layout: BuildingLayout, t: float) -> list[SmokeFloorState]:
     """Fire expands on-floor and follows the same stair path as smoke, but more slowly."""
-    origin = resolve_origin_fire(layout)
-    if origin is None:
-        return []
-    return _active_stair_plumes(
-        origin,
-        layout,
-        t,
-        stair_delay_s=origin.smoke_stair_spread_delay_s * FIRE_STAIR_DELAY_MULTIPLIER,
-        intensity_factor=origin.smoke_stair_intensity_factor,
-    )
+    plumes: list[SmokeFloorState] = []
+    for origin in resolve_origin_fires(layout):
+        plumes.extend(
+            _active_stair_plumes(
+                origin,
+                layout,
+                t,
+                stair_delay_s=origin.smoke_stair_spread_delay_s * FIRE_STAIR_DELAY_MULTIPLIER,
+                intensity_factor=origin.smoke_stair_intensity_factor,
+            )
+        )
+    return plumes
 
 
 def smoke_factor_at(

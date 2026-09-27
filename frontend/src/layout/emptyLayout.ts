@@ -51,9 +51,8 @@ export function filterLayoutByFloor(layout: BuildingLayout, floorId: string): Bu
     occupant_groups: layout.occupant_groups.filter(
       (g) => entityFloorId(g) === floorId && spaceIds.has(g.space_id),
     ),
-    flood:
-      layout.flood && entityFloorId(layout.flood) === floorId ? layout.flood : null,
-    fire: layout.fire && entityFloorId(layout.fire) === floorId ? layout.fire : null,
+    floods: (layout.floods ?? []).filter((f) => entityFloorId(f) === floorId),
+    fires: (layout.fires ?? []).filter((f) => entityFloorId(f) === floorId),
     smoke:
       layout.smoke && entityFloorId(layout.smoke) === floorId ? layout.smoke : null,
   };

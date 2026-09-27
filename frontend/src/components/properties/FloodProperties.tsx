@@ -1,4 +1,5 @@
 import type { BuildingLayout, FloodEmergency } from '../../types/building';
+import { layoutFloods } from '../../layout/hazards';
 
 interface Props {
   layout: BuildingLayout;
@@ -16,7 +17,11 @@ export function FloodProperties({
   disabled,
 }: Props) {
   const update = (patch: Partial<FloodEmergency>) => {
-    onChange({ ...layout, flood: { ...flood, ...patch } });
+    onChange({
+      ...layout,
+      floods: layoutFloods(layout).map((f) => (f.id === flood.id ? { ...f, ...patch } : f)),
+      flood: undefined,
+    });
   };
 
   return (

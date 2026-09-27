@@ -160,8 +160,8 @@ export function deleteFloor(
     occupant_groups: layout.occupant_groups.filter(
       (g) => entityFloorId(g) !== floorId,
     ),
-    flood: clearHazard(layout.flood),
-    fire: clearHazard(layout.fire),
+    floods: (layout.floods ?? []).filter((f) => entityFloorId(f) !== floorId),
+    fires: (layout.fires ?? []).filter((f) => entityFloorId(f) !== floorId),
     smoke: clearHazard(layout.smoke),
   };
 }

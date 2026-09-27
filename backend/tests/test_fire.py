@@ -14,7 +14,7 @@ def fire_layout(config=None, **kwargs):
 
 class FireTests(unittest.TestCase):
     def test_legacy_and_json_round_trip(self):
-        self.assertIsNone(layout().fire)
+        self.assertEqual(layout().fires, [])
         self.assertIsNone(SimulationFrame(t=0, occupants=[]).fire_radius_m)
         original = fire_layout(dict(x=6, y=5, radius_m=1, intensity=40, spread_speed_mps=0.2))
         self.assertEqual(BuildingLayout.model_validate_json(original.model_dump_json()), original)
@@ -72,7 +72,7 @@ class FireTests(unittest.TestCase):
             self.assertEqual(output.frames[-1].occupants[0].status, 'trapped')
             for frame in output.frames:
                 self.assertAlmostEqual(frame.fire_radius_m, 0.5 + 2 * frame.t)
-            self.assertEqual(building.fire.radius_m, 0.5)
+            self.assertEqual(building.fires[0].radius_m, 0.5)
         fixed = run(fire_layout(dict(x=10, y=5, radius_m=0.5, spread_speed_mps=0), two_exits=False))
         self.assertEqual(fixed.results.evacuated_count, 1)
         self.assertTrue(all(frame.fire_radius_m == 0.5 for frame in fixed.frames))
@@ -99,12 +99,41 @@ class FireTests(unittest.TestCase):
             buildings, simulations = BuildingService(db), SimulationService(db)
             original = fire_layout(dict(x=7, y=5, radius_m=0.5, intensity=70, spread_speed_mps=0.02))
             saved = buildings.create_building(original)
-            self.assertEqual(buildings.get_layout(saved.id).fire, original.fire)
+            self.assertEqual(buildings.get_layout(saved.id).fires, original.fires)
             snapshot = simulations.create(saved.id, SimulationParameters(max_time_s=10))
             buildings.update_building(saved.id, layout())
             result = simulations.run(snapshot.id)
             self.assertEqual(result.results.occupants[0].route_node_ids[-1], 'exit:far')
             self.assertEqual(result.frames[0].fire_radius_m, 0.5)
             self.assertEqual(simulations.get(snapshot.id).frames, result.frames)
-            self.assertIsNone(buildings.get_layout(saved.id).fire)
+            self.assertEqual(buildings.get_layout(saved.id).fires, [])
         engine.dispose()
+
+
+class MultiFireTests(unittest.TestCase):
+    def test_two_fires_produce_separate_plumes(self):
+        from app.simulation.hazards import active_fire_plumes
+
+        building = BuildingLayout.model_validate({
+            "width": 30,
+            "height": 20,
+            "spaces": [
+                {"id": "a", "name": "A", "type": "room", "x": 0, "y": 0, "width": 10, "height": 10},
+                {"id": "b", "name": "B", "type": "room", "x": 15, "y": 0, "width": 10, "height": 10},
+            ],
+            "exits": [
+                {"id": "ea", "x": 0, "y": 5, "width": 1, "connected_space_id": "a", "flow_rate_per_s": 100},
+            ],
+            "occupant_groups": [
+                {"id": "g", "name": "People", "count": 1, "space_id": "a"},
+            ],
+            "fires": [
+                {"id": "f1", "x": 5, "y": 5, "radius_m": 1, "intensity": 50, "spread_speed_mps": 0,
+                 "emit_smoke": False},
+                {"id": "f2", "x": 20, "y": 5, "radius_m": 1, "intensity": 50, "spread_speed_mps": 0,
+                 "emit_smoke": False},
+            ],
+        })
+        plumes = active_fire_plumes(building, 0.0)
+        self.assertEqual(len(plumes), 2)
+        self.assertEqual({(round(p.x), round(p.y)) for p in plumes}, {(5, 5), (20, 5)})

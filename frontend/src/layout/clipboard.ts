@@ -269,8 +269,12 @@ export function deleteRefs(
     occupant_groups: layout.occupant_groups.filter(
       (g) => !groupIds.has(g.id) && !spaceIds.has(g.space_id),
     ),
-    flood: refs.some((r) => r.kind === 'flood') ? null : layout.flood,
-    fire: refs.some((r) => r.kind === 'fire') ? null : layout.fire,
+    floods: (layout.floods ?? []).filter(
+      (f) => !refs.some((r) => r.kind === 'flood' && r.id === f.id),
+    ),
+    fires: (layout.fires ?? []).filter(
+      (f) => !refs.some((r) => r.kind === 'fire' && r.id === f.id),
+    ),
   };
 }
 
@@ -350,21 +354,21 @@ export function translateSelection(
       }
       return { ...group, spawn_x, spawn_y, space_id };
     }),
-    flood:
-      layout.flood && selection.some((r) => r.kind === 'flood')
-        ? {
-            ...layout.flood,
-            x: Math.max(0, Math.min(layout.width, snap(layout.flood.x + dx))),
-            y: Math.max(0, Math.min(layout.height, snap(layout.flood.y + dy))),
-          }
-        : layout.flood,
-    fire:
-      layout.fire && selection.some((r) => r.kind === 'fire')
-        ? {
-            ...layout.fire,
-            x: Math.max(0, Math.min(layout.width, snap(layout.fire.x + dx))),
-            y: Math.max(0, Math.min(layout.height, snap(layout.fire.y + dy))),
-          }
-        : layout.fire,
+    floods: (layout.floods ?? []).map((flood) => {
+      if (!selection.some((r) => r.kind === 'flood' && r.id === flood.id)) return flood;
+      return {
+        ...flood,
+        x: Math.max(0, Math.min(layout.width, snap(flood.x + dx))),
+        y: Math.max(0, Math.min(layout.height, snap(flood.y + dy))),
+      };
+    }),
+    fires: (layout.fires ?? []).map((fire) => {
+      if (!selection.some((r) => r.kind === 'fire' && r.id === fire.id)) return fire;
+      return {
+        ...fire,
+        x: Math.max(0, Math.min(layout.width, snap(fire.x + dx))),
+        y: Math.max(0, Math.min(layout.height, snap(fire.y + dy))),
+      };
+    }),
   };
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { emptyLayout } from '../layout/emptyLayout';
+import { normalizeHazards } from '../layout/hazards';
 import type { BuildingLayout, BuildingSummary, FloorPlanImageSummary, Selection } from '../types/building';
 
 export interface FloorPlanLibraryImage extends FloorPlanImageSummary {
@@ -74,7 +75,7 @@ export function useBuildingPersistence({
     const b = await api.getBuilding(id);
     await loadFloorPlans(id);
     setBuildingId(b.id);
-    setLayout(b.layout);
+    setLayout(normalizeHazards(b.layout));
     setUndoHistory([]);
     setSelected([]);
     setDirty(false);
@@ -105,7 +106,7 @@ export function useBuildingPersistence({
     try {
       if (buildingId) {
         const b = await api.updateBuilding(buildingId, layout);
-        setLayout(b.layout);
+        setLayout(normalizeHazards(b.layout));
         setBuildingId(b.id);
         // #region agent log
         fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:onSave',message:'update ok',data:{id:b.id,name:b.name},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
@@ -113,7 +114,7 @@ export function useBuildingPersistence({
       } else {
         const b = await api.createBuilding(layout);
         setBuildingId(b.id);
-        setLayout(b.layout);
+        setLayout(normalizeHazards(b.layout));
         // #region agent log
         fetch('http://127.0.0.1:7624/ingest/ff651be1-af95-41d0-83f9-fb5094101590',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8a2919'},body:JSON.stringify({sessionId:'8a2919',location:'useBuildingPersistence.ts:onSave',message:'create ok',data:{id:b.id,name:b.name},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
         // #endregion
@@ -146,12 +147,12 @@ export function useBuildingPersistence({
         const building = await api.createBuilding(layoutToSave);
         id = building.id;
         setBuildingId(id);
-        setLayout(building.layout);
+        setLayout(normalizeHazards(building.layout));
         setDirty(false);
         await refreshList();
       } else if (dirty || layout.obstacle_map) {
         const building = await api.updateBuilding(id, layoutToSave);
-        setLayout(building.layout);
+        setLayout(normalizeHazards(building.layout));
         setDirty(false);
       }
       const result = await api.uploadFloorPlan(id, file);
@@ -180,7 +181,7 @@ export function useBuildingPersistence({
     setBuildingId(null);
     replaceFloorPlans([]);
     setSelectedFloorPlanId(null);
-    setLayout(nextLayout);
+    setLayout(normalizeHazards(nextLayout));
     setUndoHistory([]);
     setSelected([]);
     setDirty(true);

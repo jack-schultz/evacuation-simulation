@@ -1,4 +1,5 @@
 import type { BuildingLayout, FireEmergency } from '../../types/building';
+import { layoutFires } from '../../layout/hazards';
 
 interface Props {
   layout: BuildingLayout;
@@ -16,7 +17,11 @@ export function FireProperties({
   disabled,
 }: Props) {
   const update = (patch: Partial<FireEmergency>) => {
-    onChange({ ...layout, fire: { ...fire, ...patch } });
+    onChange({
+      ...layout,
+      fires: layoutFires(layout).map((f) => (f.id === fire.id ? { ...f, ...patch } : f)),
+      fire: undefined,
+    });
   };
 
   return (

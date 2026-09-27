@@ -39,7 +39,7 @@ export function ToolPalette({ tool, onToolChange, disabled }: Props) {
         Room and stairs: click corners to draw a polygon, then click the
         starting point to close it (Esc or right-click cancels). Esc also
         switches back to Select. Door, exit, occupants, flood and fire place
-        with a click (flood/fire replace the existing one if already set).
+        with a click (each flood/fire click adds another).
         Obstacle: click and drag a rectangle; release to place it.
         Use Select to drag spaces, obstacles, doors, exits, occupants or
         flood/fire centres. Shift or Cmd/Ctrl+click to multi-select.
