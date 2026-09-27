@@ -154,11 +154,8 @@ class SimulationEngine:
                     floors,
                     plumes,
                     fire_plumes,
-<<<<<<< HEAD
                     layout.obstacles,
-=======
                     flood_plumes,
->>>>>>> f7599a3948d88e71be0aa9e180c6c62f3c6f94de
                 )
 
             if t + 1e-9 >= next_frame_t:
