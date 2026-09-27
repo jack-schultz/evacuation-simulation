@@ -10,6 +10,7 @@ export function useSimulationPlayback() {
   const [simTime, setSimTime] = useState(0);
   const [status, setStatus] = useState<PlaybackState>('idle');
   const [speed, setSpeed] = useState(1);
+  const [streaming, setStreaming] = useState(false);
 
   const rafRef = useRef<number | null>(null);
   const lastWallRef = useRef<number | null>(null);
@@ -17,6 +18,7 @@ export function useSimulationPlayback() {
   const framesRef = useRef(frames);
   const speedRef = useRef(speed);
   const statusRef = useRef(status);
+  const streamingRef = useRef(streaming);
 
   useEffect(() => {
     framesRef.current = frames;
@@ -30,6 +32,10 @@ export function useSimulationPlayback() {
     statusRef.current = status;
   }, [status]);
 
+  useEffect(() => {
+    streamingRef.current = streaming;
+  }, [streaming]);
+
   const clearRaf = () => {
     if (rafRef.current != null) {
       window.cancelAnimationFrame(rafRef.current);
@@ -40,6 +46,8 @@ export function useSimulationPlayback() {
 
   const load = useCallback((nextFrames: SimulationFrame[], nextResults: SimulationResults | null) => {
     clearRaf();
+    streamingRef.current = false;
+    setStreaming(false);
     framesRef.current = nextFrames;
     setFrames(nextFrames);
     setResults(nextResults);
@@ -49,8 +57,35 @@ export function useSimulationPlayback() {
     setStatus(nextFrames.length ? 'paused' : 'idle');
   }, []);
 
+  const startStream = useCallback(() => {
+    clearRaf();
+    framesRef.current = [];
+    setFrames([]);
+    setResults(null);
+    simTimeRef.current = 0;
+    setSimTime(0);
+    streamingRef.current = true;
+    setStreaming(true);
+    setStatus('playing');
+  }, []);
+
+  const appendFrame = useCallback((frame: SimulationFrame) => {
+    const nextFrames = [...framesRef.current, frame];
+    framesRef.current = nextFrames;
+    setFrames(nextFrames);
+  }, []);
+
+  const finishStream = useCallback((nextResults: SimulationResults | null) => {
+    setResults(nextResults);
+    streamingRef.current = false;
+    setStreaming(false);
+    if (!framesRef.current.length) setStatus('idle');
+  }, []);
+
   const reset = useCallback(() => {
     clearRaf();
+    streamingRef.current = false;
+    setStreaming(false);
     framesRef.current = [];
     setFrames([]);
     setResults(null);
@@ -63,7 +98,7 @@ export function useSimulationPlayback() {
     const list = framesRef.current;
     if (!list.length) return;
     const endT = list[list.length - 1].t;
-    if (simTimeRef.current >= endT) {
+    if (simTimeRef.current >= endT && !streamingRef.current) {
       setStatus('finished');
       return;
     }
@@ -103,7 +138,7 @@ export function useSimulationPlayback() {
       const next = Math.min(endT, simTimeRef.current + dtWall * speedRef.current);
       simTimeRef.current = next;
       setSimTime(next);
-      if (next >= endT) {
+      if (next >= endT && !streamingRef.current) {
         setStatus('finished');
         clearRaf();
         return;
@@ -113,7 +148,7 @@ export function useSimulationPlayback() {
 
     rafRef.current = window.requestAnimationFrame(tick);
     return clearRaf;
-  }, [status, frames]);
+  }, [status, frames, streaming]);
 
   const currentFrame = useMemo(
     () => interpolateFrame(frames, simTime),
@@ -132,9 +167,13 @@ export function useSimulationPlayback() {
     currentFrame,
     simTime,
     status,
+    streaming,
     speed,
     setSpeed,
     load,
+    startStream,
+    appendFrame,
+    finishStream,
     reset,
     play,
     pause,

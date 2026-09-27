@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from dataclasses import dataclass
 
 from app.domain.building import (
@@ -60,6 +61,19 @@ class SimulationEngine:
         self.graph_builder = NavigationGraphBuilder()
 
     def run(self, layout: BuildingLayout, params: SimulationParameters) -> SimulationOutput:
+        frames: list[SimulationFrame] = []
+        stream = self.iter_run(layout, params)
+        while True:
+            try:
+                frames.append(next(stream))
+            except StopIteration as completed:
+                output = completed.value
+                output.frames = frames
+                return output
+
+    def iter_run(
+        self, layout: BuildingLayout, params: SimulationParameters
+    ) -> Generator[SimulationFrame, None, SimulationOutput]:
         if not layout.exits:
             raise ValueError("Building must have at least one exit")
         if not layout.occupant_groups:
@@ -116,12 +130,12 @@ class SimulationEngine:
             defaults,
         )
         queues: dict[str, ElementQueueState] = {}
-        frames: list[SimulationFrame] = []
         t = 0.0
         next_frame_t = 0.0
 
-        frames.append(self._capture_frame(t, occupants, layout))
+        yield self._capture_frame(t, occupants, layout)
         next_frame_t = params.frame_interval_s
+        last_frame_t = t
 
         while t < params.max_time_s:
             occupants_done = all(
@@ -164,14 +178,15 @@ class SimulationEngine:
                 )
 
             if t + 1e-9 >= next_frame_t:
-                frames.append(self._capture_frame(t, occupants, layout))
+                yield self._capture_frame(t, occupants, layout)
+                last_frame_t = t
                 next_frame_t += params.frame_interval_s
 
-        if not frames or frames[-1].t < t:
-            frames.append(self._capture_frame(t, occupants, layout))
+        if last_frame_t < t:
+            yield self._capture_frame(t, occupants, layout)
 
         results = build_results(occupants, queues, t, graph=graph)
-        return SimulationOutput(results=results, frames=frames)
+        return SimulationOutput(results=results, frames=[])
 
     @staticmethod
     def _capture_frame(

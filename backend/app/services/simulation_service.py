@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import uuid
+from collections.abc import Iterator
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
@@ -93,6 +95,55 @@ class SimulationService:
         self.db.commit()
         self.db.refresh(row)
         return self._to_run_response(row, include_frames=True)
+
+    def stream(self, simulation_id: str) -> Iterator[str]:
+        row = self._get_or_404(simulation_id)
+        layout = BuildingLayout.model_validate_json(row.building_snapshot_json)
+        params = SimulationParameters.model_validate_json(row.parameters_json)
+        self._validate_runnable(layout)
+        return self._stream_run(row, layout, params)
+
+    def _stream_run(
+        self,
+        row: SimulationRecord,
+        layout: BuildingLayout,
+        params: SimulationParameters,
+    ) -> Iterator[str]:
+        row.status = "running"
+        row.error_message = None
+        self.db.commit()
+
+        frame_json: list[str] = []
+        simulation = self.engine.iter_run(layout, params)
+        try:
+            while True:
+                try:
+                    frame = next(simulation)
+                except StopIteration as completed:
+                    output = completed.value
+                    break
+                serialized = frame.model_dump_json()
+                frame_json.append(serialized)
+                yield '{"type":"frame","frame":' + serialized + "}\n"
+        except GeneratorExit:
+            row.status = "cancelled"
+            row.updated_at = datetime.now(timezone.utc)
+            self.db.commit()
+            raise
+        except Exception as exc:
+            row.status = "error"
+            row.error_message = str(exc)
+            row.updated_at = datetime.now(timezone.utc)
+            self.db.commit()
+            yield json.dumps({"type": "error", "message": str(exc)}) + "\n"
+            return
+
+        row.status = "completed"
+        row.results_json = output.results.model_dump_json()
+        row.frames_json = "[" + ",".join(frame_json) + "]"
+        row.updated_at = datetime.now(timezone.utc)
+        self.db.commit()
+        yield '{"type":"complete","results":' + output.results.model_dump_json() + "}\n"
 
     def reset(self, simulation_id: str) -> SimulationSummary:
         row = self._get_or_404(simulation_id)
