@@ -13,7 +13,11 @@ from app.domain.building import (
     SimulationResults,
 )
 from app.simulation.collision import build_collision_solids
-from app.simulation.flood import active_flood_plumes, apply_flood_plumes
+from app.simulation.flood import (
+    active_flood_plumes,
+    apply_flood_plumes,
+    flood_intensity_at,
+)
 from app.simulation.hazards import (
     active_fire_plumes,
     active_smoke_plumes,
@@ -22,6 +26,7 @@ from app.simulation.hazards import (
     fire_emergencies_from_plumes,
     hazard_stair_spread_pending,
     max_hazard_radius_at,
+    fire_touches,
     resolve_origin_smoke,
 )
 from app.simulation.flow import CapacityFlowModel, ElementQueueState, FlowModel
@@ -122,46 +127,52 @@ class SimulationEngine:
 
         frames.append(self._capture_frame(t, occupants, layout))
         next_frame_t = params.frame_interval_s
+        future_fire_plumes = active_fire_plumes(layout, params.max_time_s)
+        future_flood_plumes = active_flood_plumes(layout, params.max_time_s)
 
         while t < params.max_time_s:
             occupants_done = all(
                 o.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED)
                 for o in occupants
             )
+            trapped_casualties_pending = self._trapped_casualties_pending(
+                occupants, params, future_fire_plumes, future_flood_plumes
+            )
             # Keep running after egress so fire/smoke can finish spreading through stairs.
             if occupants_done and not hazard_stair_spread_pending(
                 layout, t, params.max_time_s
-            ):
+            ) and not trapped_casualties_pending:
                 break
 
             t += params.timestep_s
             plumes = active_smoke_plumes(layout, t)
             fire_plumes = active_fire_plumes(layout, t)
             flood_plumes = active_flood_plumes(layout, t)
-            if not occupants_done:
-                advance_timestep(
-                    self.flow_model,
-                    self.movement_model,
-                    occupants,
-                    graph,
-                    queues,
-                    params,
-                    t,
-                    boundary_solids,
-                    spaces,
-                    doors,
-                    layout.floods[0] if layout.floods else None,
-                    layout.fires[0] if layout.fires else None,
-                    origin_smoke,
-                    layout.obstacle_map,
-                    layout.width,
-                    layout.height,
-                    floors,
-                    plumes,
-                    fire_plumes,
-                    flood_plumes,
-                    layout.obstacles,
-                )
+            # Keep hazard exposure checks running for trapped occupants. The
+            # timestep leaves trapped and evacuated occupants stationary.
+            advance_timestep(
+                self.flow_model,
+                self.movement_model,
+                occupants,
+                graph,
+                queues,
+                params,
+                t,
+                boundary_solids,
+                spaces,
+                doors,
+                layout.floods[0] if layout.floods else None,
+                layout.fires[0] if layout.fires else None,
+                origin_smoke,
+                layout.obstacle_map,
+                layout.width,
+                layout.height,
+                floors,
+                plumes,
+                fire_plumes,
+                flood_plumes,
+                layout.obstacles,
+            )
 
             if t + 1e-9 >= next_frame_t:
                 frames.append(self._capture_frame(t, occupants, layout))
@@ -172,6 +183,36 @@ class SimulationEngine:
 
         results = build_results(occupants, queues, t, graph=graph)
         return SimulationOutput(results=results, frames=frames)
+
+    @staticmethod
+    def _trapped_casualties_pending(
+        occupants, params, future_fire_plumes, future_flood_plumes
+    ) -> bool:
+        """Whether a live trapped occupant can still be reached by a spreading hazard."""
+        trapped = [
+            occupant for occupant in occupants
+            if occupant.status == OccupantStatus.TRAPPED and not occupant.deceased
+        ]
+        if not trapped:
+            return False
+
+        for occupant in trapped:
+            if fire_touches(
+                future_fire_plumes,
+                occupant.floor_id,
+                occupant.x,
+                occupant.y,
+                params.occupant_radius_m,
+            ):
+                return True
+            if flood_intensity_at(
+                future_flood_plumes,
+                occupant.current_space_id,
+                occupant.x,
+                occupant.y,
+            ) > 0:
+                return True
+        return False
 
     @staticmethod
     def _capture_frame(

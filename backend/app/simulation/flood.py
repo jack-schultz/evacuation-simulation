@@ -417,7 +417,7 @@ def apply_flood_exposure(
     if not plumes or dt <= 0:
         return
     for occ in occupants:
-        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if occ.status == OccupantStatus.EVACUATED or occ.deceased:
             continue
         intensity = flood_intensity_at(plumes, occ.current_space_id, occ.x, occ.y)
         if intensity <= 0:

@@ -140,7 +140,7 @@ def _apply_fire_casualties(
     if not fire_plumes:
         return
     for occ in occupants:
-        if occ.status in (OccupantStatus.EVACUATED, OccupantStatus.TRAPPED):
+        if occ.status == OccupantStatus.EVACUATED or occ.deceased:
             continue
         if fire_touches(fire_plumes, occ.floor_id, occ.x, occ.y, body_radius_m):
             occ.status = OccupantStatus.TRAPPED
