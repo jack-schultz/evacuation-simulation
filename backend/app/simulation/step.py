@@ -25,11 +25,10 @@ from app.simulation.collision import (
     resolve_wall_collisions,
     update_space_membership_from_position,
 )
+from app.simulation.flood import apply_flood_exposure, flood_soft_speed_factor
 from app.simulation.hazards import (
     fire_touches,
     hard_plume_factor,
-    hazard_radius_at,
-    hazards_speed_factor,
     smoke_factor_at,
 )
 from app.simulation.hazard_avoidance import flood_detour_target
@@ -157,7 +156,7 @@ def advance_timestep(
     boundary_solids: list[WallSegment] | None = None,
     spaces: dict | None = None,
     doors: dict | None = None,
-    flood: FloodEmergency | None = None,
+    flood: FloodEmergency | None = None,  # kept for call-site compat; plumes drive effects
     fire: FireEmergency | None = None,  # kept for call-site compat; plumes drive effects
     smoke: SmokeEmergency | None = None,
     obstacle_map: PixelObstacleMap | None = None,
@@ -166,6 +165,7 @@ def advance_timestep(
     floors: dict[str, Floor] | None = None,
     smoke_plumes=None,
     fire_plumes=None,
+    flood_plumes=None,
 ) -> None:
     radius = params.occupant_radius_m
     solids = boundary_solids or []
@@ -174,7 +174,8 @@ def advance_timestep(
     floors = floors or {}
     smoke_plumes = smoke_plumes or []
     fire_plumes = fire_plumes or []
-    flood_active = hazard_radius_at(flood, t) is not None
+    flood_plumes = flood_plumes or []
+    flood_active = bool(flood_plumes)
     fire_active = bool(fire_plumes)
     has_hazard = flood_active or fire_active
     speed_factors: dict[str, float] = {}
@@ -213,27 +214,20 @@ def advance_timestep(
             (occ.x, occ.y),
             (waypoint.x, waypoint.y),
             spaces.get(occ.current_space_id),
-            flood,
-            t,
+            flood_plumes,
             radius,
         )
-        if flood_target is False:
-            occ.status = OccupantStatus.TRAPPED
-            continue
         target_x, target_y = flood_target or (waypoint.x, waypoint.y)
         factor = 1.0
         if has_hazard:
             if flood_active:
                 factor = min(
                     factor,
-                    hazards_speed_factor(
-                        (flood,),
-                        t,
+                    flood_soft_speed_factor(
+                        flood_plumes,
+                        occ.current_space_id,
                         occ.x,
                         occ.y,
-                        target_x,
-                        target_y,
-                        is_exit=waypoint.kind == NodeKind.EXIT,
                     ),
                 )
             if fire_active:
@@ -414,30 +408,20 @@ def advance_timestep(
             (occ.x, occ.y),
             (target_x, target_y),
             spaces.get(occ.current_space_id),
-            flood,
-            t,
+            flood_plumes,
             radius,
         )
-        if flood_target is False:
-            continue
         if flood_target is not None:
             target_x, target_y = flood_target
 
         desired = occ.speed_mps * params.timestep_s
         desired *= speed_factors[occ.id]
         # Aperture slots can deviate from the centreline checked above.
-        if has_hazard:
-            blocked = False
-            if flood_active and hazards_speed_factor(
-                (flood,), t, occ.x, occ.y, target_x, target_y
-            ) == 0:
-                blocked = True
-            if fire_active and hard_plume_factor(
-                fire_plumes, occ.floor_id, occ.x, occ.y, target_x, target_y
-            ) == 0:
-                blocked = True
-            if blocked:
-                desired = 0.0
+        # Fire still hard-blocks entry; flood only slows (already in speed_factors).
+        if fire_active and hard_plume_factor(
+            fire_plumes, occ.floor_id, occ.x, occ.y, target_x, target_y
+        ) == 0:
+            desired = 0.0
 
         if edge is not None and edge.kind in (EdgeKind.DOOR, EdgeKind.EXIT, EdgeKind.STAIRS):  # type: ignore[union-attr]
             next_node = graph.nodes[occ.next_node_id]
@@ -569,3 +553,4 @@ def advance_timestep(
             occ.travel_time_s += params.timestep_s
 
     _apply_fire_casualties(occupants, fire_plumes, radius)
+    apply_flood_exposure(occupants, flood_plumes, params.timestep_s)

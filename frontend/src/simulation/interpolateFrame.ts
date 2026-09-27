@@ -119,6 +119,7 @@ export function interpolateFrame(
   return {
     t,
     flood_radius_m: lerpRadius(a.flood_radius_m, b.flood_radius_m, alpha),
+    flood_rooms: alpha < 0.5 ? (a.flood_rooms ?? []) : (b.flood_rooms ?? []),
     fire_radius_m: lerpRadius(a.fire_radius_m, b.fire_radius_m, alpha),
     fire_floors: alpha < 0.5 ? (a.fire_floors ?? []) : (b.fire_floors ?? []),
     smoke_floors: alpha < 0.5 ? (a.smoke_floors ?? []) : (b.smoke_floors ?? []),
