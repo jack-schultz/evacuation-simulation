@@ -170,7 +170,7 @@ class SimulationEngine:
         if not frames or frames[-1].t < t:
             frames.append(self._capture_frame(t, occupants, layout))
 
-        results = build_results(occupants, queues, t, graph=graph)
+        results = build_results(occupants, queues, t, graph=graph, layout=layout)
         return SimulationOutput(results=results, frames=frames)
 
     @staticmethod
@@ -195,6 +195,7 @@ class SimulationEngine:
                     deceased=o.deceased,
                     group_id=o.group_id,
                     floor_id=o.floor_id,
+                    route_index=o.route_index,
                     climb_progress=(
                         round(o.climb_progress, 3)
                         if o.climb_progress is not None

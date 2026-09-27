@@ -3,27 +3,54 @@
 from __future__ import annotations
 
 from app.domain.building import (
+    BuildingLayout,
     CongestionHotspot,
+    DEFAULT_FLOOR_ID,
     OccupantResult,
     OccupantStatus,
     SimulationResults,
 )
 from app.simulation.flow import ElementQueueState
-from app.simulation.graph import NavigationGraph
+from app.simulation.graph import NavigationGraph, NodeKind
 from app.simulation.movement import SimulatedOccupant
 
 
-def _route_points(
-    route: list[str], graph: NavigationGraph | None
-) -> list[tuple[float, float]]:
+def _node_floor(
+    node_id: str,
+    graph: NavigationGraph,
+    doors: dict[str, str],
+    exits: dict[str, str],
+) -> str:
+    node = graph.nodes.get(node_id)
+    if node is None:
+        return DEFAULT_FLOOR_ID
+    if node.kind in (NodeKind.SPACE, NodeKind.WAYPOINT):
+        return graph.space_floor_ids.get(node.ref_id, DEFAULT_FLOOR_ID)
+    if node.kind == NodeKind.DOOR:
+        return doors.get(node.ref_id, DEFAULT_FLOOR_ID)
+    if node.kind == NodeKind.EXIT:
+        return exits.get(node.ref_id, DEFAULT_FLOOR_ID)
+    return DEFAULT_FLOOR_ID
+
+
+def _route_geometry(
+    route: list[str],
+    graph: NavigationGraph | None,
+    layout: BuildingLayout | None,
+) -> tuple[list[tuple[float, float]], list[str]]:
     if graph is None:
-        return []
+        return [], []
+    doors = {d.id: d.floor_id for d in (layout.doors if layout else [])}
+    exits = {e.id: e.floor_id for e in (layout.exits if layout else [])}
     points: list[tuple[float, float]] = []
+    floors: list[str] = []
     for node_id in route:
         node = graph.nodes.get(node_id)
-        if node is not None:
-            points.append((node.x, node.y))
-    return points
+        if node is None:
+            continue
+        points.append((node.x, node.y))
+        floors.append(_node_floor(node_id, graph, doors, exits))
+    return points, floors
 
 
 def build_results(
@@ -31,6 +58,7 @@ def build_results(
     queues: dict[str, ElementQueueState],
     simulation_time_s: float,
     graph: NavigationGraph | None = None,
+    layout: BuildingLayout | None = None,
 ) -> SimulationResults:
     evacuated = [o for o in occupants if o.status == OccupantStatus.EVACUATED]
     remaining = [o for o in occupants if o.status != OccupantStatus.EVACUATED]
@@ -50,21 +78,27 @@ def build_results(
     ]
     hotspots.sort(key=lambda h: h.total_wait_s, reverse=True)
 
-    occupant_results = [
-        OccupantResult(
-            id=o.id,
-            group_id=o.group_id,
-            evacuated=o.status == OccupantStatus.EVACUATED,
-            deceased=o.deceased,
-            distance_m=round(o.distance_m, 3),
-            travel_time_s=round(o.travel_time_s, 3),
-            wait_time_s=round(o.wait_time_s, 3),
-            total_time_s=round((o.evacuated_at if o.evacuated_at is not None else simulation_time_s), 3),
-            route_node_ids=list(o.route),
-            route_points=_route_points(o.route, graph),
+    occupant_results = []
+    for o in occupants:
+        points, floors = _route_geometry(o.route, graph, layout)
+        occupant_results.append(
+            OccupantResult(
+                id=o.id,
+                group_id=o.group_id,
+                evacuated=o.status == OccupantStatus.EVACUATED,
+                deceased=o.deceased,
+                distance_m=round(o.distance_m, 3),
+                travel_time_s=round(o.travel_time_s, 3),
+                wait_time_s=round(o.wait_time_s, 3),
+                total_time_s=round(
+                    (o.evacuated_at if o.evacuated_at is not None else simulation_time_s),
+                    3,
+                ),
+                route_node_ids=list(o.route),
+                route_points=points,
+                route_floors=floors,
+            )
         )
-        for o in occupants
-    ]
 
     avg_evac = sum(evac_times) / len(evac_times) if evac_times else None
     max_evac = max(evac_times) if evac_times else None

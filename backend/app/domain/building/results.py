@@ -24,6 +24,10 @@ class OccupantFrameState(BaseModel):
     deceased: bool = False
     group_id: str
     floor_id: str = "floor-0"
+    route_index: int = Field(
+        default=0,
+        description="Index into the occupant's fixed route of the current waypoint.",
+    )
     climb_progress: float | None = Field(
         default=None,
         description="0..1 along a stair transfer when status is climbing.",
@@ -92,6 +96,10 @@ class OccupantResult(BaseModel):
     total_time_s: float
     route_node_ids: list[str]
     route_points: list[tuple[float, float]] = []
+    route_floors: list[str] = Field(
+        default_factory=list,
+        description="Floor id for each route_points entry (same length).",
+    )
 
 
 class SimulationResults(BaseModel):

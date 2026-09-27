@@ -40,6 +40,7 @@ export interface OccupantFrameState {
   deceased?: boolean;
   group_id: string;
   floor_id?: string;
+  route_index?: number;
   climb_progress?: number | null;
 }
 
@@ -96,6 +97,8 @@ export interface OccupantResult {
   total_time_s: number;
   route_node_ids: string[];
   route_points: [number, number][];
+  /** Floor id for each route_points entry (same length). */
+  route_floors?: string[];
 }
 
 export interface SimulationResults {

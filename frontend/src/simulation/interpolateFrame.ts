@@ -63,6 +63,7 @@ function interpolateOccupant(
     deceased: meta.deceased ?? false,
     group_id: meta.group_id,
     floor_id: meta.floor_id,
+    route_index: meta.route_index ?? 0,
     climb_progress,
   };
 }

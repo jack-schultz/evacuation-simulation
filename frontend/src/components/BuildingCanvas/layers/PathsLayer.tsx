@@ -1,35 +1,67 @@
 import { useMemo } from 'react';
 import { Line } from 'react-konva';
-import type { OccupantResult } from '../../../types/building';
+import type { OccupantFrameState, OccupantResult } from '../../../types/building';
 import { SCALE } from '../../../utils';
 
 interface Props {
-  occupants: OccupantResult[];
+  routeOccupants: OccupantResult[];
+  liveOccupants: OccupantFrameState[];
+  activeFloorId: string;
 }
 
 const PATH_COLORS = ['#2563eb', '#7c3aed', '#0891b2', '#c026d3', '#4f46e5'];
 
-function routeKey(points: [number, number][]): string {
-  return points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join('|');
+const HIDDEN_STATUSES = new Set(['evacuated', 'trapped']);
+
+function remainingFloorPath(
+  live: OccupantFrameState,
+  result: OccupantResult,
+  activeFloorId: string,
+): number[] | null {
+  const pts = result.route_points;
+  if (!pts || pts.length < 1) return null;
+
+  const floors = result.route_floors ?? [];
+  const routeIndex = Math.max(0, live.route_index ?? 0);
+
+  const poly: number[] = [live.x * SCALE, live.y * SCALE];
+  let added = 0;
+
+  for (let i = routeIndex; i < pts.length; i++) {
+    const floor = floors[i] ?? 'floor-0';
+    if (floor !== activeFloorId) {
+      // Stair / floor hop — stop so we don't draw a cross-floor chord.
+      break;
+    }
+    const [x, y] = pts[i];
+    poly.push(x * SCALE, y * SCALE);
+    added += 1;
+  }
+
+  // Need the live position plus at least one remaining waypoint.
+  if (added < 1 || poly.length < 4) return null;
+  return poly;
 }
 
-export function PathsLayer({ occupants }: Props) {
+export function PathsLayer({ routeOccupants, liveOccupants, activeFloorId }: Props) {
   const paths = useMemo(() => {
-    const seen = new Set<string>();
-    const unique: { key: string; points: number[] }[] = [];
-    for (const occ of occupants) {
-      const pts = occ.route_points;
-      if (!pts || pts.length < 2) continue;
-      const key = routeKey(pts);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      unique.push({
-        key,
-        points: pts.flatMap(([x, y]) => [x * SCALE, y * SCALE]),
-      });
+    const byId = new Map(routeOccupants.map((o) => [o.id, o]));
+    const out: { key: string; points: number[] }[] = [];
+
+    for (const live of liveOccupants) {
+      if (HIDDEN_STATUSES.has(live.status)) continue;
+      if ((live.floor_id ?? 'floor-0') !== activeFloorId) continue;
+
+      const result = byId.get(live.id);
+      if (!result) continue;
+
+      const points = remainingFloorPath(live, result, activeFloorId);
+      if (!points) continue;
+
+      out.push({ key: live.id, points });
     }
-    return unique;
-  }, [occupants]);
+    return out;
+  }, [routeOccupants, liveOccupants, activeFloorId]);
 
   if (!paths.length) return null;
 

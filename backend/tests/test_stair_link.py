@@ -234,6 +234,28 @@ class StairClimbSimTests(unittest.TestCase):
         self.assertIn("floor-1", floors_seen)
         self.assertIn("floor-0", floors_seen)
 
+    def test_route_floors_span_both_storeys(self):
+        layout = linked_floors_layout(count=1)
+        out = SimulationEngine().run(layout, SimulationParameters(max_time_s=120, frame_interval_s=0.5))
+        occ = out.results.occupants[0]
+        self.assertEqual(len(occ.route_points), len(occ.route_floors))
+        self.assertGreaterEqual(len(occ.route_floors), 2)
+        self.assertIn("floor-1", occ.route_floors)
+        self.assertIn("floor-0", occ.route_floors)
+        # First waypoint is upstairs spawn; last is ground exit.
+        self.assertEqual(occ.route_floors[0], "floor-1")
+        self.assertEqual(occ.route_floors[-1], "floor-0")
+
+    def test_frames_include_route_index(self):
+        layout = linked_floors_layout(count=1)
+        out = SimulationEngine().run(layout, SimulationParameters(max_time_s=120, frame_interval_s=0.5))
+        self.assertTrue(out.frames)
+        first = out.frames[0].occupants[0]
+        self.assertEqual(first.route_index, 0)
+        # Route progress advances before evacuation completes.
+        max_index = max(o.route_index for f in out.frames for o in f.occupants)
+        self.assertGreater(max_index, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
